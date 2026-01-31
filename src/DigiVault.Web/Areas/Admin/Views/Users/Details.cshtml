@@ -1,0 +1,147 @@
+@model ApplicationUser
+@{
+    ViewData["Title"] = $"User - {Model.Email}";
+    var roles = ViewBag.Roles as IList<string>;
+}
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body text-center">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="bi bi-person-fill text-primary fs-2"></i>
+                </div>
+                <h5>@Model.Email</h5>
+                <div class="mb-3">
+                    @foreach (var role in roles)
+                    {
+                        <span class="badge bg-primary">@role</span>
+                    }
+                </div>
+                <span class="badge bg-@(Model.IsActive ? "success" : "danger")">
+                    @(Model.IsActive ? "Active" : "Inactive")
+                </span>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                    <span class="text-muted">Balance</span>
+                    <span class="text-primary fw-bold">$@Model.Balance.ToString("F2")</span>
+                </li>
+                <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                    <span class="text-muted">Registered</span>
+                    <span>@Model.CreatedAt.ToString("MMM dd, yyyy")</span>
+                </li>
+                <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                    <span class="text-muted">Last Login</span>
+                    <span>@(Model.LastLoginAt?.ToString("MMM dd, HH:mm") ?? "Never")</span>
+                </li>
+                <li class="list-group-item bg-dark border-secondary d-flex justify-content-between">
+                    <span class="text-muted">Total Orders</span>
+                    <span>@Model.Orders.Count</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header border-secondary">Actions</div>
+            <div class="card-body">
+                <form asp-action="ToggleActive" method="post" class="mb-3">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-@(Model.IsActive ? "warning" : "success") w-100">
+                        <i class="bi bi-@(Model.IsActive ? "pause" : "play") me-1"></i>
+                        @(Model.IsActive ? "Deactivate" : "Activate") User
+                    </button>
+                </form>
+
+                <form asp-action="AdjustBalance" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="input-group mb-2">
+                        <span class="input-group-text bg-dark border-secondary">$</span>
+                        <input type="number" step="0.01" name="amount" class="form-control bg-dark border-secondary text-white" placeholder="Amount (+/-)" required />
+                    </div>
+                    <input type="text" name="reason" class="form-control bg-dark border-secondary text-white mb-2" placeholder="Reason" required />
+                    <button type="submit" class="btn btn-outline-primary w-100">Adjust Balance</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header border-secondary">
+                <h5 class="mb-0">Recent Orders</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.Orders.OrderByDescending(o => o.CreatedAt).Take(10))
+                        {
+                            var statusClass = order.Status switch
+                            {
+                                OrderStatus.Completed => "success",
+                                OrderStatus.Processing => "info",
+                                _ => "secondary"
+                            };
+                            <tr>
+                                <td>
+                                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id" class="text-primary">
+                                        @order.OrderNumber
+                                    </a>
+                                </td>
+                                <td class="text-primary">$@order.TotalAmount.ToString("F2")</td>
+                                <td><span class="badge bg-@statusClass">@order.Status</span></td>
+                                <td>@order.CreatedAt.ToString("MMM dd, HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary">
+            <div class="card-header border-secondary">
+                <h5 class="mb-0">Transaction History</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in Model.Transactions.OrderByDescending(t => t.CreatedAt).Take(10))
+                        {
+                            var typeClass = tx.Type switch
+                            {
+                                TransactionType.Deposit => "success",
+                                TransactionType.Purchase => "danger",
+                                TransactionType.Refund => "info",
+                                _ => "secondary"
+                            };
+                            <tr>
+                                <td>@tx.CreatedAt.ToString("MMM dd, HH:mm")</td>
+                                <td><span class="badge bg-@typeClass">@tx.Type</span></td>
+                                <td class="text-muted small">@tx.Description</td>
+                                <td class="text-end fw-bold @(tx.Amount > 0 ? "text-success" : "text-danger")">
+                                    @(tx.Amount > 0 ? "+" : "")$@Math.Abs(tx.Amount).ToString("F2")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

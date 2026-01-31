@@ -1,0 +1,96 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <form method="get" class="d-flex gap-2">
+            <select name="category" class="form-select bg-dark border-secondary" style="width: 200px;">
+                <option value="">All Categories</option>
+                <option value="1" selected="@(ViewBag.Category?.ToString() == "1")">VPN</option>
+                <option value="2" selected="@(ViewBag.Category?.ToString() == "2")">Game Currency</option>
+                <option value="3" selected="@(ViewBag.Category?.ToString() == "3")">Gift Cards</option>
+            </select>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control bg-dark border-secondary" placeholder="Search...">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        </form>
+    </div>
+    <a asp-action="Create" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i>Add Product
+    </a>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                @if (product.ImageUrl != null)
+                                {
+                                    <img src="@product.ImageUrl" alt="" style="width: 40px; height: 40px; object-fit: cover;" class="rounded me-2">
+                                }
+                                @product.Name
+                            </div>
+                        </td>
+                        <td>
+                            @{
+                                var catName = product.Category switch
+                                {
+                                    ProductCategory.VpnSubscription => "VPN",
+                                    ProductCategory.GameCurrency => "Game",
+                                    ProductCategory.GiftCard => "Gift Card",
+                                    _ => "Other"
+                                };
+                            }
+                            <span class="badge bg-secondary">@catName</span>
+                        </td>
+                        <td class="text-primary">$@product.Price.ToString("F2")</td>
+                        <td>
+                            <span class="@(product.StockQuantity < 10 ? "text-danger" : "")">@product.StockQuantity</span>
+                        </td>
+                        <td>
+                            @if (product.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a asp-action="Keys" asp-route-id="@product.Id" class="btn btn-outline-secondary">
+                                    <i class="bi bi-key"></i>
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@product.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

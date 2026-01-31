@@ -1,0 +1,167 @@
+/* DigiVault - Dark Theme Styles */
+
+:root {
+    --bs-body-bg: #121212;
+    --bs-body-color: #e0e0e0;
+}
+
+body {
+    background-color: #121212;
+}
+
+/* Card hover effects */
+.hover-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Form controls dark theme fixes */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.form-control::placeholder {
+    color: #6c757d;
+}
+
+/* Badge improvements */
+.badge {
+    font-weight: 500;
+}
+
+/* Button improvements */
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+    border: none;
+}
+
+/* Navbar improvements */
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Alert customization */
+.alert {
+    border-radius: 8px;
+}
+
+/* Card improvements */
+.card {
+    border-radius: 12px;
+}
+
+/* Table improvements */
+.table-dark {
+    --bs-table-bg: transparent;
+}
+
+/* Pagination */
+.page-link {
+    color: var(--bs-primary);
+}
+
+.page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+/* Footer */
+footer a:hover {
+    color: var(--bs-primary) !important;
+}
+
+/* Input group dark fixes */
+.input-group-text {
+    color: #adb5bd;
+}
+
+/* Dropdown dark theme */
+.dropdown-menu-dark {
+    background-color: #1a1a1a;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Code/monospace styling */
+code {
+    color: #e83e8c;
+    background-color: rgba(232, 62, 140, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Selection color */
+::selection {
+    background-color: rgba(13, 110, 253, 0.3);
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+}

@@ -1,0 +1,110 @@
+@model Order
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber}";
+    var statusClass = Model.Status switch
+    {
+        OrderStatus.Completed => "success",
+        OrderStatus.Processing => "info",
+        OrderStatus.Pending => "warning",
+        OrderStatus.Cancelled => "secondary",
+        OrderStatus.Refunded => "danger",
+        _ => "secondary"
+    };
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header border-secondary">
+                <h5 class="mb-0">Order Items</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Keys</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <tr>
+                                <td>@item.Product.Name</td>
+                                <td>@item.Quantity</td>
+                                <td class="text-primary">$@item.TotalPrice.ToString("F2")</td>
+                                <td>
+                                    @foreach (var key in item.ProductKeys)
+                                    {
+                                        <code class="d-block small">@key.KeyValue</code>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header border-secondary">
+                <h5 class="mb-0">Order Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="text-muted small">Order Number</div>
+                    <code>@Model.OrderNumber</code>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Customer</div>
+                    <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId" class="text-primary">
+                        @Model.User?.Email
+                    </a>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Total Amount</div>
+                    <span class="fs-4 fw-bold text-primary">$@Model.TotalAmount.ToString("F2")</span>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Status</div>
+                    <span class="badge bg-@statusClass fs-6">@Model.Status</span>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Created</div>
+                    <div>@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</div>
+                </div>
+                @if (Model.CompletedAt.HasValue)
+                {
+                    <div class="mb-3">
+                        <div class="text-muted small">Completed</div>
+                        <div>@Model.CompletedAt.Value.ToString("MMMM dd, yyyy HH:mm")</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary">
+            <div class="card-header border-secondary">
+                <h5 class="mb-0">Update Status</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="mb-3">
+                        <select name="status" class="form-select bg-dark border-secondary text-white">
+                            <option value="1" selected="@(Model.Status == OrderStatus.Pending)">Pending</option>
+                            <option value="2" selected="@(Model.Status == OrderStatus.Processing)">Processing</option>
+                            <option value="3" selected="@(Model.Status == OrderStatus.Completed)">Completed</option>
+                            <option value="4" selected="@(Model.Status == OrderStatus.Cancelled)">Cancelled</option>
+                            <option value="5" selected="@(Model.Status == OrderStatus.Refunded)">Refunded</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

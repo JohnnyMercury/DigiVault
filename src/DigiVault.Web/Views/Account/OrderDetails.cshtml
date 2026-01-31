@@ -1,0 +1,107 @@
+@model OrderViewModel
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber}";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Profile" class="text-primary">Profile</a></li>
+            <li class="breadcrumb-item"><a asp-action="Orders" class="text-primary">Orders</a></li>
+            <li class="breadcrumb-item active">@Model.OrderNumber</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>Order Items</h5>
+                    <span class="badge bg-@Model.StatusClass">@Model.StatusName</span>
+                </div>
+                <div class="card-body">
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="d-flex align-items-start mb-4 pb-4 border-bottom border-secondary">
+                            <div class="flex-shrink-0 me-3">
+                                @if (item.ImageUrl != null)
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.ProductName" style="width: 80px; height: 80px; object-fit: cover;" class="rounded">
+                                }
+                                else
+                                {
+                                    <div class="bg-secondary d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6>@item.ProductName</h6>
+                                <div class="text-muted small mb-2">
+                                    Qty: @item.Quantity x $@item.UnitPrice.ToString("F2") = <span class="text-primary fw-bold">$@item.TotalPrice.ToString("F2")</span>
+                                </div>
+                                @if (item.ProductKeys.Any())
+                                {
+                                    <div class="mt-2">
+                                        <label class="text-muted small">Your Keys:</label>
+                                        @foreach (var key in item.ProductKeys)
+                                        {
+                                            <div class="input-group input-group-sm mt-1">
+                                                <input type="text" class="form-control bg-dark border-secondary text-white font-monospace" value="@key" readonly>
+                                                <button class="btn btn-outline-primary copy-btn" type="button" data-value="@key">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-muted small">Order Number</div>
+                        <code>@Model.OrderNumber</code>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-muted small">Order Date</div>
+                        <div>@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</div>
+                    </div>
+                    @if (Model.CompletedAt.HasValue)
+                    {
+                        <div class="mb-3">
+                            <div class="text-muted small">Completed</div>
+                            <div>@Model.CompletedAt.Value.ToString("MMMM dd, yyyy HH:mm")</div>
+                        </div>
+                    }
+                    <hr class="border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fs-5">Total</span>
+                        <span class="fs-4 fw-bold text-primary">$@Model.TotalAmount.ToString("F2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                navigator.clipboard.writeText(this.dataset.value);
+                const icon = this.querySelector('i');
+                icon.className = 'bi bi-check';
+                setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,90 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px;">
+                        <i class="bi bi-person-fill text-primary display-4"></i>
+                    </div>
+                    <h5>@Model.Email</h5>
+                    <p class="text-muted small">Member since @Model.CreatedAt.ToString("MMMM yyyy")</p>
+
+                    <div class="bg-dark border border-secondary rounded p-3 mb-3">
+                        <div class="text-muted small">Account Balance</div>
+                        <div class="display-6 text-primary fw-bold">$@Model.Balance.ToString("F2")</div>
+                    </div>
+
+                    <a asp-action="Deposit" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-plus-circle me-2"></i>Deposit Funds
+                    </a>
+                    <a asp-action="ChangePassword" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-key me-2"></i>Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded p-3 me-3">
+                                    <i class="bi bi-box text-primary fs-4"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Total Orders</div>
+                                    <div class="fs-4 fw-bold">@Model.TotalOrders</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success bg-opacity-10 rounded p-3 me-3">
+                                    <i class="bi bi-currency-dollar text-success fs-4"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small">Total Spent</div>
+                                    <div class="fs-4 fw-bold">$@Model.TotalSpent.ToString("F2")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Quick Links</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a asp-action="Orders" class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-box me-2"></i>My Orders</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a asp-action="Transactions" class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-receipt me-2"></i>Transaction History</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a asp-controller="Cart" asp-action="Index" class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-cart me-2"></i>Shopping Cart</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a asp-controller="Catalog" asp-action="Index" class="list-group-item list-group-item-action bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-grid me-2"></i>Browse Products</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

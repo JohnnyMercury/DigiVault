@@ -1,0 +1,76 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <form method="get" class="d-flex gap-2">
+        <select name="status" class="form-select bg-dark border-secondary" style="width: 150px;">
+            <option value="">All Status</option>
+            <option value="1" selected="@(ViewBag.Status?.ToString() == "1")">Pending</option>
+            <option value="2" selected="@(ViewBag.Status?.ToString() == "2")">Processing</option>
+            <option value="3" selected="@(ViewBag.Status?.ToString() == "3")">Completed</option>
+            <option value="4" selected="@(ViewBag.Status?.ToString() == "4")">Cancelled</option>
+            <option value="5" selected="@(ViewBag.Status?.ToString() == "5")">Refunded</option>
+        </select>
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control bg-dark border-secondary" placeholder="Order # or email...">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+    </form>
+</div>
+
+<div class="card bg-dark border-secondary">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    var statusClass = order.Status switch
+                    {
+                        OrderStatus.Completed => "success",
+                        OrderStatus.Processing => "info",
+                        OrderStatus.Pending => "warning",
+                        OrderStatus.Cancelled => "secondary",
+                        OrderStatus.Refunded => "danger",
+                        _ => "secondary"
+                    };
+                    <tr>
+                        <td><code>@order.OrderNumber</code></td>
+                        <td>@order.User?.Email</td>
+                        <td class="text-primary fw-bold">$@order.TotalAmount.ToString("F2")</td>
+                        <td><span class="badge bg-@statusClass">@order.Status</span></td>
+                        <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if ((int)ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= (int)ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == (int)ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link bg-dark border-secondary" asp-action="Index" asp-route-page="@i" asp-route-status="@ViewBag.Status" asp-route-search="@ViewBag.Search">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

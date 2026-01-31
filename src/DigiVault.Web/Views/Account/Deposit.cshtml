@@ -1,0 +1,86 @@
+@model DepositViewModel
+@{
+    ViewData["Title"] = "Deposit Funds";
+    var currentBalance = ViewBag.CurrentBalance as decimal? ?? 0;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Deposit Funds</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info bg-info bg-opacity-10 border-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Current balance: <strong>$@currentBalance.ToString("F2")</strong>
+                    </div>
+
+                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning mb-4">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Demo Mode:</strong> This is a payment stub. In production, real payment providers will be integrated.
+                    </div>
+
+                    <form asp-action="Deposit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-4">
+                            <label asp-for="Amount" class="form-label">Amount (USD)</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-dark border-secondary">$</span>
+                                <input asp-for="Amount" class="form-control bg-dark border-secondary text-white" placeholder="0.00" />
+                            </div>
+                            <span asp-validation-for="Amount" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Quick Amount</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="10">$10</button>
+                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="25">$25</button>
+                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="50">$50</button>
+                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="100">$100</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="PaymentMethod" class="form-label">Payment Method</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="PaymentMethod" id="card" value="card" checked>
+                                    <label class="btn btn-outline-secondary w-100" for="card">
+                                        <i class="bi bi-credit-card me-2"></i>Card
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="PaymentMethod" id="crypto" value="crypto">
+                                    <label class="btn btn-outline-secondary w-100" for="crypto">
+                                        <i class="bi bi-currency-bitcoin me-2"></i>Crypto
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle me-2"></i>Deposit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.quick-amount').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('Amount').value = this.dataset.amount;
+            });
+        });
+    </script>
+}

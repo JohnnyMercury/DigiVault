@@ -1,86 +1,332 @@
 @model DepositViewModel
 @{
-    ViewData["Title"] = "Deposit Funds";
+    ViewData["Title"] = "Пополнение баланса";
     var currentBalance = ViewBag.CurrentBalance as decimal? ?? 0;
 }
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary">
-                    <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Deposit Funds</h4>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info bg-info bg-opacity-10 border-info mb-4">
-                        <i class="bi bi-info-circle me-2"></i>
-                        Current balance: <strong>$@currentBalance.ToString("F2")</strong>
-                    </div>
+<style>
+    .deposit-page {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
 
-                    <div class="alert alert-warning bg-warning bg-opacity-10 border-warning mb-4">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <strong>Demo Mode:</strong> This is a payment stub. In production, real payment providers will be integrated.
-                    </div>
+    .deposit-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
 
-                    <form asp-action="Deposit" method="post">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    .deposit-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
 
-                        <div class="mb-4">
-                            <label asp-for="Amount" class="form-label">Amount (USD)</label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text bg-dark border-secondary">$</span>
-                                <input asp-for="Amount" class="form-control bg-dark border-secondary text-white" placeholder="0.00" />
-                            </div>
-                            <span asp-validation-for="Amount" class="text-danger small"></span>
-                        </div>
+    .deposit-balance {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
 
-                        <div class="mb-4">
-                            <label class="form-label">Quick Amount</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="10">$10</button>
-                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="25">$25</button>
-                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="50">$50</button>
-                                <button type="button" class="btn btn-outline-secondary quick-amount" data-amount="100">$100</button>
-                            </div>
-                        </div>
+    .deposit-balance i { font-size: 1.25rem; color: #667eea; }
+    .deposit-balance-text { font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
+    .deposit-balance-value { font-weight: 700; color: white; }
 
-                        <div class="mb-4">
-                            <label asp-for="PaymentMethod" class="form-label">Payment Method</label>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <input type="radio" class="btn-check" name="PaymentMethod" id="card" value="card" checked>
-                                    <label class="btn btn-outline-secondary w-100" for="card">
-                                        <i class="bi bi-credit-card me-2"></i>Card
-                                    </label>
-                                </div>
-                                <div class="col-6">
-                                    <input type="radio" class="btn-check" name="PaymentMethod" id="crypto" value="crypto">
-                                    <label class="btn btn-outline-secondary w-100" for="crypto">
-                                        <i class="bi bi-currency-bitcoin me-2"></i>Crypto
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+    .deposit-demo {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-check-circle me-2"></i>Deposit
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    .deposit-demo i { color: #f59e0b; margin-right: 0.5rem; }
+    .deposit-demo strong { color: #f59e0b; }
+
+    .deposit-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .deposit-input-wrap {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+
+    .deposit-input-wrap span { color: rgba(255, 255, 255, 0.4); font-size: 1.25rem; font-weight: 600; }
+
+    .deposit-input-wrap input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .deposit-input-wrap input:focus { outline: none; }
+    .deposit-input-wrap input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+    .quick-amounts {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .quick-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .quick-btn:hover {
+        border-color: rgba(102, 126, 234, 0.4);
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    /* Payment Categories (Level 1) */
+    .payment-categories {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .payment-category {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 0.6rem 0.4rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .payment-category:hover { border-color: rgba(102, 126, 234, 0.3); }
+
+    .payment-category.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .payment-category-icon { font-size: 1.25rem; margin-bottom: 0.15rem; }
+    .payment-category-name { font-size: 0.65rem; color: rgba(255, 255, 255, 0.7); line-height: 1.2; }
+
+    /* Payment Methods (Level 2) */
+    .payment-methods-container { margin-bottom: 1.5rem; }
+
+    .payment-methods-group {
+        display: none;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    .payment-methods-group.active { display: grid; }
+
+    .payment-method {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .payment-method:hover { border-color: rgba(102, 126, 234, 0.3); }
+
+    .payment-method.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .payment-method-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .payment-method-name { font-size: 0.7rem; color: rgba(255, 255, 255, 0.7); }
+
+    .deposit-submit {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .deposit-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+</style>
+
+<div class="deposit-page">
+    <div class="deposit-card">
+        <div class="deposit-title">
+            <i class="bi bi-plus-circle"></i>
+            Пополнение баланса
+        </div>
+
+        <div class="deposit-balance">
+            <i class="bi bi-wallet2"></i>
+            <div>
+                <div class="deposit-balance-text">Текущий баланс</div>
+                <div class="deposit-balance-value">$@currentBalance.ToString("F2")</div>
             </div>
         </div>
+
+        <div class="deposit-demo">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Демо режим:</strong> Это платёжная заглушка. В продакшене будут подключены реальные платёжные провайдеры.
+        </div>
+
+        <form asp-action="Deposit" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="deposit-label">Сумма (USD)</div>
+            <div class="deposit-input-wrap">
+                <span>$</span>
+                <input asp-for="Amount" placeholder="0.00" />
+            </div>
+            <span asp-validation-for="Amount" class="text-danger small d-block mb-3"></span>
+
+            <div class="deposit-label">Быстрая сумма</div>
+            <div class="quick-amounts">
+                <button type="button" class="quick-btn" data-amount="10">$10</button>
+                <button type="button" class="quick-btn" data-amount="25">$25</button>
+                <button type="button" class="quick-btn" data-amount="50">$50</button>
+                <button type="button" class="quick-btn" data-amount="100">$100</button>
+            </div>
+
+            <div class="deposit-label">Способ оплаты</div>
+
+            <!-- Payment Categories (Level 1) -->
+            <div class="payment-categories">
+                <div class="payment-category selected" onclick="selectCategory(this, 'card')">
+                    <div class="payment-category-icon">💳</div>
+                    <div class="payment-category-name">Банковская карта</div>
+                </div>
+                <div class="payment-category" onclick="selectCategory(this, 'p2p')">
+                    <div class="payment-category-icon">🔄</div>
+                    <div class="payment-category-name">P2P карты</div>
+                </div>
+                <div class="payment-category" onclick="selectCategory(this, 'sbp')">
+                    <div class="payment-category-icon">🏦</div>
+                    <div class="payment-category-name">СБП</div>
+                </div>
+                <div class="payment-category" onclick="selectCategory(this, 'qr')">
+                    <div class="payment-category-icon">📱</div>
+                    <div class="payment-category-name">QR код</div>
+                </div>
+            </div>
+
+            <!-- Payment Methods (Level 2) -->
+            <div class="payment-methods-container">
+                <div class="payment-methods-group active" data-category="card">
+                    <div class="payment-method selected" onclick="selectPayment(this, 'card')">
+                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-name">Карта</div>
+                    </div>
+                </div>
+                <div class="payment-methods-group" data-category="p2p">
+                    <div class="payment-method" onclick="selectPayment(this, 'yoomoney')">
+                        <div class="payment-method-icon">💰</div>
+                        <div class="payment-method-name">ЮMoney</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this, 'paypal')">
+                        <div class="payment-method-icon">🅿️</div>
+                        <div class="payment-method-name">PayPal</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this, 'crypto')">
+                        <div class="payment-method-icon">₿</div>
+                        <div class="payment-method-name">Crypto</div>
+                    </div>
+                </div>
+                <div class="payment-methods-group" data-category="sbp">
+                    <div class="payment-method" onclick="selectPayment(this, 'sbp')">
+                        <div class="payment-method-icon">🏦</div>
+                        <div class="payment-method-name">СБП</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this, 'sberpay')">
+                        <div class="payment-method-icon">📱</div>
+                        <div class="payment-method-name">SberPay</div>
+                    </div>
+                </div>
+                <div class="payment-methods-group" data-category="qr">
+                    <div class="payment-method" onclick="selectPayment(this, 'qr')">
+                        <div class="payment-method-icon">📱</div>
+                        <div class="payment-method-name">QR оплата</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden input for the selected payment method -->
+            <input type="hidden" name="PaymentMethod" id="selectedPaymentMethod" value="card" />
+
+            <button type="submit" class="deposit-submit">
+                <i class="bi bi-check-circle me-2"></i>Пополнить
+            </button>
+        </form>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        document.querySelectorAll('.quick-amount').forEach(btn => {
+        // Quick amount buttons
+        document.querySelectorAll('.quick-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.getElementById('Amount').value = this.dataset.amount;
             });
         });
+
+        function selectPayment(method, value) {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+            method.classList.add('selected');
+            document.getElementById('selectedPaymentMethod').value = value || 'card';
+        }
+
+        function selectCategory(el, category) {
+            document.querySelectorAll('.payment-category').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+
+            document.querySelectorAll('.payment-methods-group').forEach(g => g.classList.remove('active'));
+            const group = document.querySelector('.payment-methods-group[data-category="' + category + '"]');
+            if (group) {
+                group.classList.add('active');
+                const firstMethod = group.querySelector('.payment-method');
+                if (firstMethod) firstMethod.click();
+            }
+        }
     </script>
 }

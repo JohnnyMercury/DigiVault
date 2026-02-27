@@ -1108,9 +1108,16 @@
         const input = document.getElementById('modalInput');
         const val = input.value.trim();
         const agree = document.getElementById('modalAgree');
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
         if (!val) {
             alert('Пожалуйста, введите Email для доставки');
+            input.focus();
+            return;
+        }
+
+        if (!emailPattern.test(val)) {
+            alert('Введите корректный Email адрес');
             input.focus();
             return;
         }

@@ -1741,12 +1741,12 @@
                 {
                     <div>
                         <div class="modal-label">User ID:</div>
-                        <input type="text" class="modal-input" id="modalInput" placeholder="9-15 цифр, например: 1030612204" pattern="[0-9]{9,15}" />
+                        <input type="text" class="modal-input" id="modalInput" inputmode="numeric" placeholder="9-15 цифр, например: 1030612204" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="15" />
                         <div class="modal-hint">Ваш игровой User ID из Mobile Legends</div>
                     </div>
                     <div>
                         <div class="modal-label">Zone ID:</div>
-                        <input type="text" class="modal-input" id="modalZoneInput" placeholder="4-5 цифр, например: 13124" pattern="[0-9]{4,5}" />
+                        <input type="text" class="modal-input" id="modalZoneInput" inputmode="numeric" placeholder="4-5 цифр, например: 13124" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="5" />
                         <div class="modal-hint">Zone ID можно найти в профиле рядом с User ID</div>
                     </div>
                 }
@@ -1762,7 +1762,7 @@
                 {
                     <div>
                         <div class="modal-label">Ваш UID:</div>
-                        <input type="text" class="modal-input" id="modalInput" placeholder="9-10 цифр, например: 700123456" pattern="[0-9]{9,10}" />
+                        <input type="text" class="modal-input" id="modalInput" inputmode="numeric" placeholder="9-10 цифр, например: 700123456" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="10" />
                         <div class="modal-hint">UID можно найти в правом нижнем углу экрана в игре</div>
                     </div>
                 }
@@ -1770,7 +1770,7 @@
                 {
                     <div>
                         <div class="modal-label">Ваш UID:</div>
-                        <input type="text" class="modal-input" id="modalInput" placeholder="9 цифр, например: 800123456" pattern="[0-9]{9}" />
+                        <input type="text" class="modal-input" id="modalInput" inputmode="numeric" placeholder="9 цифр, например: 800123456" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="9" />
                         <div class="modal-hint">UID отображается в профиле игрока</div>
                     </div>
                 }
@@ -1778,7 +1778,7 @@
                 {
                     <div>
                         <div class="modal-label">Ваш Player ID:</div>
-                        <input type="text" class="modal-input" id="modalInput" placeholder="5-12 цифр, например: 567535724" pattern="[0-9]{5,12}" />
+                        <input type="text" class="modal-input" id="modalInput" inputmode="numeric" placeholder="5-12 цифр, например: 567535724" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="12" />
                         <div class="modal-hint">Player ID можно найти в профиле игры</div>
                     </div>
                 }
@@ -1956,11 +1956,53 @@
         const input = document.getElementById('modalInput');
         const val = input.value.trim();
         const agree = document.getElementById('modalAgree');
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-        if (!val) {
-            alert('Пожалуйста, введите данные для доставки');
-            input.focus();
-            return;
+        @if (isFortnite)
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите Email от Epic Games'); input.focus(); return; }
+            if (!emailPattern.test(val)) { alert('Введите корректный Email адрес'); input.focus(); return; }
+            </text>
+        }
+        else if (isMobileLegends)
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите User ID'); input.focus(); return; }
+            if (!/^[0-9]{9,15}$/.test(val)) { alert('User ID должен содержать от 9 до 15 цифр'); input.focus(); return; }
+            const zoneInput = document.getElementById('modalZoneInput');
+            const zoneVal = zoneInput.value.trim();
+            if (!zoneVal) { alert('Пожалуйста, введите Zone ID'); zoneInput.focus(); return; }
+            if (!/^[0-9]{4,5}$/.test(zoneVal)) { alert('Zone ID должен содержать 4-5 цифр'); zoneInput.focus(); return; }
+            </text>
+        }
+        else if (isRoblox)
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите Email'); input.focus(); return; }
+            if (!emailPattern.test(val)) { alert('Введите корректный Email адрес'); input.focus(); return; }
+            </text>
+        }
+        else if (isGenshin)
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите UID'); input.focus(); return; }
+            if (!/^[0-9]{9,10}$/.test(val)) { alert('UID должен содержать 9-10 цифр'); input.focus(); return; }
+            </text>
+        }
+        else if (isHonkai)
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите UID'); input.focus(); return; }
+            if (!/^[0-9]{9}$/.test(val)) { alert('UID должен содержать ровно 9 цифр'); input.focus(); return; }
+            </text>
+        }
+        else
+        {
+            <text>
+            if (!val) { alert('Пожалуйста, введите Player ID'); input.focus(); return; }
+            if (!/^[0-9]{5,12}$/.test(val)) { alert('Player ID должен содержать от 5 до 12 цифр'); input.focus(); return; }
+            </text>
         }
 
         if (!agree.checked) {

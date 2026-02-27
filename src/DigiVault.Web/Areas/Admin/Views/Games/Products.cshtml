@@ -57,6 +57,12 @@
         <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Pass" class="btn @(currentType == GameProductType.Pass ? "btn-primary" : "btn-outline-light")">
             Пропуски (@Model.Products.Count(p => p.ProductType == GameProductType.Pass))
         </a>
+        <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Subscription" class="btn @(currentType == GameProductType.Subscription ? "btn-primary" : "btn-outline-light")">
+            Подписки (@Model.Products.Count(p => p.ProductType == GameProductType.Subscription))
+        </a>
+        <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Promo" class="btn @(currentType == GameProductType.Promo ? "btn-primary" : "btn-outline-light")">
+            Акции (@Model.Products.Count(p => p.ProductType == GameProductType.Promo))
+        </a>
     </div>
 </div>
 

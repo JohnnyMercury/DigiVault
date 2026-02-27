@@ -159,22 +159,21 @@
         ? dbGame.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList()
         : new List<GameProduct>();
 
+    // Filter DB products by type
+    var dbCurrencies = dbProducts.Where(p => p.ProductType == GameProductType.Currency).ToList();
+    var dbPacks = dbProducts.Where(p => p.ProductType == GameProductType.Pack).ToList();
+    var dbPasses = dbProducts.Where(p => p.ProductType == GameProductType.Pass).ToList();
+    var dbSubscriptions = dbProducts.Where(p => p.ProductType == GameProductType.Subscription).ToList();
+    var dbPromos = dbProducts.Where(p => p.ProductType == GameProductType.Promo).ToList();
+
+    var hasDbCurrencies = dbCurrencies.Any();
+    var hasDbPacks = dbPacks.Any();
+    var hasDbPasses = dbPasses.Any();
+    var hasDbSubscriptions = dbSubscriptions.Any();
+    var hasDbPromos = dbPromos.Any();
+
     // Fallback to demo products if no database products
     var demoProducts = isFortnite ? fortniteProducts : (isRoblox ? robloxProducts : (isHonkai ? honkaiProducts : (isGenshin ? genshinProducts : (isMobileLegends ? mlProducts : pubgProducts))));
-
-    // Large packs
-    var demoPacks = isMobileLegends ? new[] {
-        new { Amount = "5000", Bonus = "+1000", TotalUC = "6000 алмазов", Price = 9404, OldPrice = 14467, Discount = 35 }
-    } : new[] {
-        new { Amount = "5650", Bonus = "", TotalUC = "5650 UC", Price = 6253, OldPrice = 9620, Discount = 35 },
-        new { Amount = "6000", Bonus = "+2100", TotalUC = "8100 UC", Price = 8347, OldPrice = 12841, Discount = 35 },
-        new { Amount = "11950", Bonus = "", TotalUC = "11950 UC", Price = 13790, OldPrice = 21215, Discount = 35 },
-        new { Amount = "15000", Bonus = "+1200", TotalUC = "16200 UC", Price = 17520, OldPrice = 26953, Discount = 35 },
-        new { Amount = "22000", Bonus = "+2300", TotalUC = "24300 UC", Price = 25428, OldPrice = 31785, Discount = 20 },
-        new { Amount = "30000", Bonus = "+2400", TotalUC = "32400 UC", Price = 35229, OldPrice = 44036, Discount = 20 },
-        new { Amount = "37000", Bonus = "+3500", TotalUC = "40500 UC", Price = 43048, OldPrice = 53810, Discount = 20 },
-        new { Amount = "81000", Bonus = "", TotalUC = "81000 UC", Price = 87109, OldPrice = 108886, Discount = 20 }
-    };
 }
 
 <style>
@@ -1261,10 +1260,10 @@
             <div class="product-section" id="section-uc">
                 <h2 class="section-title">@(isFortnite ? "V-Bucks" : (isRoblox ? "Robux" : (isHonkai ? "Сущности Древних Снов" : (isGenshin ? "Кристаллы Сотворения" : (isMobileLegends ? "Алмазы" : $"Купить {gameInfo.CurrencyShort} {gameName}")))))</h2>
                 <div class="currency-grid">
-                    @if (hasDbProducts)
+                    @if (hasDbCurrencies)
                     {
-                        @* Render products from database *@
-                        @foreach (var item in dbProducts)
+                        @* Render currency products from database *@
+                        @foreach (var item in dbCurrencies)
                         {
                             var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
                                 ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
@@ -1336,104 +1335,51 @@
                 </div>
             </div>
 
-            @if (isGenshin)
+            @if (hasDbPacks)
             {
-                <!-- Section: All Pack for Genshin -->
+                <!-- Section: Packs from DB -->
                 <div class="product-section" id="section-packs">
-                    <h2 class="section-title">Выгодные наборы</h2>
+                    <h2 class="section-title">@(isGenshin || isHonkai ? "Выгодные наборы" : "Выгодные паки")</h2>
                     <div class="currency-grid">
-                        @foreach (var item in genshinPacks)
+                        @foreach (var item in dbPacks)
                         {
-                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
+                            var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
+                                ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
+                                : item.Discount;
+                            var oldPrice = item.OldPrice ?? item.Price;
+                            var displayName = !string.IsNullOrEmpty(item.TotalDisplay) ? item.TotalDisplay : item.Name;
+                            var badgeText = !string.IsNullOrEmpty(item.Amount) ? item.Amount : item.Name;
+                            var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+                            var emoji = isRoblox ? "🪙" : (isHonkai ? "🔮" : (isGenshin ? "💠" : (isMobileLegends ? "💎" : (isFortnite ? "🎮" : "💰"))));
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@displayName', @item.Price, @oldPrice)">
                                 <div class="currency-card">
-                                    <span class="currency-card-badge">@item.Amount</span>
+                                    <span class="currency-card-badge">@badgeText</span>
                                     <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
                                     @if (!string.IsNullOrEmpty(item.Multiplier))
                                     {
                                         <span class="currency-card-multiplier">@item.Multiplier</span>
                                     }
                                     <div class="currency-card-image">
-                                        <span class="currency-card-placeholder">💠</span>
+                                        @if (hasImage)
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">@emoji</span>
+                                        }
                                     </div>
                                 </div>
                                 <div class="product-caption">
                                     <div class="product-caption-price">
                                         @item.Price.ToString("N0") ₽
-                                        @if (item.Discount > 0)
+                                        @if (discount > 0)
                                         {
-                                            <span class="product-caption-discount">-@item.Discount%</span>
-                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
+                                            <span class="product-caption-discount">-@discount%</span>
+                                            <span class="product-caption-old-price">@oldPrice.ToString("N0") ₽</span>
                                         }
                                     </div>
-                                    <div class="product-caption-name">@item.TotalUC</div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-            else if (isHonkai)
-            {
-                <!-- Section: All Pack for Honkai -->
-                <div class="product-section" id="section-packs">
-                    <h2 class="section-title">Выгодные наборы</h2>
-                    <div class="currency-grid">
-                        @foreach (var item in honkaiPacks)
-                        {
-                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
-                                <div class="currency-card">
-                                    <span class="currency-card-badge">@item.Amount</span>
-                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                    @if (!string.IsNullOrEmpty(item.Multiplier))
-                                    {
-                                        <span class="currency-card-multiplier">@item.Multiplier</span>
-                                    }
-                                    <div class="currency-card-image">
-                                        <span class="currency-card-placeholder">🔮</span>
-                                    </div>
-                                </div>
-                                <div class="product-caption">
-                                    <div class="product-caption-price">
-                                        @item.Price.ToString("N0") ₽
-                                        @if (item.Discount > 0)
-                                        {
-                                            <span class="product-caption-discount">-@item.Discount%</span>
-                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
-                                        }
-                                    </div>
-                                    <div class="product-caption-name">@item.TotalUC</div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-            else if (!isFortnite && !isMobileLegends && !isRoblox)
-            {
-                <!-- Section: Packs (only for PUBG-like games) -->
-                <div class="product-section" id="section-packs">
-                    <h2 class="section-title">Выгодные паки</h2>
-                    <div class="currency-grid">
-                        @foreach (var item in demoPacks)
-                        {
-                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
-                                <div class="currency-card">
-                                    <span class="currency-card-badge">@item.Amount</span>
-                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                    <div class="currency-card-image">
-                                        <span class="currency-card-placeholder">@(isRoblox ? "🪙" : (isHonkai ? "🔮" : (isGenshin ? "💠" : (isMobileLegends ? "💎" : (isFortnite ? "🎮" : "💰")))))</span>
-                                    </div>
-                                </div>
-                                <div class="product-caption">
-                                    <div class="product-caption-price">
-                                        @item.Price.ToString("N0") ₽
-                                        @if (item.Discount > 0)
-                                        {
-                                            <span class="product-caption-discount">-@item.Discount%</span>
-                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
-                                        }
-                                    </div>
-                                    <div class="product-caption-name">@item.TotalUC</div>
+                                    <div class="product-caption-name">@displayName</div>
                                 </div>
                             </div>
                         }
@@ -1441,197 +1387,142 @@
                 </div>
             }
 
-            @if (isGenshin || isMobileLegends || (!isFortnite && !isGenshin && !isMobileLegends && !isHonkai && !isRoblox))
+            @if (hasDbPasses)
             {
-                <!-- Section: Passes -->
+                <!-- Section: Passes from DB -->
                 <div class="product-section" id="section-passes">
-                    <h2 class="section-title">@(isGenshin ? "Благословение Луны" : "Пропуски")</h2>
+                    <h2 class="section-title">@(isGenshin ? "Благословение и пропуски" : "Пропуски")</h2>
                     <div class="currency-grid">
-                        @if (isGenshin)
-                    {
-                        <div class="product-item" onclick="selectProduct(this, 'Blessing', 'Благословение полой луны', 349, 499)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Благословение полой луны</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💠</span>
+                        @foreach (var item in dbPasses)
+                        {
+                            var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
+                                ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
+                                : item.Discount;
+                            var oldPrice = item.OldPrice ?? item.Price;
+                            var displayName = !string.IsNullOrEmpty(item.TotalDisplay) ? item.TotalDisplay : item.Name;
+                            var badgeText = item.Name;
+                            var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+                            var emoji = isGenshin ? "💠" : (isMobileLegends ? "💎" : "🎫");
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@displayName', @item.Price, @oldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@badgeText</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <div class="currency-card-image">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">@emoji</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@discount%</span>
+                                            <span class="product-caption-old-price">@oldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
                                 </div>
                             </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">349 ₽ <span class="product-caption-discount">-30%</span> <span class="product-caption-old-price">499 ₽</span></div>
-                                <div class="product-caption-name">Благословение полой луны</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, 'Gnostic', 'Gnostic Hymn', 899, 1199)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Gnostic Hymn</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💠</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">899 ₽ <span class="product-caption-discount">-25%</span> <span class="product-caption-old-price">1 199 ₽</span></div>
-                                <div class="product-caption-name">Gnostic Hymn</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, 'Gnostic+', 'Gnostic Chorus', 1799, 2299)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Gnostic Chorus</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💠</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">1 799 ₽ <span class="product-caption-discount">-22%</span> <span class="product-caption-old-price">2 299 ₽</span></div>
-                                <div class="product-caption-name">Gnostic Chorus</div>
-                            </div>
-                        </div>
-                    }
-                    else if (isMobileLegends)
-                    {
-                        <div class="product-item" onclick="selectProduct(this, 'Twilight', 'Twilight Pass', 449, 599)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Twilight Pass</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💎</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">449 ₽ <span class="product-caption-discount">-25%</span> <span class="product-caption-old-price">599 ₽</span></div>
-                                <div class="product-caption-name">Twilight Pass</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, 'Starlight', 'Starlight Member', 549, 749)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Starlight Member</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💎</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">549 ₽ <span class="product-caption-discount">-27%</span> <span class="product-caption-old-price">749 ₽</span></div>
-                                <div class="product-caption-name">Starlight Member</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, 'Starlight+', 'Starlight Plus', 999, 1299)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Starlight Plus</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">💎</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">999 ₽ <span class="product-caption-discount">-23%</span> <span class="product-caption-old-price">1 299 ₽</span></div>
-                                <div class="product-caption-name">Starlight Plus</div>
-                            </div>
-                        </div>
-                    }
-                    else if (!isHonkai)
-                    {
-                        <div class="product-item" onclick="selectProduct(this, 'RP', 'Royale Pass', 599, 999)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Royale Pass</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">🎫</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">599 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">999 ₽</span></div>
-                                <div class="product-caption-name">Royale Pass</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, 'RP+', 'Royale Pass Plus', 1199, 1999)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Royale Pass Plus</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">🎫</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">1 199 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">1 999 ₽</span></div>
-                                <div class="product-caption-name">Royale Pass Plus</div>
-                            </div>
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
-            </div>
             }
 
-            @if (isMobileLegends)
+            @if (hasDbPromos)
             {
-                <!-- Section: Promo for Mobile Legends -->
+                <!-- Section: Promo from DB -->
                 <div class="product-section" id="section-promo">
                     <h2 class="section-title">Акция</h2>
                     <div class="currency-grid">
-                        <div class="product-item" onclick="selectProduct(this, 'Weekly', 'Weekly Diamond Pass', 199, 299)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Weekly Diamond Pass</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">🔥</span>
+                        @foreach (var item in dbPromos)
+                        {
+                            var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
+                                ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
+                                : item.Discount;
+                            var oldPrice = item.OldPrice ?? item.Price;
+                            var displayName = !string.IsNullOrEmpty(item.TotalDisplay) ? item.TotalDisplay : item.Name;
+                            var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@displayName', @item.Price, @oldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Name</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <div class="currency-card-image">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">🔥</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@discount%</span>
+                                            <span class="product-caption-old-price">@oldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
                                 </div>
                             </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">199 ₽ <span class="product-caption-discount">-33%</span> <span class="product-caption-old-price">299 ₽</span></div>
-                                <div class="product-caption-name">Weekly Diamond Pass</div>
-                            </div>
-                        </div>
+                        }
                     </div>
                 </div>
             }
 
-            @if (!isFortnite && !isMobileLegends && !isGenshin && !isHonkai && !isRoblox)
+            @if (hasDbSubscriptions)
             {
-                <!-- Section: Subscription (only for PUBG-like games) -->
+                <!-- Section: Subscriptions from DB -->
                 <div class="product-section" id="section-subscription">
                     <h2 class="section-title">Подписка Prime</h2>
                     <div class="currency-grid">
-                        <div class="product-item" onclick="selectProduct(this, '1 мес', 'Prime 1 месяц', 299, 499)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Prime 1 месяц</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">👑</span>
+                        @foreach (var item in dbSubscriptions)
+                        {
+                            var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
+                                ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
+                                : item.Discount;
+                            var oldPrice = item.OldPrice ?? item.Price;
+                            var displayName = !string.IsNullOrEmpty(item.TotalDisplay) ? item.TotalDisplay : item.Name;
+                            var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@displayName', @item.Price, @oldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Name</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <div class="currency-card-image">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">👑</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@discount%</span>
+                                            <span class="product-caption-old-price">@oldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
                                 </div>
                             </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">299 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">499 ₽</span></div>
-                                <div class="product-caption-name">Prime 1 месяц</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, '3 мес', 'Prime 3 месяца', 799, 1299)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Prime 3 месяца</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">👑</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">799 ₽ <span class="product-caption-discount">-38%</span> <span class="product-caption-old-price">1 299 ₽</span></div>
-                                <div class="product-caption-name">Prime 3 месяца</div>
-                            </div>
-                        </div>
-                        <div class="product-item" onclick="selectProduct(this, '6 мес', 'Prime 6 месяцев', 1499, 2499)">
-                            <div class="currency-card">
-                                <span class="currency-card-badge">Prime 6 месяцев</span>
-                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                <div class="currency-card-image">
-                                    <span class="currency-card-placeholder">👑</span>
-                                </div>
-                            </div>
-                            <div class="product-caption">
-                                <div class="product-caption-price">1 499 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">2 499 ₽</span></div>
-                                <div class="product-caption-name">Prime 6 месяцев</div>
-                            </div>
-                        </div>
+                        }
                     </div>
                 </div>
             }

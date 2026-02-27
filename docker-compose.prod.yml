@@ -19,7 +19,6 @@ services:
       - MinIO__PublicUrl=https://dv.cyborg-games.com:9000
       - MinIO__UseRelativeUrls=true
     volumes:
-      - digivault-uploads:/app/wwwroot/images/uploads
       - digivault-backups:/app/backups
     restart: unless-stopped
     healthcheck:
@@ -35,7 +34,5 @@ services:
         max-file: "5"
 
 volumes:
-  digivault-uploads:
-    driver: local
   digivault-backups:
     driver: local

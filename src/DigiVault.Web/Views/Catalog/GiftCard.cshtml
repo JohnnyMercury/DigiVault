@@ -802,15 +802,6 @@
 
         <!-- Main Content -->
         <main class="game-main">
-            <!-- Email input for code delivery -->
-            <div class="uid-section">
-                <input type="email" class="uid-input" id="emailInput" placeholder="Введите свой Email" />
-                <label class="uid-checkbox">
-                    <input type="checkbox" id="emailConfirm" />
-                    Я указал верный Email
-                </label>
-            </div>
-
             <!-- Tab: Gift Cards -->
             <div class="game-tabs">
                 <button class="game-tab active">Подарочные карты</button>
@@ -921,6 +912,19 @@
                         <span class="payment-delivery-value">Моментально</span>
                     </div>
                 </div>
+
+                <div class="payment-delivery" style="border-top: none; padding-top: 0;">
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <div style="text-align: center;">
+                            <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #22c55e;"></i>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Безопасная покупка</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <i class="bi bi-cart-check" style="font-size: 1.5rem; color: #f093fb;"></i>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">100K+ продаж</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
     </div>
@@ -935,15 +939,8 @@
         </div>
         <div class="purchase-modal-body">
             <div class="purchase-modal-left">
-                <div class="purchase-modal-image" style="background: @card.Gradient;">
-                    @if (!string.IsNullOrEmpty(card.ImageUrl))
-                    {
-                        <img src="@card.ImageUrl" alt="@card.Name" />
-                    }
-                    else
-                    {
-                        <span class="modal-placeholder">@card.Icon</span>
-                    }
+                <div class="purchase-modal-image" id="modalImage" style="background: @card.Gradient;">
+                    <span class="modal-placeholder">@card.Icon</span>
                 </div>
                 <div class="purchase-modal-product-name" id="modalProductName">@card.Name</div>
                 <div class="purchase-modal-product-desc" id="modalProductDesc">Выберите карту</div>
@@ -1004,10 +1001,15 @@
     let selectedPrice = 0;
     let selectedOldPrice = 0;
     let selectedAmount = '';
+    let selectedImageUrl = '';
 
     function selectProduct(item, amount, displayName, price, oldPrice) {
         document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
         item.classList.add('selected');
+
+        // Capture product image from card
+        const cardImg = item.querySelector('.currency-card-image img');
+        selectedImageUrl = cardImg ? cardImg.src : '';
 
         selectedPrice = price;
         selectedOldPrice = oldPrice;
@@ -1042,6 +1044,11 @@
             document.getElementById('modalOldPrice').style.display = '';
         } else {
             document.getElementById('modalOldPrice').style.display = 'none';
+        }
+        // Update modal image to product image
+        const modalImg = document.getElementById('modalImage');
+        if (selectedImageUrl) {
+            modalImg.innerHTML = '<img src="' + selectedImageUrl + '" alt="Product" />';
         }
         document.getElementById('purchaseOverlay').classList.add('active');
         document.body.style.overflow = 'hidden';

@@ -1182,87 +1182,6 @@
 
         <!-- Main Content -->
         <main class="game-main">
-            @if (isFortnite)
-            {
-                <!-- Fortnite Input Fields -->
-                <div class="uid-section">
-                    <input type="email" class="uid-input" id="emailInput" placeholder="Email от Epic Games" required pattern="[a-z0-9._%+-]+@@[a-z0-9.-]+\.[a-z]{2,}$" />
-                </div>
-                <div class="uid-confirm-row" style="margin-top: 1rem;">
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="regionConfirm" />
-                        Я не менял регион в аккаунте Epic Games последние 6 месяцев
-                    </label>
-                </div>
-                <div class="uid-confirm-row">
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="dataConfirm" />
-                        Я соглашаюсь на передачу данных аккаунта для успешной доставки
-                    </label>
-                </div>
-            }
-            else if (isMobileLegends)
-            {
-                <!-- Mobile Legends Input Fields (UID: 9-15 цифр, Zone ID: 4-5 цифр) -->
-                <div class="uid-section">
-                    <input type="text" class="uid-input" id="uidInput" placeholder="User ID (9-15 цифр, например: 1030612204)" pattern="[0-9]{9,15}" />
-                </div>
-                <div class="uid-section">
-                    <input type="text" class="uid-input" id="zoneInput" placeholder="Zone ID (4-5 цифр, например: 13124)" pattern="[0-9]{4,5}" />
-                </div>
-                <div class="uid-section region-section">
-                    <span class="region-flag">🌍</span>
-                    <select class="region-select" id="regionSelect">
-                        <option value="RU" selected>RU</option>
-                        <option value="Global">Global</option>
-                    </select>
-                </div>
-            }
-            else if (isRoblox)
-            {
-                <!-- Roblox Input Fields -->
-                <div class="uid-section">
-                    <input type="email" class="uid-input" id="emailInput" placeholder="Введите свой Email" />
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="emailConfirm" />
-                        Я указал верный Email
-                    </label>
-                </div>
-            }
-            else if (isGenshin)
-            {
-                <!-- Genshin Impact UID Input (9-10 цифр) -->
-                <div class="uid-section">
-                    <input type="text" class="uid-input" id="uidInput" placeholder="UID (9-10 цифр, например: 700123456)" pattern="[0-9]{9,10}" />
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="uidConfirm" />
-                        Я указал верный UID
-                    </label>
-                </div>
-            }
-            else if (isHonkai)
-            {
-                <!-- Honkai Star Rail UID Input (9 цифр) -->
-                <div class="uid-section">
-                    <input type="text" class="uid-input" id="uidInput" placeholder="UID (9 цифр, например: 800123456)" pattern="[0-9]{9}" />
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="uidConfirm" />
-                        Я указал верный UID
-                    </label>
-                </div>
-            }
-            else
-            {
-                <!-- PUBG Mobile UID Input (5-12 цифр) -->
-                <div class="uid-section">
-                    <input type="text" class="uid-input" id="uidInput" placeholder="Player ID (5-12 цифр, например: 567535724)" pattern="[0-9]{5,12}" />
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="uidConfirm" />
-                        Я указал верный ID
-                    </label>
-                </div>
-            }
-
             <!-- Tabs -->
             <div class="game-tabs">
                 @if (isFortnite)
@@ -1733,22 +1652,18 @@
                     </div>
                 </div>
 
-                @if (isFortnite)
-                {
-                    <!-- Fortnite specific badges -->
-                    <div class="payment-delivery" style="border-top: none; padding-top: 0;">
-                        <div style="display: flex; gap: 1rem; justify-content: center;">
-                            <div style="text-align: center;">
-                                <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #22c55e;"></i>
-                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Безопасная покупка</div>
-                            </div>
-                            <div style="text-align: center;">
-                                <i class="bi bi-cart-check" style="font-size: 1.5rem; color: #667eea;"></i>
-                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">100K+ продаж</div>
-                            </div>
+                <div class="payment-delivery" style="border-top: none; padding-top: 0;">
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <div style="text-align: center;">
+                            <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #22c55e;"></i>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Безопасная покупка</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <i class="bi bi-cart-check" style="font-size: 1.5rem; color: #667eea;"></i>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">100K+ продаж</div>
                         </div>
                     </div>
-                }
+                </div>
             </div>
         </aside>
     </div>
@@ -1764,17 +1679,10 @@
         <div class="purchase-modal-body">
             <div class="purchase-modal-left">
                 <div class="purchase-modal-image" id="modalImage">
-                    @if (!string.IsNullOrEmpty(gameInfo.ImageUrl))
-                    {
-                        <img src="@gameInfo.ImageUrl" alt="@gameName" />
-                    }
-                    else
-                    {
-                        <span class="modal-placeholder">@gameInfo.Icon</span>
-                    }
+                    <span class="modal-placeholder">@gameInfo.Icon</span>
                 </div>
                 <div class="purchase-modal-product-name" id="modalProductName">@gameName</div>
-                <div class="purchase-modal-product-desc" id="modalProductDesc">1800 UC</div>
+                <div class="purchase-modal-product-desc" id="modalProductDesc">Выберите товар</div>
                 <div class="purchase-modal-price-row">
                     Цена: <span style="color: #ef4444;" id="modalPrice">2 077 ₽</span>
                     <span class="old-price" id="modalOldPrice">3 461 ₽</span>
@@ -1829,9 +1737,10 @@
 
 @section Scripts {
 <script>
-    let selectedPrice = 2077;
-    let selectedOldPrice = 3461;
-    let selectedAmount = '1800 UC';
+    let selectedPrice = 0;
+    let selectedOldPrice = 0;
+    let selectedAmount = '';
+    let selectedImageUrl = '';
 
     function selectProduct(item, amount, totalUC, price, oldPrice) {
         // Remove selected from all items
@@ -1841,13 +1750,17 @@
         // Add selected to clicked item
         item.classList.add('selected');
 
+        // Capture product image from card
+        const cardImg = item.querySelector('.currency-card-image img');
+        selectedImageUrl = cardImg ? cardImg.src : '';
+
         // Update payment sidebar
         selectedPrice = price;
         selectedOldPrice = oldPrice;
         selectedAmount = totalUC;
 
         const discount = oldPrice - price;
-        const discountPercent = Math.round((discount / oldPrice) * 100);
+        const discountPercent = oldPrice > 0 ? Math.round((discount / oldPrice) * 100) : 0;
 
         document.getElementById('selectedAmount').textContent = totalUC;
         document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
@@ -1883,6 +1796,10 @@
 
     // Purchase Modal
     function openPurchaseModal() {
+        if (selectedPrice <= 0) {
+            alert('Пожалуйста, выберите товар');
+            return;
+        }
         document.getElementById('modalProductDesc').textContent = selectedAmount;
         document.getElementById('modalPrice').textContent = selectedPrice.toLocaleString('ru-RU') + ' ₽';
         if (selectedOldPrice > selectedPrice) {
@@ -1890,6 +1807,11 @@
             document.getElementById('modalOldPrice').style.display = '';
         } else {
             document.getElementById('modalOldPrice').style.display = 'none';
+        }
+        // Update modal image to product image
+        const modalImg = document.getElementById('modalImage');
+        if (selectedImageUrl) {
+            modalImg.innerHTML = '<img src="' + selectedImageUrl + '" alt="Product" />';
         }
         document.getElementById('purchaseOverlay').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -1965,18 +1887,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const firstItem = document.querySelector('.product-item');
         if (firstItem) {
-            // Find the 1800 UC item and select it, otherwise select first
-            const items = document.querySelectorAll('.product-item');
-            let found = false;
-            items.forEach(item => {
-                if (item.querySelector('.product-caption-name')?.textContent.includes('1800')) {
-                    item.click();
-                    found = true;
-                }
-            });
-            if (!found && firstItem) {
-                firstItem.click();
-            }
+            firstItem.click();
         }
     });
 

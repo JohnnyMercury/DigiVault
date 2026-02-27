@@ -1729,11 +1729,59 @@
                 </div>
             </div>
             <div class="purchase-modal-right">
-                <div>
-                    <div class="modal-label">@(isFortnite ? "Ваш Email:" : "Ваш Player ID:")</div>
-                    <input type="text" class="modal-input" id="modalInput" placeholder="@(isFortnite ? "example@email.com" : "Введите ID")" />
-                    <div class="modal-hint">@(isFortnite ? "На этот адрес будет выполнена доставка" : "Введите ваш игровой ID для доставки")</div>
-                </div>
+                @if (isFortnite)
+                {
+                    <div>
+                        <div class="modal-label">Ваш Email:</div>
+                        <input type="email" class="modal-input" id="modalInput" placeholder="Email от Epic Games" />
+                        <div class="modal-hint">На этот адрес будет выполнена доставка V-Bucks</div>
+                    </div>
+                }
+                else if (isMobileLegends)
+                {
+                    <div>
+                        <div class="modal-label">User ID:</div>
+                        <input type="text" class="modal-input" id="modalInput" placeholder="9-15 цифр, например: 1030612204" pattern="[0-9]{9,15}" />
+                        <div class="modal-hint">Ваш игровой User ID из Mobile Legends</div>
+                    </div>
+                    <div>
+                        <div class="modal-label">Zone ID:</div>
+                        <input type="text" class="modal-input" id="modalZoneInput" placeholder="4-5 цифр, например: 13124" pattern="[0-9]{4,5}" />
+                        <div class="modal-hint">Zone ID можно найти в профиле рядом с User ID</div>
+                    </div>
+                }
+                else if (isRoblox)
+                {
+                    <div>
+                        <div class="modal-label">Ваш Email:</div>
+                        <input type="email" class="modal-input" id="modalInput" placeholder="example@email.com" />
+                        <div class="modal-hint">На этот адрес будет отправлен код</div>
+                    </div>
+                }
+                else if (isGenshin)
+                {
+                    <div>
+                        <div class="modal-label">Ваш UID:</div>
+                        <input type="text" class="modal-input" id="modalInput" placeholder="9-10 цифр, например: 700123456" pattern="[0-9]{9,10}" />
+                        <div class="modal-hint">UID можно найти в правом нижнем углу экрана в игре</div>
+                    </div>
+                }
+                else if (isHonkai)
+                {
+                    <div>
+                        <div class="modal-label">Ваш UID:</div>
+                        <input type="text" class="modal-input" id="modalInput" placeholder="9 цифр, например: 800123456" pattern="[0-9]{9}" />
+                        <div class="modal-hint">UID отображается в профиле игрока</div>
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <div class="modal-label">Ваш Player ID:</div>
+                        <input type="text" class="modal-input" id="modalInput" placeholder="5-12 цифр, например: 567535724" pattern="[0-9]{5,12}" />
+                        <div class="modal-hint">Player ID можно найти в профиле игры</div>
+                    </div>
+                }
 
                 <div class="modal-info-banner">
                     <i class="bi bi-info-circle" style="color: #667eea; margin-right: 0.3rem;"></i>

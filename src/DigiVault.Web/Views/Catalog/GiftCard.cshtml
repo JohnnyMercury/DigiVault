@@ -653,13 +653,10 @@
                                         @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
                                         {
                                             <span class="product-caption-discount">-@product.Discount%</span>
+                                            <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
                                         }
                                     </div>
                                     <div class="product-caption-name">@displayName</div>
-                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
-                                    {
-                                        <div class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</div>
-                                    }
                                 </div>
                             </div>
                         }

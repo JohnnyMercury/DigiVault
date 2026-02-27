@@ -494,19 +494,9 @@
         object-fit: cover;
     }
 
-    /* Green amount badge - top left */
+    /* Green amount badge - HIDDEN for game currency pages */
     .currency-card-badge {
-        position: absolute;
-        top: 0.5rem;
-        left: 0.5rem;
-        background: #22c55e;
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        z-index: 10;
-        white-space: nowrap;
+        display: none;
     }
 
     .currency-card-placeholder {
@@ -530,6 +520,23 @@
     .product-caption-name {
         font-size: 0.75rem;
         color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+
+    .product-caption-discount {
+        font-size: 0.65rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-weight: 600;
+        margin: 0 0.25rem;
+    }
+
+    .product-caption-old-price {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
         font-weight: 400;
     }
 
@@ -1119,7 +1126,14 @@
                                     </div>
                                 </div>
                                 <div class="product-caption">
-                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@discount%</span>
+                                            <span class="product-caption-old-price">@oldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
                                     <div class="product-caption-name">@displayName</div>
                                 </div>
                             </div>
@@ -1139,7 +1153,14 @@
                                     </div>
                                 </div>
                                 <div class="product-caption">
-                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@item.Discount%</span>
+                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
                                     <div class="product-caption-name">@item.TotalUC</div>
                                 </div>
                             </div>
@@ -1169,7 +1190,14 @@
                                     </div>
                                 </div>
                                 <div class="product-caption">
-                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@item.Discount%</span>
+                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
                                     <div class="product-caption-name">@item.TotalUC</div>
                                 </div>
                             </div>
@@ -1198,7 +1226,14 @@
                                     </div>
                                 </div>
                                 <div class="product-caption">
-                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@item.Discount%</span>
+                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
                                     <div class="product-caption-name">@item.TotalUC</div>
                                 </div>
                             </div>
@@ -1223,7 +1258,14 @@
                                     </div>
                                 </div>
                                 <div class="product-caption">
-                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-price">
+                                        @item.Price.ToString("N0") ₽
+                                        @if (item.Discount > 0)
+                                        {
+                                            <span class="product-caption-discount">-@item.Discount%</span>
+                                            <span class="product-caption-old-price">@item.OldPrice.ToString("N0") ₽</span>
+                                        }
+                                    </div>
                                     <div class="product-caption-name">@item.TotalUC</div>
                                 </div>
                             </div>
@@ -1249,7 +1291,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">349 ₽</div>
+                                <div class="product-caption-price">349 ₽ <span class="product-caption-discount">-30%</span> <span class="product-caption-old-price">499 ₽</span></div>
                                 <div class="product-caption-name">Благословение полой луны</div>
                             </div>
                         </div>
@@ -1262,7 +1304,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">899 ₽</div>
+                                <div class="product-caption-price">899 ₽ <span class="product-caption-discount">-25%</span> <span class="product-caption-old-price">1 199 ₽</span></div>
                                 <div class="product-caption-name">Gnostic Hymn</div>
                             </div>
                         </div>
@@ -1275,7 +1317,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">1 799 ₽</div>
+                                <div class="product-caption-price">1 799 ₽ <span class="product-caption-discount">-22%</span> <span class="product-caption-old-price">2 299 ₽</span></div>
                                 <div class="product-caption-name">Gnostic Chorus</div>
                             </div>
                         </div>
@@ -1291,7 +1333,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">449 ₽</div>
+                                <div class="product-caption-price">449 ₽ <span class="product-caption-discount">-25%</span> <span class="product-caption-old-price">599 ₽</span></div>
                                 <div class="product-caption-name">Twilight Pass</div>
                             </div>
                         </div>
@@ -1304,7 +1346,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">549 ₽</div>
+                                <div class="product-caption-price">549 ₽ <span class="product-caption-discount">-27%</span> <span class="product-caption-old-price">749 ₽</span></div>
                                 <div class="product-caption-name">Starlight Member</div>
                             </div>
                         </div>
@@ -1317,7 +1359,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">999 ₽</div>
+                                <div class="product-caption-price">999 ₽ <span class="product-caption-discount">-23%</span> <span class="product-caption-old-price">1 299 ₽</span></div>
                                 <div class="product-caption-name">Starlight Plus</div>
                             </div>
                         </div>
@@ -1333,7 +1375,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">599 ₽</div>
+                                <div class="product-caption-price">599 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">999 ₽</span></div>
                                 <div class="product-caption-name">Royale Pass</div>
                             </div>
                         </div>
@@ -1346,7 +1388,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">1 199 ₽</div>
+                                <div class="product-caption-price">1 199 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">1 999 ₽</span></div>
                                 <div class="product-caption-name">Royale Pass Plus</div>
                             </div>
                         </div>
@@ -1370,7 +1412,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">199 ₽</div>
+                                <div class="product-caption-price">199 ₽ <span class="product-caption-discount">-33%</span> <span class="product-caption-old-price">299 ₽</span></div>
                                 <div class="product-caption-name">Weekly Diamond Pass</div>
                             </div>
                         </div>
@@ -1393,7 +1435,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">299 ₽</div>
+                                <div class="product-caption-price">299 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">499 ₽</span></div>
                                 <div class="product-caption-name">Prime 1 месяц</div>
                             </div>
                         </div>
@@ -1406,7 +1448,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">799 ₽</div>
+                                <div class="product-caption-price">799 ₽ <span class="product-caption-discount">-38%</span> <span class="product-caption-old-price">1 299 ₽</span></div>
                                 <div class="product-caption-name">Prime 3 месяца</div>
                             </div>
                         </div>
@@ -1419,7 +1461,7 @@
                                 </div>
                             </div>
                             <div class="product-caption">
-                                <div class="product-caption-price">1 499 ₽</div>
+                                <div class="product-caption-price">1 499 ₽ <span class="product-caption-discount">-40%</span> <span class="product-caption-old-price">2 499 ₽</span></div>
                                 <div class="product-caption-name">Prime 6 месяцев</div>
                             </div>
                         </div>

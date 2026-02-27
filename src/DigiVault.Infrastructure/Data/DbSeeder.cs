@@ -47,13 +47,13 @@ public static class DbSeeder
         if (!await context.GiftCards.AnyAsync())
         {
             context.GiftCards.AddRange(
-                new GiftCard { Name = "PlayStation Store", Slug = "psn", Description = "PSN карты и PS Plus", Icon = "🎮", Gradient = "linear-gradient(135deg, #003791, #0070d1)", Category = GiftCardCategory.Gaming, SortOrder = 1 },
-                new GiftCard { Name = "Xbox", Slug = "xbox", Description = "Game Pass и подарочные карты", Icon = "🎮", Gradient = "linear-gradient(135deg, #107c10, #1db954)", Category = GiftCardCategory.Gaming, SortOrder = 3 },
-                new GiftCard { Name = "Nintendo eShop", Slug = "nintendo", Description = "Карты для Nintendo Switch", Icon = "🕹️", Gradient = "linear-gradient(135deg, #e60012, #c80010)", Category = GiftCardCategory.Gaming, SortOrder = 4 },
-                new GiftCard { Name = "Netflix", Slug = "netflix", Description = "Подарочные карты Netflix", Icon = "🎬", Gradient = "linear-gradient(135deg, #8b0000, #e50914)", Category = GiftCardCategory.Streaming, SortOrder = 1 },
-                new GiftCard { Name = "Spotify", Slug = "spotify", Description = "Premium подписка", Icon = "🎵", Gradient = "linear-gradient(135deg, #121212, #1db954)", Category = GiftCardCategory.Streaming, SortOrder = 2 },
-                new GiftCard { Name = "Apple / iTunes", Slug = "apple", Description = "App Store и Apple Music", Icon = "🍎", Gradient = "linear-gradient(135deg, #fb5b89, #d636ba)", Category = GiftCardCategory.Streaming, SortOrder = 3 },
-                new GiftCard { Name = "YouTube Premium", Slug = "youtube", Description = "Без рекламы + YouTube Music", Icon = "▶️", Gradient = "linear-gradient(135deg, #282828, #ff0000)", Category = GiftCardCategory.Streaming, SortOrder = 4 }
+                new GiftCard { Name = "PlayStation Store", Slug = "psn", Description = "PSN карты и PS Plus", Icon = "🎮", ImageUrl = "/images/products/psn.svg", Gradient = "linear-gradient(135deg, #003791, #0070d1)", Category = GiftCardCategory.Gaming, SortOrder = 1 },
+                new GiftCard { Name = "Xbox", Slug = "xbox", Description = "Game Pass и подарочные карты", Icon = "🎮", ImageUrl = "/images/products/xbox.svg", Gradient = "linear-gradient(135deg, #107c10, #1db954)", Category = GiftCardCategory.Gaming, SortOrder = 3 },
+                new GiftCard { Name = "Nintendo eShop", Slug = "nintendo", Description = "Карты для Nintendo Switch", Icon = "🕹️", ImageUrl = "/images/products/nintendo.svg", Gradient = "linear-gradient(135deg, #e60012, #c80010)", Category = GiftCardCategory.Gaming, SortOrder = 4 },
+                new GiftCard { Name = "Netflix", Slug = "netflix", Description = "Подарочные карты Netflix", Icon = "🎬", ImageUrl = "/images/products/netflix.svg", Gradient = "linear-gradient(135deg, #8b0000, #e50914)", Category = GiftCardCategory.Streaming, SortOrder = 1 },
+                new GiftCard { Name = "Spotify", Slug = "spotify", Description = "Premium подписка", Icon = "🎵", ImageUrl = "/images/products/spotify.svg", Gradient = "linear-gradient(135deg, #121212, #1db954)", Category = GiftCardCategory.Streaming, SortOrder = 2 },
+                new GiftCard { Name = "Apple / iTunes", Slug = "apple", Description = "App Store и Apple Music", Icon = "🍎", ImageUrl = "/images/products/apple.svg", Gradient = "linear-gradient(135deg, #fb5b89, #d636ba)", Category = GiftCardCategory.Streaming, SortOrder = 3 },
+                new GiftCard { Name = "YouTube Premium", Slug = "youtube", Description = "Без рекламы + YouTube Music", Icon = "▶️", ImageUrl = "/images/products/youtube.svg", Gradient = "linear-gradient(135deg, #282828, #ff0000)", Category = GiftCardCategory.Streaming, SortOrder = 4 }
             );
             await context.SaveChangesAsync();
         }

@@ -1,6 +1,5 @@
 using DigiVault.Infrastructure.Data;
 using DigiVault.Web.Models;
-using DigiVault.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
@@ -20,13 +19,19 @@ public class HomeController : Controller
     {
         var featuredProducts = await _context.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
-            .OrderByDescending(p => p.OldPrice.HasValue)
+            .OrderByDescending(p => p.IsFeatured)
             .ThenByDescending(p => p.CreatedAt)
             .Take(8)
             .ToListAsync();
 
-        ViewBag.FeaturedProducts = featuredProducts.Select(ProductViewModel.FromEntity).ToList();
-        return View();
+        var model = new HomeViewModel
+        {
+            FeaturedProducts = featuredProducts,
+            TotalProducts = await _context.Products.CountAsync(p => p.IsActive),
+            TotalUsers = await _context.Users.CountAsync()
+        };
+
+        return View(model);
     }
 
     public IActionResult Privacy()

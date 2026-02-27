@@ -1,5 +1,8 @@
 using DigiVault.Core.Entities;
+using DigiVault.Core.Interfaces;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Infrastructure.Services;
+using DigiVault.Web.Services.Payment;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +42,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-// Add session support for cart
+// Add session support
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -49,9 +52,34 @@ builder.Services.AddSession(options =>
 });
 
 // Register application services
-builder.Services.AddScoped<DigiVault.Web.Services.ICartService, DigiVault.Web.Services.CartService>();
 builder.Services.AddScoped<DigiVault.Web.Services.IOrderService, DigiVault.Web.Services.OrderService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IGameService, GameService>();
+
+// Payment infrastructure
+builder.Services.AddScoped<IPaymentProvider, TestPaymentProvider>();
+// TODO: Add real providers here:
+// builder.Services.AddScoped<IPaymentProvider, YooKassaProvider>();
+// builder.Services.AddScoped<IPaymentProvider, StripeProvider>();
+builder.Services.AddScoped<IPaymentProviderFactory, PaymentProviderFactory>();
 builder.Services.AddScoped<DigiVault.Web.Services.IPaymentService, DigiVault.Web.Services.PaymentService>();
+
+// Email & Verification
+builder.Services.AddScoped<DigiVault.Web.Services.IEmailService, DigiVault.Web.Services.EmailService>();
+builder.Services.AddScoped<DigiVault.Web.Services.IEmailVerificationService, DigiVault.Web.Services.EmailVerificationService>();
+
+// Balance
+builder.Services.AddScoped<DigiVault.Web.Services.IBalanceService, DigiVault.Web.Services.BalanceService>();
+
+// Database & Backup admin services
+builder.Services.AddScoped<DigiVault.Web.Services.IDatabaseService, DigiVault.Web.Services.DatabaseService>();
+builder.Services.AddScoped<DigiVault.Web.Services.IBackupService, DigiVault.Web.Services.BackupService>();
+
+// MinIO storage (conditional)
+if (builder.Configuration.GetValue<bool>("Storage:UseMinIO", false))
+{
+    builder.Services.AddScoped<IFileService, DigiVault.Web.Services.MinioStorageService>();
+}
 
 var app = builder.Build();
 
@@ -63,6 +91,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// MinIO proxy middleware (before static files)
+if (app.Configuration.GetValue<bool>("Storage:UseMinIO", false))
+{
+    app.UseMiddleware<DigiVault.Web.Middleware.MinioProxyMiddleware>();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -76,10 +111,29 @@ app.MapControllerRoute(
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
+    name: "catalog-game",
+    pattern: "Catalog/Game/{slug}",
+    defaults: new { controller = "Catalog", action = "Game" });
+
+app.MapControllerRoute(
+    name: "catalog-giftcard",
+    pattern: "Catalog/GiftCard/{slug}",
+    defaults: new { controller = "Catalog", action = "GiftCard" });
+
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed database
+// Apply migrations and seed database
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
+    // Seed games data (only if no games exist)
+    var gameService = scope.ServiceProvider.GetRequiredService<IGameService>();
+    await gameService.SeedDefaultGamesAsync();
+}
 await DbSeeder.SeedAsync(app.Services);
 
 app.Run();

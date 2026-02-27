@@ -1,4 +1,4 @@
-@model Product
+@model DigiVault.Web.ViewModels.ProductCreateViewModel
 @{
     ViewData["Title"] = "Create Product";
 }
@@ -7,7 +7,7 @@
     <div class="col-lg-8">
         <div class="card bg-dark border-secondary">
             <div class="card-body">
-                <form asp-action="Create" method="post">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-8 mb-3">
                             <label class="form-label">Product Name</label>
@@ -44,8 +44,15 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Image URL</label>
+                        <label class="form-label">Image</label>
+                        <input asp-for="ImageFile" type="file" class="form-control bg-dark border-secondary text-white" accept="image/*" />
+                        <small class="text-muted">Upload an image (JPG, PNG, GIF, WebP)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Or Image URL</label>
                         <input asp-for="ImageUrl" class="form-control bg-dark border-secondary text-white" placeholder="/images/products/..." />
+                        <small class="text-muted">If no file uploaded, this URL will be used</small>
                     </div>
 
                     <div class="mb-3">
@@ -53,9 +60,19 @@
                         <textarea asp-for="Metadata" class="form-control bg-dark border-secondary text-white font-monospace" rows="2" placeholder='{"key": "value"}'></textarea>
                     </div>
 
-                    <div class="form-check mb-4">
-                        <input asp-for="IsActive" class="form-check-input" checked />
-                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" checked />
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="IsFeatured" class="form-check-input" />
+                                <label asp-for="IsFeatured" class="form-check-label">Featured</label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">

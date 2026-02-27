@@ -1,0 +1,167 @@
+@model List<DigiVault.Core.Entities.PaymentTransaction>
+@{
+    ViewData["Title"] = "Транзакции";
+    var statuses = Enum.GetValues<DigiVault.Core.Enums.PaymentStatus>();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-credit-card me-2"></i>Платежные транзакции
+    </h1>
+</div>
+
+<!-- Статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success bg-opacity-10 border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-cash-stack fs-1 text-success"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Всего получено</h6>
+                        <h3 class="mb-0">@ViewBag.TotalAmount.ToString("N0") ₽</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary bg-opacity-10 border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-calendar-check fs-1 text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Сегодня</h6>
+                        <h3 class="mb-0">@ViewBag.TodayAmount.ToString("N0") ₽</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning bg-opacity-10 border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-hourglass-split fs-1 text-warning"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="text-muted mb-1">Ожидают</h6>
+                        <h3 class="mb-0">@ViewBag.PendingCount</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Поиск</label>
+                <input type="text" name="search" class="form-control" placeholder="ID или email" value="@ViewBag.Search">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select">
+                    <option value="">Все</option>
+                    @foreach (var s in statuses)
+                    {
+                        <option value="@s" selected="@(ViewBag.Status == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">С даты</label>
+                <input type="date" name="from" class="form-control" value="@(ViewBag.From?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">По дату</label>
+                <input type="date" name="to" class="form-control" value="@(ViewBag.To?.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Найти
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Сброс</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Таблица -->
+<div class="card">
+    <div class="card-header">
+        <span class="text-muted">Найдено: @ViewBag.Total</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Сумма</th>
+                    <th>Провайдер</th>
+                    <th>Метод</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tx in Model)
+                {
+                    var statusClass = tx.Status switch
+                    {
+                        DigiVault.Core.Enums.PaymentStatus.Completed => "success",
+                        DigiVault.Core.Enums.PaymentStatus.Pending => "warning",
+                        DigiVault.Core.Enums.PaymentStatus.Processing => "info",
+                        DigiVault.Core.Enums.PaymentStatus.Failed => "danger",
+                        DigiVault.Core.Enums.PaymentStatus.Cancelled => "secondary",
+                        _ => "secondary"
+                    };
+                    <tr>
+                        <td>
+                            <code class="small">@tx.TransactionId[..Math.Min(15, tx.TransactionId.Length)]...</code>
+                        </td>
+                        <td>
+                            <a href="/Admin/Users/Details/@tx.UserId">@tx.User?.Email</a>
+                        </td>
+                        <td><strong>@tx.Amount.ToString("N0") @tx.Currency</strong></td>
+                        <td>@tx.ProviderName</td>
+                        <td>@tx.Method</td>
+                        <td><span class="badge bg-@statusClass">@tx.Status</span></td>
+                        <td>@tx.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            <a href="@Url.Action("Details", new { id = tx.Id })" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination pagination-sm mb-0 justify-content-center">
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == ViewBag.Page ? "active" : "")">
+                            <a class="page-link" href="?page=@i&search=@ViewBag.Search&status=@ViewBag.Status&from=@ViewBag.From?.ToString("yyyy-MM-dd")&to=@ViewBag.To?.ToString("yyyy-MM-dd")">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

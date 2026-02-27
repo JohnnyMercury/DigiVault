@@ -2,40 +2,42 @@ version: '3.8'
 
 services:
   web:
-    image: ghcr.io/${GITHUB_REPOSITORY:-digivault}/digivault:${IMAGE_TAG:-latest}
-    ports:
-      - "8081:8080"
+    image: digivault:latest
+    build:
+      context: .
+      dockerfile: src/DigiVault.Web/Dockerfile
+    container_name: digivault-web
+    network_mode: "host"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=db;Database=digivault;Username=postgres;Password=${DB_PASSWORD}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - digivault-network
-
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=digivault
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - ASPNETCORE_URLS=http://+:8082
+      - ConnectionStrings__DefaultConnection=Host=localhost;Database=digivault;Username=postgres;Password=Cyb0rg@Games2025_Secure434;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=50;
+      - Storage__UseMinIO=true
+      - MinIO__Endpoint=localhost:9000
+      - MinIO__AccessKey=minioadmin
+      - MinIO__SecretKey=Cyb0rg@MinIO2025_Secure!
+      - MinIO__BucketName=digivault-images
+      - MinIO__UseSSL=false
+      - MinIO__PublicUrl=https://dv.cyborg-games.com:9000
+      - MinIO__UseRelativeUrls=true
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d digivault"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - digivault-uploads:/app/wwwroot/images/uploads
+      - digivault-backups:/app/backups
     restart: unless-stopped
-    networks:
-      - digivault-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
-  postgres_data:
-
-networks:
-  digivault-network:
-    driver: bridge
+  digivault-uploads:
+    driver: local
+  digivault-backups:
+    driver: local

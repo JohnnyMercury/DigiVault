@@ -1,0 +1,86 @@
+@model DigiVault.Core.Entities.PaymentProviderConfig
+@{
+    ViewData["Title"] = "Новый провайдер";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Назад
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title">
+                    <i class="bi bi-plus-circle me-2"></i>Новый платёжный провайдер
+                </h5>
+            </div>
+            <div class="p-3">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Системное имя</label>
+                            <input asp-for="Name" class="form-control" placeholder="paymentlnk" />
+                            <div class="form-text">Уникальный идентификатор (латиница)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Отображаемое имя</label>
+                            <input asp-for="DisplayName" class="form-control" placeholder="PaymentLnk" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label">API Key</label>
+                            <input asp-for="ApiKey" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Secret Key</label>
+                            <input asp-for="SecretKey" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <label class="form-label">Merchant ID</label>
+                            <input asp-for="MerchantId" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Приоритет</label>
+                            <input asp-for="Priority" type="number" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Комиссия %</label>
+                            <input asp-for="Commission" type="number" step="0.1" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-auto">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsEnabled" class="form-check-input" />
+                                <label class="form-check-label" asp-for="IsEnabled">Активен</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsTestMode" class="form-check-input" checked />
+                                <label class="form-check-label" asp-for="IsTestMode">Тестовый режим</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Создать
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

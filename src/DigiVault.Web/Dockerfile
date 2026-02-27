@@ -21,4 +21,11 @@ RUN dotnet publish "DigiVault.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# Create directories for uploads with proper permissions
+RUN mkdir -p /app/wwwroot/images/uploads && \
+    mkdir -p /app/wwwroot/images/backups && \
+    chmod -R 777 /app/wwwroot/images/uploads && \
+    chmod -R 777 /app/wwwroot/images/backups
+
 ENTRYPOINT ["dotnet", "DigiVault.Web.dll"]

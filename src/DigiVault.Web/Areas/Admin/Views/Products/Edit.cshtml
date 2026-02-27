@@ -1,4 +1,4 @@
-@model Product
+@model DigiVault.Web.ViewModels.ProductEditViewModel
 @{
     ViewData["Title"] = "Edit Product";
 }
@@ -7,9 +7,9 @@
     <div class="col-lg-8">
         <div class="card bg-dark border-secondary">
             <div class="card-body">
-                <form asp-action="Edit" method="post">
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
                     <input type="hidden" asp-for="Id" />
-                    <input type="hidden" asp-for="CreatedAt" />
+                    <input type="hidden" asp-for="CurrentImageUrl" />
 
                     <div class="row">
                         <div class="col-md-8 mb-3">
@@ -46,9 +46,27 @@
                         </div>
                     </div>
 
+                    <!-- Current Image Preview -->
+                    @if (!string.IsNullOrEmpty(Model.CurrentImageUrl))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Current Image</label>
+                            <div class="p-3 bg-secondary rounded">
+                                <img src="@Model.CurrentImageUrl" alt="Current image" style="max-height: 150px; max-width: 100%;" class="rounded" />
+                            </div>
+                        </div>
+                    }
+
                     <div class="mb-3">
-                        <label class="form-label">Image URL</label>
-                        <input asp-for="ImageUrl" class="form-control bg-dark border-secondary text-white" />
+                        <label class="form-label">Upload New Image</label>
+                        <input asp-for="ImageFile" type="file" class="form-control bg-dark border-secondary text-white" accept="image/*" />
+                        <small class="text-muted">Upload a new image to replace the current one (JPG, PNG, GIF, WebP)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Or Image URL</label>
+                        <input asp-for="ImageUrl" class="form-control bg-dark border-secondary text-white" value="@Model.CurrentImageUrl" />
+                        <small class="text-muted">Change URL manually (only used if no file uploaded)</small>
                     </div>
 
                     <div class="mb-3">
@@ -56,9 +74,19 @@
                         <textarea asp-for="Metadata" class="form-control bg-dark border-secondary text-white font-monospace" rows="2"></textarea>
                     </div>
 
-                    <div class="form-check mb-4">
-                        <input asp-for="IsActive" class="form-check-input" />
-                        <label asp-for="IsActive" class="form-check-label">Active</label>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" />
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="IsFeatured" class="form-check-input" />
+                                <label asp-for="IsFeatured" class="form-check-label">Featured</label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">

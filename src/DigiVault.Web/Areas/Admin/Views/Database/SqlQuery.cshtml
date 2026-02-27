@@ -1,0 +1,75 @@
+@{
+    ViewData["Title"] = "SQL запрос";
+    var query = ViewBag.Query as string ?? "";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Назад к таблицам
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title">
+                    <i class="bi bi-terminal me-2"></i>Выполнить SQL запрос
+                </h5>
+                <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">Только SELECT</span>
+            </div>
+            <div class="p-3">
+                <form asp-action="SqlQuery" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <textarea name="query" class="form-control" rows="8" placeholder="SELECT * FROM &quot;AspNetUsers&quot; LIMIT 10"
+                                  style="font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.9rem;">@query</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-play-fill me-1"></i>Выполнить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title">
+                    <i class="bi bi-bookmark me-2"></i>Шаблоны
+                </h5>
+            </div>
+            <div class="p-3">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT * FROM &quot;AspNetUsers&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 20')">
+                        <i class="bi bi-people me-2"></i>Пользователи
+                    </button>
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT * FROM &quot;Orders&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 20')">
+                        <i class="bi bi-bag me-2"></i>Заказы
+                    </button>
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT * FROM &quot;PaymentTransactions&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 20')">
+                        <i class="bi bi-credit-card me-2"></i>Платежи
+                    </button>
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT * FROM &quot;WalletTransactions&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 20')">
+                        <i class="bi bi-wallet2 me-2"></i>Кошелёк
+                    </button>
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT &quot;Status&quot;, COUNT(*) as cnt, SUM(&quot;TotalAmount&quot;) as total FROM &quot;Orders&quot; GROUP BY &quot;Status&quot;')">
+                        <i class="bi bi-bar-chart me-2"></i>Статистика заказов
+                    </button>
+                    <button class="btn btn-outline-light btn-sm text-start" onclick="setQuery('SELECT table_name, (SELECT COUNT(*) FROM information_schema.columns c WHERE c.table_name = t.table_name AND c.table_schema = \'public\') as cols FROM information_schema.tables t WHERE table_schema = \'public\' AND table_type = \'BASE TABLE\' ORDER BY table_name')">
+                        <i class="bi bi-table me-2"></i>Все таблицы
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function setQuery(q) {
+    document.querySelector('textarea[name="query"]').value = q;
+}
+</script>
+}

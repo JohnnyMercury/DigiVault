@@ -1,113 +1,667 @@
-@model CatalogViewModel
+@model DigiVault.Web.Models.CatalogViewModel
+@using DigiVault.Core.Entities
 @{
-    ViewData["Title"] = Model.Category.HasValue ? Model.Category.Value switch
-    {
-        ProductCategory.VpnSubscription => "VPN Subscriptions",
-        ProductCategory.GameCurrency => "Game Currency",
-        ProductCategory.GiftCard => "Gift Cards",
-        _ => "Catalog"
-    } : "Catalog";
+    ViewData["Title"] = "Каталог";
+
+    // Получаем игры из контроллера (из базы данных)
+    var games = ViewBag.Games as List<Game> ?? new List<Game>();
 }
 
-<div class="container py-4">
-    <div class="row">
-        <!-- Filters Sidebar -->
-        <div class="col-lg-3 mb-4">
-            <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary">
-                    <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h5>
-                </div>
-                <div class="card-body">
-                    <form asp-controller="Catalog" asp-action="Index" method="get">
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select name="category" class="form-select bg-dark border-secondary text-white">
-                                <option value="">All Categories</option>
-                                <option value="1" selected="@(Model.Category == ProductCategory.VpnSubscription)">VPN Subscriptions</option>
-                                <option value="2" selected="@(Model.Category == ProductCategory.GameCurrency)">Game Currency</option>
-                                <option value="3" selected="@(Model.Category == ProductCategory.GiftCard)">Gift Cards</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Sort By</label>
-                            <select name="sort" class="form-select bg-dark border-secondary text-white">
-                                <option value="" selected="@(Model.SortBy == null)">Featured</option>
-                                <option value="price_asc" selected="@(Model.SortBy == "price_asc")">Price: Low to High</option>
-                                <option value="price_desc" selected="@(Model.SortBy == "price_desc")">Price: High to Low</option>
-                                <option value="name" selected="@(Model.SortBy == "name")">Name</option>
-                                <option value="newest" selected="@(Model.SortBy == "newest")">Newest</option>
-                            </select>
-                        </div>
-                        <input type="hidden" name="search" value="@Model.SearchQuery" />
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-search me-1"></i>Apply Filters
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+<style>
+    /* Hero Section */
+    .catalog-hero {
+        padding: 3rem 0 2rem;
+        text-align: center;
+    }
 
-        <!-- Products Grid -->
-        <div class="col-lg-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">@ViewData["Title"]</h2>
-                    <small class="text-muted">@Model.TotalProducts products found</small>
-                </div>
-                @if (!string.IsNullOrEmpty(Model.SearchQuery))
-                {
-                    <div>
-                        <span class="badge bg-secondary">
-                            Search: @Model.SearchQuery
-                            <a asp-controller="Catalog" asp-action="Index" asp-route-category="@Model.Category" class="text-white ms-1">
-                                <i class="bi bi-x"></i>
-                            </a>
-                        </span>
-                    </div>
-                }
-            </div>
+    .catalog-hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
 
-            @if (Model.Products.Any())
+    .catalog-hero-title span {
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .catalog-hero-subtitle {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.1rem;
+    }
+
+    /* Game Tiles Grid */
+    .games-section {
+        padding: 2rem 0;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: #667eea;
+    }
+
+    .game-tiles-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .game-tiles-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @@media (max-width: 768px) {
+        .game-tiles-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @@media (max-width: 576px) {
+        .game-tiles-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .game-tile {
+        text-decoration: none;
+        color: white;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .game-tile:hover {
+        transform: translateY(-5px);
+        color: white;
+    }
+
+    .game-tile-image-wrapper {
+        aspect-ratio: 1;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 0.6rem;
+    }
+
+    .game-tile-icon {
+        font-size: 3rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .game-tile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .game-tile:hover .game-tile-image {
+        transform: scale(1.05);
+    }
+
+    .game-tile-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Category Cards */
+    .category-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    @@media (max-width: 992px) {
+        .category-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 576px) {
+        .category-cards { grid-template-columns: 1fr; }
+    }
+
+    .category-card {
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        text-decoration: none;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border-color: rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .category-card-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+
+    .category-card-icon.vpn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .category-card-icon.game { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #0a0a0f; }
+    .category-card-icon.gift { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+    .category-card-content h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .category-card-content p {
+        color: rgba(255, 255, 255, 0.5);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .category-card-arrow {
+        margin-left: auto;
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover .category-card-arrow {
+        color: white;
+        transform: translateX(5px);
+    }
+
+    /* Filters */
+    .filters-bar {
+        background: rgba(30, 30, 47, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        padding: 0.5rem 1.25rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+        background: var(--primary-gradient);
+        border-color: transparent;
+        color: white;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .search-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.5rem 1rem;
+        color: white;
+        min-width: 250px;
+    }
+
+    .search-input:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        color: white;
+        outline: none;
+    }
+
+    .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Products Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .products-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @@media (max-width: 768px) {
+        .products-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 576px) {
+        .products-grid { grid-template-columns: 1fr; }
+    }
+
+    .product-card {
+        background: #1a1a2e;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .product-card-image {
+        height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        position: relative;
+    }
+
+    .product-card-image.vpn { background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%); color: #667eea; }
+    .product-card-image.game { background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%); color: #4facfe; }
+    .product-card-image.gift { background: linear-gradient(135deg, rgba(240, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%); color: #f093fb; }
+
+    .product-card-badges {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .badge-hit {
+        background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .badge-sale {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .product-card-body {
+        padding: 1.25rem;
+    }
+
+    .product-card-category {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+
+    .product-card-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: white;
+        line-height: 1.3;
+    }
+
+    .product-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 0.75rem;
+    }
+
+    .product-card-price {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .price-old {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .price-current {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #4facfe;
+    }
+
+    .btn-buy {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-buy:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-buy:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .stock-info {
+        font-size: 0.75rem;
+        color: #22c55e;
+    }
+
+    .stock-info.out {
+        color: #ef4444;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: rgba(255, 255, 255, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Results count */
+    .results-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .results-count {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .results-count strong {
+        color: white;
+    }
+</style>
+
+<!-- Hero -->
+<section class="catalog-hero">
+    <div class="container container-wide">
+        <h1 class="catalog-hero-title">
+            @if (!string.IsNullOrEmpty(Model.SearchQuery))
             {
-                <div class="row g-4">
-                    @foreach (var product in Model.Products)
-                    {
-                        <div class="col-6 col-md-4">
-                            <partial name="_ProductCard" model="product" />
-                        </div>
-                    }
-                </div>
-
-                @if (Model.TotalPages > 1)
-                {
-                    <nav class="mt-4">
-                        <ul class="pagination justify-content-center">
-                            @for (int i = 1; i <= Model.TotalPages; i++)
-                            {
-                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link bg-dark border-secondary"
-                                       asp-controller="Catalog" asp-action="Index"
-                                       asp-route-category="@Model.Category"
-                                       asp-route-search="@Model.SearchQuery"
-                                       asp-route-sort="@Model.SortBy"
-                                       asp-route-page="@i">@i</a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
-                }
+                <span>Результаты поиска: "@Model.SearchQuery"</span>
+            }
+            else if (Model.SelectedCategory.HasValue)
+            {
+                var catName = Model.SelectedCategory switch {
+                    DigiVault.Core.Enums.ProductCategory.VpnSubscription => "VPN подписки",
+                    DigiVault.Core.Enums.ProductCategory.GameCurrency => "Игровая валюта",
+                    _ => "Подарочные карты"
+                };
+                <span>@catName</span>
             }
             else
             {
-                <div class="text-center py-5">
-                    <i class="bi bi-search display-1 text-muted"></i>
-                    <h4 class="mt-3">No products found</h4>
-                    <p class="text-muted">Try adjusting your filters or search query</p>
-                    <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary">
-                        Clear Filters
+                <text>Каталог <span>товаров</span></text>
+            }
+        </h1>
+        <p class="catalog-hero-subtitle">Выберите нужную игру или сервис</p>
+    </div>
+</section>
+
+@if (string.IsNullOrEmpty(Model.SearchQuery) && !Model.SelectedCategory.HasValue)
+{
+    <!-- Game Tiles -->
+    <section class="games-section">
+        <div class="container container-wide">
+            <h2 class="section-title">
+                <i class="bi bi-controller"></i>
+                Популярные игры и сервисы
+            </h2>
+            <div class="game-tiles-grid">
+                @foreach (var game in games)
+                {
+                    var hasImage = !string.IsNullOrEmpty(game.ImageUrl);
+
+                    <a href="/Catalog/Game/@game.Slug" class="game-tile">
+                        <div class="game-tile-image-wrapper" style="background: @game.Gradient;">
+                            @if (hasImage)
+                            {
+                                <img src="@game.ImageUrl" alt="@game.Name" class="game-tile-image" />
+                            }
+                            else
+                            {
+                                <span class="game-tile-icon">@game.Icon</span>
+                            }
+                        </div>
+                        <span class="game-tile-name">@game.Name</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Category Cards -->
+    <section class="pb-4">
+        <div class="container container-wide">
+            <h2 class="section-title">
+                <i class="bi bi-grid-3x3-gap"></i>
+                Категории
+            </h2>
+            <div class="category-cards">
+                <a href="/Catalog/Vpn" class="category-card">
+                    <div class="category-card-icon vpn">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="category-card-content">
+                        <h3>VPN подписки</h3>
+                        <p>NordVPN, ExpressVPN и другие</p>
+                    </div>
+                    <i class="bi bi-chevron-right category-card-arrow"></i>
+                </a>
+                <a href="/Catalog/GameCurrency" class="category-card">
+                    <div class="category-card-icon game">
+                        <i class="bi bi-coin"></i>
+                    </div>
+                    <div class="category-card-content">
+                        <h3>Игровая валюта</h3>
+                        <p>V-Bucks, Robux, UC и другие</p>
+                    </div>
+                    <i class="bi bi-chevron-right category-card-arrow"></i>
+                </a>
+                <a href="/Catalog/GiftCards" class="category-card">
+                    <div class="category-card-icon gift">
+                        <i class="bi bi-gift-fill"></i>
+                    </div>
+                    <div class="category-card-content">
+                        <h3>Подарочные карты</h3>
+                        <p>PSN, Xbox, Netflix, Spotify</p>
+                    </div>
+                    <i class="bi bi-chevron-right category-card-arrow"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Products Section -->
+<section class="pb-5">
+    <div class="container container-wide">
+        @if (!string.IsNullOrEmpty(Model.SearchQuery) || Model.SelectedCategory.HasValue)
+        {
+            <!-- Filters Bar -->
+            <div class="filters-bar">
+                <div class="filter-pills">
+                    <a href="/Catalog" class="filter-pill @(Model.SelectedCategory == null && string.IsNullOrEmpty(Model.SearchQuery) ? "active" : "")">
+                        <i class="bi bi-grid-3x3-gap me-1"></i> Все
+                    </a>
+                    <a href="/Catalog/Vpn" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.VpnSubscription ? "active" : "")">
+                        <i class="bi bi-shield-check me-1"></i> VPN
+                    </a>
+                    <a href="/Catalog/GameCurrency" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.GameCurrency ? "active" : "")">
+                        <i class="bi bi-controller me-1"></i> Игры
+                    </a>
+                    <a href="/Catalog/GiftCards" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.GiftCard ? "active" : "")">
+                        <i class="bi bi-gift me-1"></i> Подарки
                     </a>
                 </div>
+                <form action="/Catalog" method="get" class="search-form">
+                    @if (Model.SelectedCategory.HasValue)
+                    {
+                        <input type="hidden" name="category" value="@Model.SelectedCategory" />
+                    }
+                    <input type="search" name="search" value="@Model.SearchQuery" class="search-input" placeholder="Поиск..." />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Info -->
+            @if (Model.Products?.Any() == true)
+            {
+                <div class="results-info">
+                    <span class="results-count">
+                        Найдено: <strong>@Model.Products.Count()</strong> товаров
+                    </span>
+                </div>
             }
-        </div>
+        }
+        else
+        {
+            <h2 class="section-title">
+                <i class="bi bi-fire"></i>
+                Все товары
+            </h2>
+        }
+
+        <!-- Products Grid -->
+        @if (Model.Products?.Any() == true)
+        {
+            <div class="products-grid">
+                @foreach (var product in Model.Products)
+                {
+                    var categoryClass = product.Category switch {
+                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "vpn",
+                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "game",
+                        _ => "gift"
+                    };
+                    var categoryIcon = product.Category switch {
+                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "bi-shield-lock",
+                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "bi-controller",
+                        _ => "bi-gift"
+                    };
+                    var categoryName = product.Category switch {
+                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "VPN",
+                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "Игровая валюта",
+                        _ => "Подарочная карта"
+                    };
+
+                    <div class="product-card">
+                        <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
+                            <div class="product-card-image @categoryClass">
+                                <i class="bi @categoryIcon"></i>
+                                <div class="product-card-badges">
+                                    @if (product.IsFeatured)
+                                    {
+                                        <span class="badge-hit">ХИТ</span>
+                                    }
+                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                    {
+                                        var discount = (int)Math.Round((1 - product.Price / product.OldPrice.Value) * 100);
+                                        <span class="badge-sale">-@discount%</span>
+                                    }
+                                </div>
+                            </div>
+                        </a>
+                        <div class="product-card-body">
+                            <div class="product-card-category">@categoryName</div>
+                            <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
+                                <h4 class="product-card-title">@product.Name</h4>
+                            </a>
+                            <div class="product-card-footer">
+                                <div class="product-card-price">
+                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                    {
+                                        <span class="price-old">@product.OldPrice.Value.ToString("N0") ₽</span>
+                                    }
+                                    <span class="price-current">@product.Price.ToString("N0") ₽</span>
+                                    <span class="stock-info @(product.StockQuantity > 0 ? "" : "out")">
+                                        @(product.StockQuantity > 0 ? $"В наличии: {product.StockQuantity}" : "Нет в наличии")
+                                    </span>
+                                </div>
+                                <a href="/Catalog/Product/@product.Id" class="btn-buy">
+                                    <i class="bi bi-bag"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-search d-block"></i>
+                <h3>Товары не найдены</h3>
+                <p>Попробуйте изменить параметры поиска</p>
+                <a href="/Catalog" class="btn btn-primary mt-3">
+                    <i class="bi bi-arrow-left me-2"></i>Показать все товары
+                </a>
+            </div>
+        }
     </div>
-</div>
+</section>

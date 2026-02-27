@@ -1,0 +1,178 @@
+@model DigiVault.Core.Entities.PaymentTransaction
+@{
+    ViewData["Title"] = $"Транзакция {Model.TransactionId}";
+    var statuses = Enum.GetValues<DigiVault.Core.Enums.PaymentStatus>();
+    var statusClass = Model.Status switch
+    {
+        DigiVault.Core.Enums.PaymentStatus.Completed => "success",
+        DigiVault.Core.Enums.PaymentStatus.Pending => "warning",
+        DigiVault.Core.Enums.PaymentStatus.Processing => "info",
+        DigiVault.Core.Enums.PaymentStatus.Failed => "danger",
+        DigiVault.Core.Enums.PaymentStatus.Cancelled => "secondary",
+        _ => "secondary"
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm mb-2">
+            <i class="bi bi-arrow-left"></i> Назад
+        </a>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-credit-card me-2"></i>Транзакция
+        </h1>
+    </div>
+    <span class="badge bg-@statusClass fs-6">@Model.Status</span>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Информация о платеже</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="200">ID транзакции</th>
+                        <td><code>@Model.TransactionId</code></td>
+                    </tr>
+                    <tr>
+                        <th>ID у провайдера</th>
+                        <td><code>@(Model.ProviderTransactionId ?? "-")</code></td>
+                    </tr>
+                    <tr>
+                        <th>Провайдер</th>
+                        <td>@Model.ProviderName</td>
+                    </tr>
+                    <tr>
+                        <th>Метод оплаты</th>
+                        <td>@Model.Method</td>
+                    </tr>
+                    <tr>
+                        <th>Сумма</th>
+                        <td><strong class="fs-4">@Model.Amount.ToString("N2") @Model.Currency</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Описание</th>
+                        <td>@(Model.Description ?? "-")</td>
+                    </tr>
+                    <tr>
+                        <th>IP клиента</th>
+                        <td><code>@(Model.ClientIp ?? "-")</code></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Даты</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="200">Создана</th>
+                        <td>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    </tr>
+                    <tr>
+                        <th>Обновлена</th>
+                        <td>@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    </tr>
+                    <tr>
+                        <th>Завершена</th>
+                        <td>@(Model.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "-")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ProviderData))
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Данные провайдера</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0 bg-dark text-light p-3 rounded"><code>@Model.ProviderData</code></pre>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="card border-danger mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Ошибка</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">@Model.ErrorMessage</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Пользователь -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Пользователь</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.User != null)
+                {
+                    <p class="mb-1"><strong>@Model.User.Email</strong></p>
+                    <p class="text-muted small mb-2">ID: @Model.UserId</p>
+                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-person"></i> Профиль
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Заказ -->
+        @if (Model.OrderId.HasValue)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Связанный заказ</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">Заказ #@Model.OrderId</p>
+                    <a href="/Admin/Orders/Details/@Model.OrderId" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-bag"></i> Открыть заказ
+                    </a>
+                </div>
+            </div>
+        }
+
+        <!-- Действия -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Действия</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-action="UpdateStatus" asp-route-id="@Model.Id">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Изменить статус</label>
+                        <select name="status" class="form-select">
+                            @foreach (var s in statuses)
+                            {
+                                <option value="@s" selected="@(Model.Status == s)">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100" onclick="return confirm('Изменить статус транзакции?')">
+                        <i class="bi bi-pencil"></i> Обновить статус
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

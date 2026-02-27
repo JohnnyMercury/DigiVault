@@ -1,0 +1,376 @@
+@{
+    ViewData["Title"] = "VPN подписки";
+}
+
+<style>
+    .page-hero {
+        padding: 3rem 0 2rem;
+        text-align: center;
+    }
+
+    .page-hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-hero-title span {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .page-hero-subtitle {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.1rem;
+    }
+
+    .breadcrumb-nav {
+        padding: 1rem 0;
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: #667eea;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.3);
+        margin: 0 0.5rem;
+    }
+
+    .breadcrumb-nav .current {
+        color: white;
+    }
+
+    /* VPN Cards Grid */
+    .vpn-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        padding: 2rem 0;
+    }
+
+    @@media (max-width: 992px) {
+        .vpn-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 576px) {
+        .vpn-grid { grid-template-columns: 1fr; }
+    }
+
+    .vpn-card {
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .vpn-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .vpn-card-header {
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    }
+
+    .vpn-card-logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .vpn-card-logo img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .vpn-card-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .vpn-card-tagline {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+    }
+
+    .vpn-card-body {
+        padding: 1.5rem 2rem 2rem;
+    }
+
+    .vpn-features {
+        margin-bottom: 1.5rem;
+    }
+
+    .vpn-feature {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+
+    .vpn-feature i {
+        color: #22c55e;
+    }
+
+    .vpn-plans {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .vpn-plan {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .vpn-plan:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .vpn-plan-duration {
+        font-weight: 600;
+    }
+
+    .vpn-plan-price {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .vpn-plan-price-old {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .vpn-plan-price-current {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4facfe;
+    }
+
+    /* Info Banner */
+    .info-banner {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .info-banner-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .info-banner-content h4 {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-banner-content p {
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+</style>
+
+<!-- Breadcrumb -->
+<section class="breadcrumb-nav">
+    <div class="container">
+        <a href="/">Главная</a>
+        <span>/</span>
+        <a href="/Catalog">Каталог</a>
+        <span>/</span>
+        <span class="current">VPN подписки</span>
+    </div>
+</section>
+
+<!-- Hero -->
+<section class="page-hero">
+    <div class="container">
+        <h1 class="page-hero-title">
+            <span>VPN подписки</span>
+        </h1>
+        <p class="page-hero-subtitle">Защитите свою приватность в интернете</p>
+    </div>
+</section>
+
+<!-- Info Banner -->
+<section class="pb-2">
+    <div class="container">
+        <div class="info-banner">
+            <div class="info-banner-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="info-banner-content">
+                <h4>Официальные подписки</h4>
+                <p>Мгновенная активация. Ключи доставляются автоматически после оплаты.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- VPN Grid -->
+<section class="pb-5">
+    <div class="container">
+        <div class="vpn-grid">
+            <!-- NordVPN -->
+            <div class="vpn-card">
+                <div class="vpn-card-header">
+                    <div class="vpn-card-logo">
+                        <img src="/images/products/nordvpn.svg" alt="NordVPN" />
+                    </div>
+                    <h3 class="vpn-card-name">NordVPN</h3>
+                    <p class="vpn-card-tagline">5500+ серверов в 60 странах</p>
+                </div>
+                <div class="vpn-card-body">
+                    <div class="vpn-features">
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Защита до 6 устройств</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Блокировка рекламы</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Высокая скорость</span>
+                        </div>
+                    </div>
+                    <div class="vpn-plans">
+                        <a href="/Catalog?search=NordVPN+1+Month" class="vpn-plan">
+                            <span class="vpn-plan-duration">1 месяц</span>
+                            <div class="vpn-plan-price">
+                                <span class="vpn-plan-price-current">13 ₽</span>
+                            </div>
+                        </a>
+                        <a href="/Catalog?search=NordVPN+1+Year" class="vpn-plan">
+                            <span class="vpn-plan-duration">1 год</span>
+                            <div class="vpn-plan-price">
+                                <span class="vpn-plan-price-old">156 ₽</span>
+                                <span class="vpn-plan-price-current">60 ₽</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ExpressVPN -->
+            <div class="vpn-card">
+                <div class="vpn-card-header">
+                    <div class="vpn-card-logo">
+                        <img src="/images/products/expressvpn.svg" alt="ExpressVPN" />
+                    </div>
+                    <h3 class="vpn-card-name">ExpressVPN</h3>
+                    <p class="vpn-card-tagline">Серверы в 94 странах</p>
+                </div>
+                <div class="vpn-card-body">
+                    <div class="vpn-features">
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Защита до 8 устройств</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Ультра-быстрый протокол</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Поддержка стриминга</span>
+                        </div>
+                    </div>
+                    <div class="vpn-plans">
+                        <a href="/Catalog?search=ExpressVPN+1+Month" class="vpn-plan">
+                            <span class="vpn-plan-duration">1 месяц</span>
+                            <div class="vpn-plan-price">
+                                <span class="vpn-plan-price-current">15 ₽</span>
+                            </div>
+                        </a>
+                        <a href="/Catalog?search=ExpressVPN+1+Year" class="vpn-plan">
+                            <span class="vpn-plan-duration">1 год</span>
+                            <div class="vpn-plan-price">
+                                <span class="vpn-plan-price-old">180 ₽</span>
+                                <span class="vpn-plan-price-current">90 ₽</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Surfshark -->
+            <div class="vpn-card">
+                <div class="vpn-card-header">
+                    <div class="vpn-card-logo">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: #1dcdfe;"></i>
+                    </div>
+                    <h3 class="vpn-card-name">Surfshark</h3>
+                    <p class="vpn-card-tagline">Безлимитные устройства</p>
+                </div>
+                <div class="vpn-card-body">
+                    <div class="vpn-features">
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Неограниченное кол-во устройств</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>CleanWeb (блокировка рекламы)</span>
+                        </div>
+                        <div class="vpn-feature">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Camouflage Mode</span>
+                        </div>
+                    </div>
+                    <div class="vpn-plans">
+                        <a href="/Catalog?search=Surfshark" class="vpn-plan">
+                            <span class="vpn-plan-duration">1 месяц</span>
+                            <div class="vpn-plan-price">
+                                <span class="vpn-plan-price-current">Скоро</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

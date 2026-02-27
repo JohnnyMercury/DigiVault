@@ -3,129 +3,558 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="ru" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - DigiVault</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover: rgba(255, 255, 255, 0.06);
+            --glow-primary: rgba(102, 126, 234, 0.4);
+            --glow-secondary: rgba(240, 147, 251, 0.4);
+        }
+
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animated {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animated::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(240, 147, 251, 0.05) 0%, transparent 70%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+
+        @@keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, 2%) rotate(1deg); }
+            50% { transform: translate(0, 4%) rotate(0deg); }
+            75% { transform: translate(-2%, 2%) rotate(-1deg); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            top: 5%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            top: 50%;
+            right: 5%;
+            animation-delay: -7s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            bottom: 10%;
+            left: 25%;
+            animation-delay: -14s;
+        }
+
+        @@keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(20px, 30px) scale(1.02); }
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(10, 10, 15, 0.7) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 15, 0.95) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: transform 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar-brand i {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7) !important;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover::before {
+            width: 80%;
+        }
+
+        .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        /* Buttons with ripple effect */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .5s, opacity 1s;
+        }
+
+        .btn:active::after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+            background: var(--primary-gradient);
+        }
+
+        .btn-outline-light {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 0.65rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-accent {
+            background: var(--accent-gradient);
+            border: none;
+            padding: 0.7rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #0a0a0f;
+            transition: all 0.3s ease;
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(79, 172, 254, 0.5);
+            color: #0a0a0f;
+        }
+
+        /* Cards with glow effect */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 21px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 0%, rgba(102, 126, 234, 0) 50%, rgba(102, 126, 234, 0.3) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-card:hover::before {
+            opacity: 1;
+        }
+
+        .glass-card:hover {
+            background: var(--card-hover);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(10, 10, 15, 0.9);
+            border-top: 1px solid var(--card-border);
+            padding: 3rem 0 2rem;
+            margin-top: 5rem;
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
+        }
+
+        footer a {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        footer a:hover {
+            color: #fff;
+            padding-left: 5px;
+        }
+
+        /* Social icons */
+        footer .bi {
+            transition: all 0.3s ease;
+        }
+
+        footer a:hover .bi-telegram { color: #0088cc; transform: scale(1.2); }
+        footer a:hover .bi-discord { color: #5865F2; transform: scale(1.2); }
+        footer a:hover .bi-envelope { color: #667eea; transform: scale(1.2); }
+
+        /* Dropdown */
+        .dropdown-menu {
+            background: rgba(20, 20, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: dropdownFade 0.2s ease;
+        }
+
+        @@keyframes dropdownFade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            color: #fff;
+            transform: translateX(5px);
+        }
+
+        .dropdown-divider {
+            border-color: var(--card-border);
+        }
+
+        /* Badge */
+        .badge-glow {
+            background: var(--secondary-gradient);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        @@keyframes badgePulse {
+            0%, 100% { box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(240, 147, 251, 0.5); }
+        }
+
+        /* Balance indicator */
+        .balance-badge {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #4facfe;
+            transition: all 0.3s ease;
+        }
+
+        .balance-badge:hover {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%);
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+        }
+
+        /* Page transitions */
+        main {
+            animation: pageIn 0.5s ease-out;
+        }
+
+        @@keyframes pageIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Staggered animations for children */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: animateIn 0.6s ease forwards;
+        }
+
+        .animate-in:nth-child(1) { animation-delay: 0.1s; }
+        .animate-in:nth-child(2) { animation-delay: 0.2s; }
+        .animate-in:nth-child(3) { animation-delay: 0.3s; }
+        .animate-in:nth-child(4) { animation-delay: 0.4s; }
+        .animate-in:nth-child(5) { animation-delay: 0.5s; }
+        .animate-in:nth-child(6) { animation-delay: 0.6s; }
+
+        @@keyframes animateIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating animation */
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @@keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Pulse glow */
+        .pulse-glow {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @@keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+        }
+
+        /* Gradient text animation */
+        .gradient-text-animated {
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #667eea);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientMove 5s ease infinite;
+        }
+
+        @@keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #764ba2, #667eea);
+        }
+
+        /* Container - override Bootstrap - wider but not full screen */
+        .container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl, .container-wide {
+            max-width: 1600px !important;
+            width: 100% !important;
+            padding-left: 30px !important;
+            padding-right: 30px !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+
+
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+<body>
+    <!-- Animated background -->
+    <div class="bg-animated">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="/">
+            <a class="navbar-brand" href="/">
                 <i class="bi bi-shield-lock-fill me-2"></i>DigiVault
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Catalog" asp-action="Index">
-                            <i class="bi bi-grid me-1"></i>Catalog
-                        </a>
+                        <a class="nav-link" href="/Catalog"><i class="bi bi-grid-3x3-gap-fill"></i>Каталог</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            Categories
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-tag-fill"></i>Категории
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-dark">
-                            <li>
-                                <a class="dropdown-item" asp-controller="Catalog" asp-action="Vpn">
-                                    <i class="bi bi-shield-check me-2"></i>VPN Subscriptions
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-controller="Catalog" asp-action="GameCurrency">
-                                    <i class="bi bi-controller me-2"></i>Game Currency
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" asp-controller="Catalog" asp-action="GiftCards">
-                                    <i class="bi bi-gift me-2"></i>Gift Cards
-                                </a>
-                            </li>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/Catalog/Vpn"><i class="bi bi-shield-check me-2"></i>VPN подписки</a></li>
+                            <li><a class="dropdown-item" href="/Catalog/GameCurrency"><i class="bi bi-controller me-2"></i>Игровая валюта</a></li>
+                            <li><a class="dropdown-item" href="/Catalog/GiftCards"><i class="bi bi-gift me-2"></i>Подарочные карты</a></li>
                         </ul>
                     </li>
                 </ul>
-                <form class="d-flex me-3" asp-controller="Catalog" asp-action="Index" method="get">
-                    <div class="input-group">
-                        <input class="form-control form-control-sm bg-dark border-secondary text-white"
-                               type="search" name="search" placeholder="Search products..."
-                               value="@Context.Request.Query["search"]">
-                        <button class="btn btn-outline-primary btn-sm" type="submit">
-                            <i class="bi bi-search"></i>
-                        </button>
-                    </div>
-                </form>
-                <ul class="navbar-nav">
+
+                <ul class="navbar-nav align-items-center">
                     @if (SignInManager.IsSignedIn(User))
                     {
                         var user = await UserManager.GetUserAsync(User);
-                        <li class="nav-item">
-                            <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index">
-                                <i class="bi bi-cart3"></i>
-                                <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="display: none;">
-                                    0
-                                </span>
-                            </a>
+                        <li class="nav-item me-2">
+                            <span class="balance-badge">
+                                <i class="bi bi-wallet2 me-1"></i>@user?.Balance.ToString("N2") ₽
+                            </span>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-wallet2 me-1"></i>
-                                $<span id="user-balance">@user?.Balance.ToString("F2")</span>
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle fs-5"></i>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="Deposit">
-                                        <i class="bi bi-plus-circle me-2"></i>Deposit
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="Transactions">
-                                        <i class="bi bi-clock-history me-2"></i>Transactions
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle me-1"></i>@user?.Email
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="Profile">
-                                        <i class="bi bi-person me-2"></i>Profile
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="Orders">
-                                        <i class="bi bi-box me-2"></i>My Orders
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword">
-                                        <i class="bi bi-key me-2"></i>Change Password
-                                    </a>
-                                </li>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><span class="dropdown-item-text text-muted small">@user?.Email</span></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/Account/Dashboard"><i class="bi bi-speedometer2 me-2"></i>Личный кабинет</a></li>
+                                <li><a class="dropdown-item" href="/Account/Orders"><i class="bi bi-bag-check me-2"></i>Мои заказы</a></li>
+                                <li><a class="dropdown-item" href="/Account/Deposit"><i class="bi bi-plus-circle me-2"></i>Пополнить баланс</a></li>
                                 @if (User.IsInRole("Admin"))
                                 {
                                     <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-warning" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
-                                            <i class="bi bi-gear me-2"></i>Admin Panel
-                                        </a>
-                                    </li>
+                                    <li><a class="dropdown-item text-warning" href="/Admin/Dashboard"><i class="bi bi-gear me-2"></i>Админ-панель</a></li>
                                 }
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form asp-controller="Account" asp-action="Logout" method="post">
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="bi bi-box-arrow-right me-2"></i>Logout
-                                        </button>
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Выйти</button>
                                     </form>
                                 </li>
                             </ul>
@@ -134,14 +563,10 @@
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Account" asp-action="Login">
-                                <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                            </a>
+                            <a class="nav-link" href="/Account/Login"><i class="bi bi-box-arrow-in-right"></i>Войти</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="btn btn-primary btn-sm ms-2" asp-controller="Account" asp-action="Register">
-                                Register
-                            </a>
+                        <li class="nav-item ms-2">
+                            <a class="btn btn-primary" href="/Account/Register">Регистрация</a>
                         </li>
                     }
                 </ul>
@@ -149,68 +574,108 @@
         </div>
     </nav>
 
-    <main class="flex-grow-1">
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="container mt-3">
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="container mt-3">
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            </div>
-        }
+    <main>
         @RenderBody()
     </main>
 
-    <footer class="bg-dark border-top border-secondary py-4 mt-auto">
+    <footer>
         <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <h5 class="text-primary"><i class="bi bi-shield-lock-fill me-2"></i>DigiVault</h5>
-                    <p class="text-muted small">Your trusted source for digital goods. VPN subscriptions, game currencies, and gift cards - all in one place.</p>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5 class="mb-3 gradient-text-animated">
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                        DigiVault
+                    </h5>
+                    <p class="text-muted mb-3">Надёжная платформа для покупки цифровых товаров. Мгновенная доставка, безопасные платежи.</p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-telegram"></i></a>
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-discord"></i></a>
+                        <a href="#" class="text-muted fs-5"><i class="bi bi-envelope"></i></a>
+                    </div>
                 </div>
-                <div class="col-md-2 mb-3">
-                    <h6>Categories</h6>
-                    <ul class="list-unstyled small">
-                        <li><a href="/Catalog?category=1" class="text-muted text-decoration-none">VPN</a></li>
-                        <li><a href="/Catalog?category=2" class="text-muted text-decoration-none">Game Currency</a></li>
-                        <li><a href="/Catalog?category=3" class="text-muted text-decoration-none">Gift Cards</a></li>
+                <div class="col-lg-2 col-md-4">
+                    <h6 class="mb-3 text-white">Каталог</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="/Catalog/Vpn">VPN подписки</a></li>
+                        <li class="mb-2"><a href="/Catalog/GameCurrency">Игровая валюта</a></li>
+                        <li class="mb-2"><a href="/Catalog/GiftCards">Подарочные карты</a></li>
                     </ul>
                 </div>
-                <div class="col-md-2 mb-3">
-                    <h6>Account</h6>
-                    <ul class="list-unstyled small">
-                        <li><a asp-controller="Account" asp-action="Profile" class="text-muted text-decoration-none">Profile</a></li>
-                        <li><a asp-controller="Account" asp-action="Orders" class="text-muted text-decoration-none">Orders</a></li>
-                        <li><a asp-controller="Account" asp-action="Deposit" class="text-muted text-decoration-none">Deposit</a></li>
+                <div class="col-lg-2 col-md-4">
+                    <h6 class="mb-3 text-white">Информация</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">О нас</a></li>
+                        <li class="mb-2"><a href="#">Как это работает</a></li>
+                        <li class="mb-2"><a href="#">FAQ</a></li>
                     </ul>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <h6>Contact</h6>
-                    <ul class="list-unstyled small text-muted">
-                        <li><i class="bi bi-envelope me-2"></i>support@digivault.com</li>
-                        <li><i class="bi bi-telegram me-2"></i>@@digivault_support</li>
+                <div class="col-lg-2 col-md-4">
+                    <h6 class="mb-3 text-white">Поддержка</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Связаться с нами</a></li>
+                        <li class="mb-2"><a href="#">Политика возврата</a></li>
+                        <li class="mb-2"><a href="#">Условия использования</a></li>
                     </ul>
+                </div>
+                <div class="col-lg-2">
+                    <h6 class="mb-3 text-white">Оплата</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-dark border"><i class="bi bi-credit-card me-1"></i>Visa</span>
+                        <span class="badge bg-dark border"><i class="bi bi-credit-card me-1"></i>MC</span>
+                        <span class="badge bg-dark border"><i class="bi bi-currency-bitcoin me-1"></i>Crypto</span>
+                    </div>
                 </div>
             </div>
-            <hr class="border-secondary">
-            <div class="text-center text-muted small">
-                &copy; @DateTime.Now.Year DigiVault. All rights reserved.
+            <hr class="my-4" style="border-color: var(--card-border);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <p class="text-muted small mb-0">&copy; 2024 DigiVault. Все права защищены.</p>
+                <p class="text-muted small mb-0">Поддержка: @@digivault_support</p>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card, .stat-card, .data-card').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Apply container styles after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            var style = document.createElement('style');
+            style.textContent = '.container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl, .container-wide { max-width: 1600px !important; width: 100% !important; padding-left: 30px !important; padding-right: 30px !important; margin-left: auto !important; margin-right: auto !important; }';
+            document.head.appendChild(style);
+        });
+    </script>
 </body>
 </html>

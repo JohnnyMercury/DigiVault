@@ -1,0 +1,93 @@
+@using System.Data
+@{
+    ViewData["Title"] = "Результат запроса";
+    var query = ViewBag.Query as string ?? "";
+    var result = ViewBag.Result as DataTable;
+    var rowCount = (int)(ViewBag.RowCount ?? 0);
+}
+
+<div class="mb-4 d-flex gap-2">
+    <a asp-action="SqlQuery" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Новый запрос
+    </a>
+    <a asp-action="Index" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-table me-1"></i>Таблицы
+    </a>
+</div>
+
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title">
+            <i class="bi bi-code-slash me-2"></i>Запрос
+        </h5>
+        <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">@rowCount строк</span>
+    </div>
+    <div class="p-3">
+        <code style="color: #4facfe; font-size: 0.9rem; white-space: pre-wrap;">@query</code>
+    </div>
+</div>
+
+@if (result != null && result.Rows.Count > 0)
+{
+    <div class="data-card">
+        <div class="data-card-header">
+            <h5 class="data-card-title">
+                <i class="bi bi-table me-2"></i>Результат
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table" style="white-space: nowrap;">
+                <thead>
+                    <tr>
+                        @foreach (DataColumn col in result.Columns)
+                        {
+                            <th style="font-size: 0.75rem; padding: 0.6rem 0.8rem;">@col.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in result.Rows)
+                    {
+                        <tr>
+                            @foreach (DataColumn col in result.Columns)
+                            {
+                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; padding: 0.5rem 0.8rem; font-size: 0.85rem;" title="@row[col]">
+                                    @if (row[col] == DBNull.Value)
+                                    {
+                                        <span class="text-muted fst-italic">NULL</span>
+                                    }
+                                    else if (row[col] is bool b)
+                                    {
+                                        <span class="badge @(b ? "bg-success" : "bg-secondary")">@(b ? "true" : "false")</span>
+                                    }
+                                    else if (row[col] is DateTime dt)
+                                    {
+                                        @dt.ToString("dd.MM.yyyy HH:mm:ss")
+                                    }
+                                    else if (row[col] is decimal d)
+                                    {
+                                        @d.ToString("N2")
+                                    }
+                                    else
+                                    {
+                                        var val = row[col].ToString();
+                                        @(val?.Length > 150 ? val[..150] + "..." : val)
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="data-card">
+        <div class="empty-state">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">Запрос не вернул результатов</p>
+        </div>
+    </div>
+}

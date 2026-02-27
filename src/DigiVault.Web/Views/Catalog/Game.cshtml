@@ -1,0 +1,1664 @@
+@model List<DigiVault.Core.Entities.Product>
+@using DigiVault.Core.Entities
+@{
+    var gameName = ViewBag.GameName as string ?? "Игра";
+    var gameSlug = ViewBag.GameSlug as string ?? "";
+    ViewData["Title"] = $"{gameName} - Купить валюту";
+
+    // Получаем игру из базы данных (если есть)
+    var dbGame = ViewBag.Game as Game;
+    var sidebarGames = ViewBag.AllGames as List<Game> ?? new List<Game>();
+
+    // Если игра из базы - используем её данные, иначе fallback на hardcoded
+    var gameInfo = dbGame != null
+        ? new { Currency = dbGame.Currency, CurrencyShort = dbGame.CurrencyShort, Icon = dbGame.Icon, Color = dbGame.Color, Gradient = dbGame.Gradient, ImageUrl = dbGame.ImageUrl }
+        : gameSlug.ToLower() switch {
+            "fortnite" => new { Currency = "V-Bucks", CurrencyShort = "V-Bucks", Icon = "🎮", Color = "#2d5a87", Gradient = "linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)", ImageUrl = (string?)null },
+            "roblox" => new { Currency = "Robux", CurrencyShort = "Robux", Icon = "🎲", Color = "#e74c3c", Gradient = "linear-gradient(135deg, #c4281c 0%, #e74c3c 100%)", ImageUrl = (string?)null },
+            "pubg" => new { Currency = "Unknown Cash", CurrencyShort = "UC", Icon = "🔫", Color = "#e67e22", Gradient = "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)", ImageUrl = (string?)null },
+            "genshin" => new { Currency = "Genesis Crystals", CurrencyShort = "Crystals", Icon = "⚔️", Color = "#8b5cf6", Gradient = "linear-gradient(135deg, #5a3e7a 0%, #8b5cf6 100%)", ImageUrl = (string?)null },
+            "mobilelegends" => new { Currency = "Diamonds", CurrencyShort = "Diamonds", Icon = "💎", Color = "#3949ab", Gradient = "linear-gradient(135deg, #1a237e 0%, #3949ab 100%)", ImageUrl = (string?)null },
+            "honkai" => new { Currency = "Oneiric Shards", CurrencyShort = "Shards", Icon = "🌟", Color = "#6366f1", Gradient = "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)", ImageUrl = (string?)null },
+            _ => new { Currency = "Валюта", CurrencyShort = "Валюта", Icon = "🎮", Color = "#667eea", Gradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", ImageUrl = (string?)null }
+        };
+
+    // Check game types
+    var isMobileLegends = gameSlug.ToLower() == "mobilelegends";
+    var isGenshin = gameSlug.ToLower() == "genshin";
+    var isHonkai = gameSlug.ToLower() == "honkai";
+    var isRoblox = gameSlug.ToLower() == "roblox";
+    var isFortnite = gameSlug.ToLower() == "fortnite";
+
+    // Fortnite V-Bucks products (exactly like kupikod.com)
+    var fortniteProducts = new[] {
+        new { Amount = "200", Bonus = "", TotalUC = "200 V-Bucks", Price = 109, OldPrice = 109, Discount = 0 },
+        new { Amount = "300", Bonus = "", TotalUC = "300 V-Bucks", Price = 162, OldPrice = 162, Discount = 0 },
+        new { Amount = "500", Bonus = "", TotalUC = "500 V-Bucks", Price = 273, OldPrice = 273, Discount = 0 },
+        new { Amount = "800", Bonus = "", TotalUC = "800 V-Bucks", Price = 412, OldPrice = 412, Discount = 0 },
+        new { Amount = "1000", Bonus = "", TotalUC = "1 000 V-Bucks", Price = 559, OldPrice = 559, Discount = 0 },
+        new { Amount = "1200", Bonus = "", TotalUC = "1 200 V-Bucks", Price = 594, OldPrice = 594, Discount = 0 },
+        new { Amount = "1300", Bonus = "", TotalUC = "1 300 V-Bucks", Price = 644, OldPrice = 644, Discount = 0 },
+        new { Amount = "1500", Bonus = "", TotalUC = "1 500 V-Bucks", Price = 727, OldPrice = 727, Discount = 0 },
+        new { Amount = "1600", Bonus = "", TotalUC = "1 600 V-Bucks", Price = 780, OldPrice = 780, Discount = 0 },
+        new { Amount = "1800", Bonus = "", TotalUC = "1 800 V-Bucks", Price = 854, OldPrice = 854, Discount = 0 },
+        new { Amount = "1900", Bonus = "", TotalUC = "1 900 V-Bucks", Price = 897, OldPrice = 897, Discount = 0 },
+        new { Amount = "2000", Bonus = "", TotalUC = "2 000 V-Bucks", Price = 941, OldPrice = 941, Discount = 0 },
+        new { Amount = "2100", Bonus = "", TotalUC = "2 100 V-Bucks", Price = 965, OldPrice = 965, Discount = 0 },
+        new { Amount = "2400", Bonus = "", TotalUC = "2 400 V-Bucks", Price = 1097, OldPrice = 1097, Discount = 0 },
+        new { Amount = "2600", Bonus = "", TotalUC = "2 600 V-Bucks", Price = 1175, OldPrice = 1175, Discount = 0 },
+        new { Amount = "2800", Bonus = "", TotalUC = "2 800 V-Bucks", Price = 1444, OldPrice = 1444, Discount = 0 },
+        new { Amount = "3800", Bonus = "", TotalUC = "3 800 V-Bucks", Price = 1589, OldPrice = 1589, Discount = 0 },
+        new { Amount = "5000", Bonus = "", TotalUC = "5 000 V-Bucks", Price = 2264, OldPrice = 2264, Discount = 0 },
+        new { Amount = "5600", Bonus = "", TotalUC = "5 600 V-Bucks", Price = 2533, OldPrice = 2533, Discount = 0 },
+        new { Amount = "6000", Bonus = "", TotalUC = "6 000 V-Bucks", Price = 2729, OldPrice = 2729, Discount = 0 },
+        new { Amount = "7800", Bonus = "", TotalUC = "7 800 V-Bucks", Price = 3350, OldPrice = 3350, Discount = 0 },
+        new { Amount = "10000", Bonus = "", TotalUC = "10 000 V-Bucks", Price = 4139, OldPrice = 4139, Discount = 0 },
+        new { Amount = "13500", Bonus = "", TotalUC = "13 500 V-Bucks", Price = 5550, OldPrice = 5550, Discount = 0 }
+    };
+
+    // Roblox products (Robux)
+    var robloxProducts = new[] {
+        new { Amount = "100", Bonus = "", TotalUC = "100 Робуксов", Price = 267, OldPrice = 267, Discount = 0 },
+        new { Amount = "200", Bonus = "", TotalUC = "200 Робуксов", Price = 274, OldPrice = 274, Discount = 0 },
+        new { Amount = "400", Bonus = "", TotalUC = "400 Робуксов", Price = 489, OldPrice = 489, Discount = 0 },
+        new { Amount = "800", Bonus = "", TotalUC = "800 Робуксов", Price = 815, OldPrice = 815, Discount = 0 },
+        new { Amount = "1700", Bonus = "", TotalUC = "1700 Робуксов", Price = 1976, OldPrice = 1976, Discount = 0 },
+        new { Amount = "2000", Bonus = "", TotalUC = "2000 Робуксов", Price = 1985, OldPrice = 1985, Discount = 0 },
+        new { Amount = "2700", Bonus = "", TotalUC = "2700 Робуксов", Price = 2800, OldPrice = 2800, Discount = 0 },
+        new { Amount = "3600", Bonus = "", TotalUC = "3600 Робуксов", Price = 3890, OldPrice = 3890, Discount = 0 },
+        new { Amount = "4500", Bonus = "", TotalUC = "4500 Робуксов", Price = 4110, OldPrice = 4110, Discount = 0 },
+        new { Amount = "7500", Bonus = "", TotalUC = "7500 Робуксов", Price = 7354, OldPrice = 7354, Discount = 0 },
+        new { Amount = "10000", Bonus = "", TotalUC = "10000 Робуксов", Price = 8243, OldPrice = 8243, Discount = 0 }
+    };
+
+    // Roblox Gift Cards (Подарочные карты)
+    var robloxCards = new[] {
+        new { Amount = "200", Bonus = "", TotalUC = "200 робуксов, RU", Price = 269, OldPrice = 269, Discount = 0, Region = "RU" },
+        new { Amount = "300", Bonus = "", TotalUC = "300 робуксов, RU", Price = 407, OldPrice = 407, Discount = 0, Region = "RU" },
+        new { Amount = "300", Bonus = "", TotalUC = "300 робуксов, USA", Price = 287, OldPrice = 287, Discount = 0, Region = "USA" },
+        new { Amount = "400", Bonus = "", TotalUC = "400 робуксов, RU", Price = 531, OldPrice = 531, Discount = 0, Region = "RU" },
+        new { Amount = "400", Bonus = "", TotalUC = "400 робуксов, USA", Price = 415, OldPrice = 415, Discount = 0, Region = "USA" },
+        new { Amount = "450", Bonus = "", TotalUC = "450 робуксов, RU", Price = 572, OldPrice = 572, Discount = 0, Region = "RU" },
+        new { Amount = "500", Bonus = "", TotalUC = "500 робуксов, RU", Price = 663, OldPrice = 663, Discount = 0, Region = "RU" },
+        new { Amount = "500", Bonus = "", TotalUC = "500 робуксов, USA", Price = 500, OldPrice = 500, Discount = 0, Region = "USA" }
+    };
+
+    // Honkai Star Rail products (Oneiric Shards / Сущности Древних Снов)
+    var honkaiProducts = new[] {
+        new { Amount = "60", Bonus = "", TotalUC = "60 Сущностей", Price = 55, OldPrice = 88, Discount = 38 },
+        new { Amount = "300", Bonus = "+30", TotalUC = "330 Сущностей", Price = 277, OldPrice = 438, Discount = 37 },
+        new { Amount = "980", Bonus = "+110", TotalUC = "1090 Сущностей", Price = 831, OldPrice = 1318, Discount = 37 },
+        new { Amount = "1280", Bonus = "+140", TotalUC = "1420 Сущностей", Price = 1119, OldPrice = 1775, Discount = 37 },
+        new { Amount = "1980", Bonus = "+260", TotalUC = "2240 Сущностей", Price = 1737, OldPrice = 2755, Discount = 37 },
+        new { Amount = "3280", Bonus = "+600", TotalUC = "3880 Сущностей", Price = 2961, OldPrice = 4698, Discount = 37 },
+        new { Amount = "4260", Bonus = "+710", TotalUC = "4970 Сущностей", Price = 3654, OldPrice = 6766, Discount = 46 },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "8080 Сущностей", Price = 5355, OldPrice = 9914, Discount = 46 }
+    };
+
+    // Honkai All Packs (x2, x3, etc)
+    var honkaiPacks = new[] {
+        new { Amount = "9760", Bonus = "+2200", TotalUC = "11960 Сущностей", Price = 8298, OldPrice = 16761, Discount = 50, Multiplier = "" },
+        new { Amount = "All pack", Bonus = "", TotalUC = "All Pack", Price = 11034, OldPrice = 22290, Discount = 50, Multiplier = "" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "16160 Сущностей", Price = 11254, OldPrice = 16955, Discount = 34, Multiplier = "x2" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "24240 Сущностей", Price = 16650, OldPrice = 25433, Discount = 35, Multiplier = "x3" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "32320 Сущностей", Price = 22120, OldPrice = 30721, Discount = 28, Multiplier = "x4" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "40400 Сущностей", Price = 28309, OldPrice = 42387, Discount = 33, Multiplier = "x5" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "64640 Сущностей", Price = 44640, OldPrice = 90181, Discount = 50, Multiplier = "x8" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "80800 Сущностей", Price = 55364, OldPrice = 85805, Discount = 35, Multiplier = "x10" }
+    };
+
+    // Genshin Impact products (Genesis Crystals)
+    var genshinProducts = new[] {
+        new { Amount = "60", Bonus = "", TotalUC = "60 Кристаллов", Price = 53, OldPrice = 78, Discount = 32 },
+        new { Amount = "300", Bonus = "+30", TotalUC = "330 Кристаллов", Price = 269, OldPrice = 397, Discount = 32 },
+        new { Amount = "980", Bonus = "+110", TotalUC = "1090 Кристаллов", Price = 832, OldPrice = 1232, Discount = 32 },
+        new { Amount = "1980", Bonus = "+260", TotalUC = "2240 Кристаллов", Price = 1793, OldPrice = 2656, Discount = 32 },
+        new { Amount = "3280", Bonus = "+600", TotalUC = "3880 Кристаллов", Price = 2943, OldPrice = 4360, Discount = 33 },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "8080 Кристаллов", Price = 5497, OldPrice = 7184, Discount = 23 }
+    };
+
+    // Genshin All Packs (x2, x3, etc)
+    var genshinPacks = new[] {
+        new { Amount = "9760", Bonus = "+2200", TotalUC = "11960 Кристаллов", Price = 8565, OldPrice = 10232, Discount = 16, Multiplier = "" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "16160 Кристаллов", Price = 11069, OldPrice = 13223, Discount = 16, Multiplier = "x2" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "All Pack Genesis Crystals", Price = 11089, OldPrice = 13248, Discount = 16, Multiplier = "x2" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "24240 Кристаллов", Price = 16871, OldPrice = 20155, Discount = 16, Multiplier = "x3" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "32320 Кристаллов", Price = 21895, OldPrice = 26158, Discount = 16, Multiplier = "x4" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "40400 Кристаллов", Price = 27703, OldPrice = 33097, Discount = 16, Multiplier = "x5" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "64640 Кристаллов", Price = 43364, OldPrice = 53535, Discount = 19, Multiplier = "x8" },
+        new { Amount = "6480", Bonus = "+1600", TotalUC = "80800 Кристаллов", Price = 56303, OldPrice = 69508, Discount = 19, Multiplier = "x10" }
+    };
+
+    // Mobile Legends products
+    var mlProducts = new[] {
+        new { Amount = "32", Bonus = "+3", TotalUC = "35 алмазов", Price = 59, OldPrice = 90, Discount = 34 },
+        new { Amount = "50", Bonus = "+5", TotalUC = "55 алмазов", Price = 92, OldPrice = 102, Discount = 10 },
+        new { Amount = "150", Bonus = "+15", TotalUC = "165 алмазов", Price = 280, OldPrice = 311, Discount = 10 },
+        new { Amount = "250", Bonus = "+25", TotalUC = "275 алмазов", Price = 470, OldPrice = 723, Discount = 35 },
+        new { Amount = "500", Bonus = "+65", TotalUC = "565 алмазов", Price = 938, OldPrice = 1103, Discount = 15 },
+        new { Amount = "1000", Bonus = "+155", TotalUC = "1155 алмазов", Price = 1871, OldPrice = 2201, Discount = 15 },
+        new { Amount = "1500", Bonus = "+265", TotalUC = "1765 алмазов", Price = 2828, OldPrice = 3327, Discount = 15 },
+        new { Amount = "2500", Bonus = "+475", TotalUC = "2975 алмазов", Price = 4678, OldPrice = 5503, Discount = 15 }
+    };
+
+    // Default PUBG products
+    var pubgProducts = new[] {
+        new { Amount = "57", Bonus = "+3", TotalUC = "60 UC", Price = 73, OldPrice = 132, Discount = 45 },
+        new { Amount = "300", Bonus = "+25", TotalUC = "325 UC", Price = 376, OldPrice = 683, Discount = 45 },
+        new { Amount = "600", Bonus = "+60", TotalUC = "660 UC", Price = 741, OldPrice = 1140, Discount = 35 },
+        new { Amount = "985", Bonus = "", TotalUC = "985 UC", Price = 1276, OldPrice = 1963, Discount = 35 },
+        new { Amount = "1320", Bonus = "", TotalUC = "1320 UC", Price = 1669, OldPrice = 2781, Discount = 40 },
+        new { Amount = "1500", Bonus = "+300", TotalUC = "1800 UC", Price = 2077, OldPrice = 3461, Discount = 40 },
+        new { Amount = "2460", Bonus = "", TotalUC = "2460 UC", Price = 2961, OldPrice = 4934, Discount = 40 },
+        new { Amount = "3000", Bonus = "+850", TotalUC = "3850 UC", Price = 4129, OldPrice = 6881, Discount = 40 }
+    };
+
+    // Select products based on game - prefer database products if available
+    var hasDbProducts = dbGame?.Products != null && dbGame.Products.Any(p => p.IsActive);
+    var dbProducts = hasDbProducts
+        ? dbGame.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList()
+        : new List<GameProduct>();
+
+    // Fallback to demo products if no database products
+    var demoProducts = isFortnite ? fortniteProducts : (isRoblox ? robloxProducts : (isHonkai ? honkaiProducts : (isGenshin ? genshinProducts : (isMobileLegends ? mlProducts : pubgProducts))));
+
+    // Large packs
+    var demoPacks = isMobileLegends ? new[] {
+        new { Amount = "5000", Bonus = "+1000", TotalUC = "6000 алмазов", Price = 9404, OldPrice = 14467, Discount = 35 }
+    } : new[] {
+        new { Amount = "5650", Bonus = "", TotalUC = "5650 UC", Price = 6253, OldPrice = 9620, Discount = 35 },
+        new { Amount = "6000", Bonus = "+2100", TotalUC = "8100 UC", Price = 8347, OldPrice = 12841, Discount = 35 },
+        new { Amount = "11950", Bonus = "", TotalUC = "11950 UC", Price = 13790, OldPrice = 21215, Discount = 35 },
+        new { Amount = "15000", Bonus = "+1200", TotalUC = "16200 UC", Price = 17520, OldPrice = 26953, Discount = 35 },
+        new { Amount = "22000", Bonus = "+2300", TotalUC = "24300 UC", Price = 25428, OldPrice = 31785, Discount = 20 },
+        new { Amount = "30000", Bonus = "+2400", TotalUC = "32400 UC", Price = 35229, OldPrice = 44036, Discount = 20 },
+        new { Amount = "37000", Bonus = "+3500", TotalUC = "40500 UC", Price = 43048, OldPrice = 53810, Discount = 20 },
+        new { Amount = "81000", Bonus = "", TotalUC = "81000 UC", Price = 87109, OldPrice = 108886, Discount = 20 }
+    };
+}
+
+<style>
+    /* Inherit global container styles - no local override */
+
+    .game-page {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    /* Sidebar - wider to align with Каталог */
+    .game-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+    }
+
+    @@media (max-width: 1200px) {
+        .game-sidebar { display: none; }
+    }
+
+    /* Search box in sidebar */
+    .sidebar-search {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sidebar-search input {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+
+    .sidebar-search input:focus {
+        outline: none;
+    }
+
+    .sidebar-search input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .sidebar-search i {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 0.9rem;
+    }
+
+    .sidebar-game {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        margin-bottom: 0.25rem;
+        background: transparent;
+    }
+
+    .sidebar-game:hover, .sidebar-game.active {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .sidebar-game.active {
+        background: rgba(102, 126, 234, 0.15);
+    }
+
+    .sidebar-game-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .sidebar-game-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sidebar-game-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .sidebar-game-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-game-subtitle {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Main Content */
+    .game-main {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    /* UID Input */
+    .uid-section {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .uid-section:focus-within {
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.15);
+    }
+
+    .uid-input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.05rem;
+        padding: 0.5rem 0;
+        font-weight: 500;
+    }
+
+    .uid-input:focus {
+        outline: none;
+    }
+
+    .uid-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+        font-weight: 400;
+    }
+
+    .uid-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.9rem;
+        cursor: pointer;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .uid-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #22c55e;
+        cursor: pointer;
+    }
+
+    .uid-help-link {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        transition: color 0.2s;
+    }
+
+    .uid-help-link:hover {
+        color: #667eea;
+    }
+
+    .region-section {
+        position: relative;
+    }
+
+    .region-flag {
+        font-size: 1.25rem;
+    }
+
+    .region-select {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        appearance: none;
+        padding: 0.5rem 0;
+    }
+
+    .region-select:focus {
+        outline: none;
+    }
+
+    .region-select option {
+        background: #1a1a2e;
+        color: white;
+    }
+
+    .uid-confirm-row {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #ffffff;
+        letter-spacing: 0.01em;
+    }
+
+    /* Currency Cards - kupikod.com exact style: IMAGE ONLY, caption below */
+
+    /* Product item wrapper - image + caption separate */
+    .product-item {
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .currency-card {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1;
+    }
+
+    .currency-card:hover {
+        border-color: rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .product-item.selected .currency-card {
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+
+    /* Selected badge - top right */
+    .currency-card-selected-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 0.2rem;
+        z-index: 10;
+    }
+
+    .product-item.selected .currency-card-selected-badge {
+        display: flex;
+    }
+
+    /* Hide old header completely */
+    .currency-card-header {
+        display: none !important;
+    }
+
+    .currency-card-bonus {
+        display: none !important;
+    }
+
+    .currency-card-multiplier {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: #f59e0b;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        z-index: 10;
+    }
+
+    /* Image area - FILL THE ENTIRE CARD */
+    .currency-card-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .currency-card-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Green amount badge - top left */
+    .currency-card-badge {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        z-index: 10;
+        white-space: nowrap;
+    }
+
+    .currency-card-placeholder {
+        font-size: 3.5rem;
+        opacity: 0.9;
+    }
+
+    /* Caption OUTSIDE the card */
+    .product-caption {
+        padding: 0.5rem 0.25rem;
+        text-align: center;
+    }
+
+    .product-caption-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.1rem;
+    }
+
+    .product-caption-name {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+
+    /* Footer - HIDDEN (moved to caption) */
+    .currency-card-footer {
+        display: none !important;
+    }
+
+    .currency-card-price-row {
+        display: none !important;
+    }
+
+    .currency-card-total {
+        display: none !important;
+    }
+
+    /* Payment Sidebar */
+    .payment-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+        align-self: flex-start;
+    }
+
+    @@media (max-width: 992px) {
+        .game-page { flex-direction: column; }
+        .payment-sidebar {
+            width: 100%;
+            position: relative;
+            order: -1;
+        }
+    }
+
+    .payment-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .payment-product {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .payment-product-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        overflow: hidden;
+    }
+
+    .payment-product-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .payment-product-info {
+        flex-grow: 1;
+    }
+
+    .payment-product-name {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .payment-product-amount {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .payment-section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .payment-method {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .payment-method:hover {
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .payment-method.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .payment-method-icon {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .payment-method-name {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .payment-promo {
+        margin-bottom: 1.25rem;
+    }
+
+    .payment-promo-input {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
+    }
+
+    .payment-promo-input i {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .payment-promo-input input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .payment-promo-input input:focus {
+        outline: none;
+    }
+
+    .payment-promo-input input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .payment-summary {
+        margin-bottom: 1rem;
+    }
+
+    .payment-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .payment-summary-label {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .payment-summary-value {
+        color: white;
+    }
+
+    .payment-summary-value.discount {
+        color: #22c55e;
+    }
+
+    .payment-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin-top: 0.5rem;
+    }
+
+    .payment-total-label {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .payment-total-value {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    .payment-button {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem;
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .payment-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .payment-terms {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-align: center;
+        line-height: 1.4;
+    }
+
+    .payment-terms a {
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .payment-delivery {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-delivery-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .payment-delivery-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .payment-delivery-value {
+        font-size: 0.85rem;
+        color: white;
+    }
+
+    .payment-delivery-value.highlight {
+        color: #22c55e;
+    }
+
+    /* Sections */
+    .product-section {
+        margin-bottom: 3rem;
+        scroll-margin-top: 80px;
+    }
+
+    .product-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        color: #ffffff;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title::before {
+        content: '';
+        width: 4px;
+        height: 1.3rem;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2px;
+    }
+
+    /* Tabs */
+    .game-tabs {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 14px;
+    }
+
+    .game-tab {
+        background: transparent;
+        border: none;
+        border-radius: 10px;
+        padding: 0.85rem 1.5rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .game-tab:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+    }
+
+    .game-tab.active {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    /* Fix grid layout - 4 columns always fitting the container */
+    .currency-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .currency-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 900px) {
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 576px) {
+        .currency-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    /* Make sure cards don't overflow */
+    .currency-card {
+        min-width: 0;
+        overflow: hidden;
+    }
+</style>
+
+<div class="container container-wide">
+    <div class="game-page">
+        <!-- Sidebar -->
+        <aside class="game-sidebar">
+            <!-- Search box -->
+            <div class="sidebar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Поиск" id="gameSearch" onkeyup="filterGames(this.value)">
+            </div>
+
+            <div id="gamesList">
+            @foreach (var game in sidebarGames)
+            {
+                var isActive = game.Slug.ToLower() == gameSlug.ToLower();
+                var hasImage = !string.IsNullOrEmpty(game.ImageUrl);
+
+                <a href="/Catalog/Game/@game.Slug" class="sidebar-game @(isActive ? "active" : "")">
+                    <div class="sidebar-game-icon">
+                        @if (hasImage)
+                        {
+                            <img src="@game.ImageUrl" alt="@game.Name" />
+                        }
+                        else
+                        {
+                            <span>@game.Icon</span>
+                        }
+                    </div>
+                    <div class="sidebar-game-info">
+                        <span class="sidebar-game-name">@game.Name</span>
+                        @if (!string.IsNullOrEmpty(game.Subtitle))
+                        {
+                            <span class="sidebar-game-subtitle">@game.Subtitle</span>
+                        }
+                    </div>
+                </a>
+            }
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="game-main">
+            @if (isFortnite)
+            {
+                <!-- Fortnite Input Fields -->
+                <div class="uid-section">
+                    <input type="email" class="uid-input" id="emailInput" placeholder="Email от Epic Games" required pattern="[a-z0-9._%+-]+@@[a-z0-9.-]+\.[a-z]{2,}$" />
+                </div>
+                <div class="uid-confirm-row" style="margin-top: 1rem;">
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="regionConfirm" />
+                        Я не менял регион в аккаунте Epic Games последние 6 месяцев
+                    </label>
+                </div>
+                <div class="uid-confirm-row">
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="dataConfirm" />
+                        Я соглашаюсь на передачу данных аккаунта для успешной доставки
+                    </label>
+                </div>
+            }
+            else if (isMobileLegends)
+            {
+                <!-- Mobile Legends Input Fields (UID: 9-15 цифр, Zone ID: 4-5 цифр) -->
+                <div class="uid-section">
+                    <input type="text" class="uid-input" id="uidInput" placeholder="User ID (9-15 цифр, например: 1030612204)" pattern="[0-9]{9,15}" />
+                </div>
+                <div class="uid-section">
+                    <input type="text" class="uid-input" id="zoneInput" placeholder="Zone ID (4-5 цифр, например: 13124)" pattern="[0-9]{4,5}" />
+                </div>
+                <div class="uid-section region-section">
+                    <span class="region-flag">🌍</span>
+                    <select class="region-select" id="regionSelect">
+                        <option value="RU" selected>RU</option>
+                        <option value="Global">Global</option>
+                    </select>
+                </div>
+            }
+            else if (isRoblox)
+            {
+                <!-- Roblox Input Fields -->
+                <div class="uid-section">
+                    <input type="email" class="uid-input" id="emailInput" placeholder="Введите свой Email" />
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="emailConfirm" />
+                        Я указал верный Email
+                    </label>
+                </div>
+            }
+            else if (isGenshin)
+            {
+                <!-- Genshin Impact UID Input (9-10 цифр) -->
+                <div class="uid-section">
+                    <input type="text" class="uid-input" id="uidInput" placeholder="UID (9-10 цифр, например: 700123456)" pattern="[0-9]{9,10}" />
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="uidConfirm" />
+                        Я указал верный UID
+                    </label>
+                </div>
+            }
+            else if (isHonkai)
+            {
+                <!-- Honkai Star Rail UID Input (9 цифр) -->
+                <div class="uid-section">
+                    <input type="text" class="uid-input" id="uidInput" placeholder="UID (9 цифр, например: 800123456)" pattern="[0-9]{9}" />
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="uidConfirm" />
+                        Я указал верный UID
+                    </label>
+                </div>
+            }
+            else
+            {
+                <!-- PUBG Mobile UID Input (5-12 цифр) -->
+                <div class="uid-section">
+                    <input type="text" class="uid-input" id="uidInput" placeholder="Player ID (5-12 цифр, например: 567535724)" pattern="[0-9]{5,12}" />
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="uidConfirm" />
+                        Я указал верный ID
+                    </label>
+                </div>
+            }
+
+            <!-- Tabs -->
+            <div class="game-tabs">
+                @if (isFortnite)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">V-Bucks</button>
+                }
+                else if (isMobileLegends)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Алмазы</button>
+                    <button class="game-tab" onclick="scrollToSection('section-passes')">Пропуски</button>
+                    <button class="game-tab" onclick="scrollToSection('section-promo')">Акция</button>
+                }
+                else if (isGenshin)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Кристаллы Сотворения</button>
+                    <button class="game-tab" onclick="scrollToSection('section-packs')">All Pack</button>
+                    <button class="game-tab" onclick="scrollToSection('section-passes')">Благословение Луны</button>
+                }
+                else if (isHonkai)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Сущности Древних Снов</button>
+                    <button class="game-tab" onclick="scrollToSection('section-packs')">Выгодные наборы</button>
+                }
+                else if (isRoblox)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Robux</button>
+                }
+                else
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Купить @gameInfo.CurrencyShort @gameName</button>
+                    <button class="game-tab" onclick="scrollToSection('section-packs')">Выгодные паки</button>
+                    <button class="game-tab" onclick="scrollToSection('section-passes')">Пропуски</button>
+                    <button class="game-tab" onclick="scrollToSection('section-subscription')">Подписка Prime</button>
+                }
+            </div>
+
+            <!-- Section: Buy Currency -->
+            <div class="product-section" id="section-uc">
+                <h2 class="section-title">@(isFortnite ? "V-Bucks" : (isRoblox ? "Robux" : (isHonkai ? "Сущности Древних Снов" : (isGenshin ? "Кристаллы Сотворения" : (isMobileLegends ? "Алмазы" : $"Купить {gameInfo.CurrencyShort} {gameName}")))))</h2>
+                <div class="currency-grid">
+                    @if (hasDbProducts)
+                    {
+                        @* Render products from database *@
+                        @foreach (var item in dbProducts)
+                        {
+                            var discount = item.OldPrice.HasValue && item.OldPrice > item.Price
+                                ? (int)Math.Round((1 - (double)item.Price / (double)item.OldPrice.Value) * 100)
+                                : item.Discount;
+                            var oldPrice = item.OldPrice ?? item.Price;
+                            var displayName = !string.IsNullOrEmpty(item.TotalDisplay) ? item.TotalDisplay : item.Name;
+                            var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+
+                            <div class="product-item" onclick="selectProduct(this, '@(item.Amount ?? "")', '@displayName', @((int)item.Price), @((int)oldPrice))">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@(item.Amount ?? displayName)</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    @if (!string.IsNullOrEmpty(item.Multiplier))
+                                    {
+                                        <span class="currency-card-multiplier">@item.Multiplier</span>
+                                    }
+                                    <div class="currency-card-image">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@item.ImageUrl" alt="@item.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">@(isRoblox ? "🪙" : (isHonkai ? "🔮" : (isGenshin ? "💠" : (isMobileLegends ? "💎" : "💰"))))</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-name">@displayName</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        @* Fallback to hardcoded demo products *@
+                        @foreach (var item in demoProducts)
+                        {
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Amount</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <div class="currency-card-image">
+                                        <span class="currency-card-placeholder">@(isRoblox ? "🪙" : (isHonkai ? "🔮" : (isGenshin ? "💠" : (isMobileLegends ? "💎" : (isFortnite ? "🎮" : "💰")))))</span>
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-name">@item.TotalUC</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (isGenshin)
+            {
+                <!-- Section: All Pack for Genshin -->
+                <div class="product-section" id="section-packs">
+                    <h2 class="section-title">Выгодные наборы</h2>
+                    <div class="currency-grid">
+                        @foreach (var item in genshinPacks)
+                        {
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Amount</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    @if (!string.IsNullOrEmpty(item.Multiplier))
+                                    {
+                                        <span class="currency-card-multiplier">@item.Multiplier</span>
+                                    }
+                                    <div class="currency-card-image">
+                                        <span class="currency-card-placeholder">💠</span>
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-name">@item.TotalUC</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (isHonkai)
+            {
+                <!-- Section: All Pack for Honkai -->
+                <div class="product-section" id="section-packs">
+                    <h2 class="section-title">Выгодные наборы</h2>
+                    <div class="currency-grid">
+                        @foreach (var item in honkaiPacks)
+                        {
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Amount</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    @if (!string.IsNullOrEmpty(item.Multiplier))
+                                    {
+                                        <span class="currency-card-multiplier">@item.Multiplier</span>
+                                    }
+                                    <div class="currency-card-image">
+                                        <span class="currency-card-placeholder">🔮</span>
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-name">@item.TotalUC</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (!isFortnite && !isMobileLegends && !isRoblox)
+            {
+                <!-- Section: Packs (only for PUBG-like games) -->
+                <div class="product-section" id="section-packs">
+                    <h2 class="section-title">Выгодные паки</h2>
+                    <div class="currency-grid">
+                        @foreach (var item in demoPacks)
+                        {
+                            <div class="product-item" onclick="selectProduct(this, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
+                                <div class="currency-card">
+                                    <span class="currency-card-badge">@item.Amount</span>
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <div class="currency-card-image">
+                                        <span class="currency-card-placeholder">@(isRoblox ? "🪙" : (isHonkai ? "🔮" : (isGenshin ? "💠" : (isMobileLegends ? "💎" : (isFortnite ? "🎮" : "💰")))))</span>
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">@item.Price.ToString("N0") ₽</div>
+                                    <div class="product-caption-name">@item.TotalUC</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (isGenshin || isMobileLegends || (!isFortnite && !isGenshin && !isMobileLegends && !isHonkai && !isRoblox))
+            {
+                <!-- Section: Passes -->
+                <div class="product-section" id="section-passes">
+                    <h2 class="section-title">@(isGenshin ? "Благословение Луны" : "Пропуски")</h2>
+                    <div class="currency-grid">
+                        @if (isGenshin)
+                    {
+                        <div class="product-item" onclick="selectProduct(this, 'Blessing', 'Благословение полой луны', 349, 499)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Благословение полой луны</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💠</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">349 ₽</div>
+                                <div class="product-caption-name">Благословение полой луны</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, 'Gnostic', 'Gnostic Hymn', 899, 1199)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Gnostic Hymn</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💠</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">899 ₽</div>
+                                <div class="product-caption-name">Gnostic Hymn</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, 'Gnostic+', 'Gnostic Chorus', 1799, 2299)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Gnostic Chorus</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💠</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">1 799 ₽</div>
+                                <div class="product-caption-name">Gnostic Chorus</div>
+                            </div>
+                        </div>
+                    }
+                    else if (isMobileLegends)
+                    {
+                        <div class="product-item" onclick="selectProduct(this, 'Twilight', 'Twilight Pass', 449, 599)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Twilight Pass</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💎</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">449 ₽</div>
+                                <div class="product-caption-name">Twilight Pass</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, 'Starlight', 'Starlight Member', 549, 749)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Starlight Member</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💎</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">549 ₽</div>
+                                <div class="product-caption-name">Starlight Member</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, 'Starlight+', 'Starlight Plus', 999, 1299)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Starlight Plus</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">💎</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">999 ₽</div>
+                                <div class="product-caption-name">Starlight Plus</div>
+                            </div>
+                        </div>
+                    }
+                    else if (!isHonkai)
+                    {
+                        <div class="product-item" onclick="selectProduct(this, 'RP', 'Royale Pass', 599, 999)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Royale Pass</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">🎫</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">599 ₽</div>
+                                <div class="product-caption-name">Royale Pass</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, 'RP+', 'Royale Pass Plus', 1199, 1999)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Royale Pass Plus</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">🎫</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">1 199 ₽</div>
+                                <div class="product-caption-name">Royale Pass Plus</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+
+            @if (isMobileLegends)
+            {
+                <!-- Section: Promo for Mobile Legends -->
+                <div class="product-section" id="section-promo">
+                    <h2 class="section-title">Акция</h2>
+                    <div class="currency-grid">
+                        <div class="product-item" onclick="selectProduct(this, 'Weekly', 'Weekly Diamond Pass', 199, 299)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Weekly Diamond Pass</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">🔥</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">199 ₽</div>
+                                <div class="product-caption-name">Weekly Diamond Pass</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!isFortnite && !isMobileLegends && !isGenshin && !isHonkai && !isRoblox)
+            {
+                <!-- Section: Subscription (only for PUBG-like games) -->
+                <div class="product-section" id="section-subscription">
+                    <h2 class="section-title">Подписка Prime</h2>
+                    <div class="currency-grid">
+                        <div class="product-item" onclick="selectProduct(this, '1 мес', 'Prime 1 месяц', 299, 499)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Prime 1 месяц</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">👑</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">299 ₽</div>
+                                <div class="product-caption-name">Prime 1 месяц</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, '3 мес', 'Prime 3 месяца', 799, 1299)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Prime 3 месяца</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">👑</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">799 ₽</div>
+                                <div class="product-caption-name">Prime 3 месяца</div>
+                            </div>
+                        </div>
+                        <div class="product-item" onclick="selectProduct(this, '6 мес', 'Prime 6 месяцев', 1499, 2499)">
+                            <div class="currency-card">
+                                <span class="currency-card-badge">Prime 6 месяцев</span>
+                                <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                <div class="currency-card-image">
+                                    <span class="currency-card-placeholder">👑</span>
+                                </div>
+                            </div>
+                            <div class="product-caption">
+                                <div class="product-caption-price">1 499 ₽</div>
+                                <div class="product-caption-name">Prime 6 месяцев</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </main>
+
+        <!-- Payment Sidebar -->
+        <aside class="payment-sidebar">
+            <div class="payment-card">
+                <!-- Selected Product -->
+                <div class="payment-product">
+                    <div class="payment-product-icon">
+                        @if (!string.IsNullOrEmpty(gameInfo.ImageUrl))
+                        {
+                            <img src="@gameInfo.ImageUrl" alt="@gameName" />
+                        }
+                        else
+                        {
+                            <span>@gameInfo.Icon</span>
+                        }
+                    </div>
+                    <div class="payment-product-info">
+                        <div class="payment-product-name">@gameName</div>
+                        <div class="payment-product-amount" id="selectedAmount">1800 UC</div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="payment-section-title">Способ оплаты</div>
+                <div class="payment-methods">
+                    <div class="payment-method selected" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-name">Карта</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">🏦</div>
+                        <div class="payment-method-name">СБП</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">📱</div>
+                        <div class="payment-method-name">SberPay</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">💰</div>
+                        <div class="payment-method-name">ЮMoney</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">🅿️</div>
+                        <div class="payment-method-name">PayPal</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">₿</div>
+                        <div class="payment-method-name">Crypto</div>
+                    </div>
+                </div>
+
+                <!-- Promo Code -->
+                <div class="payment-promo">
+                    <div class="payment-promo-input">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <input type="text" placeholder="Промокод" />
+                        <i class="bi bi-info-circle" style="cursor: pointer;"></i>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="payment-summary">
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Цена</span>
+                        <span class="payment-summary-value" id="originalPrice">3 461 ₽</span>
+                    </div>
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Выгода</span>
+                        <span class="payment-summary-value discount" id="discount">-1 384 ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-40%</span></span>
+                    </div>
+                    <div class="payment-summary-total">
+                        <span class="payment-total-label">Итого</span>
+                        <span class="payment-total-value" id="totalPrice">2 077 ₽</span>
+                    </div>
+                </div>
+
+                <!-- Buy Button -->
+                <button class="payment-button" onclick="processPurchase()">
+                    Купить <span id="buttonPrice">2 077</span> ₽
+                </button>
+
+                <div class="payment-terms">
+                    Нажимая "Купить", вы принимаете <a href="#">Правила пользования сайтом</a> и <a href="#">Политику конфиденциальности</a>
+                </div>
+
+                <!-- Delivery Info -->
+                <div class="payment-delivery">
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Доставка</span>
+                        <span class="payment-delivery-value highlight">@(isFortnite ? "По Email" : "По UID")</span>
+                    </div>
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Срок доставки</span>
+                        <span class="payment-delivery-value">@(isFortnite ? "10-20 минут" : "Моментально")</span>
+                    </div>
+                </div>
+
+                @if (isFortnite)
+                {
+                    <!-- Fortnite specific badges -->
+                    <div class="payment-delivery" style="border-top: none; padding-top: 0;">
+                        <div style="display: flex; gap: 1rem; justify-content: center;">
+                            <div style="text-align: center;">
+                                <i class="bi bi-shield-check" style="font-size: 1.5rem; color: #22c55e;"></i>
+                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">Безопасная покупка</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <i class="bi bi-cart-check" style="font-size: 1.5rem; color: #667eea;"></i>
+                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">100K+ продаж</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let selectedPrice = 2077;
+    let selectedOldPrice = 3461;
+    let selectedAmount = '1800 UC';
+
+    function selectProduct(item, amount, totalUC, price, oldPrice) {
+        // Remove selected from all items
+        document.querySelectorAll('.product-item').forEach(c => {
+            c.classList.remove('selected');
+        });
+        // Add selected to clicked item
+        item.classList.add('selected');
+
+        // Update payment sidebar
+        selectedPrice = price;
+        selectedOldPrice = oldPrice;
+        selectedAmount = totalUC;
+
+        const discount = oldPrice - price;
+        const discountPercent = Math.round((discount / oldPrice) * 100);
+
+        document.getElementById('selectedAmount').textContent = totalUC;
+        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
+    }
+
+    function selectPayment(method) {
+        document.querySelectorAll('.payment-method').forEach(m => {
+            m.classList.remove('selected');
+        });
+        method.classList.add('selected');
+    }
+
+    function scrollToSection(sectionId) {
+        // Update tabs
+        document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Scroll to section
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // Update active tab on scroll
+    function updateActiveTab() {
+        const sections = document.querySelectorAll('.product-section');
+        const tabs = document.querySelectorAll('.game-tab');
+
+        let currentSection = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (window.scrollY >= sectionTop - 150) {
+                currentSection = section.id;
+            }
+        });
+
+        tabs.forEach((tab, index) => {
+            const sectionIds = ['section-uc', 'section-packs', 'section-passes', 'section-subscription'];
+            if (sectionIds[index] === currentSection) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveTab);
+
+    function processPurchase() {
+        // Check if this is Fortnite page
+        const emailInput = document.getElementById('emailInput');
+        const uidInput = document.getElementById('uidInput');
+
+        if (emailInput) {
+            // Fortnite validation
+            const email = emailInput.value.trim();
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            if (!email) {
+                alert('Пожалуйста, введите Email от Epic Games');
+                emailInput.focus();
+                return;
+            }
+
+            if (!emailPattern.test(email)) {
+                alert('Пожалуйста, введите корректный Email адрес');
+                emailInput.focus();
+                return;
+            }
+
+            const regionConfirm = document.getElementById('regionConfirm');
+            const dataConfirm = document.getElementById('dataConfirm');
+
+            if (regionConfirm && !regionConfirm.checked) {
+                alert('Пожалуйста, подтвердите что вы не меняли регион в аккаунте Epic Games последние 6 месяцев');
+                return;
+            }
+
+            if (dataConfirm && !dataConfirm.checked) {
+                alert('Пожалуйста, подтвердите согласие на передачу данных аккаунта для успешной доставки');
+                return;
+            }
+        } else if (uidInput) {
+            // Standard UID validation
+            const uid = uidInput.value.trim();
+            const uidConfirmEl = document.getElementById('uidConfirm');
+
+            if (!uid) {
+                alert('Пожалуйста, введите ваш ID');
+                uidInput.focus();
+                return;
+            }
+
+            if (uidConfirmEl && !uidConfirmEl.checked) {
+                alert('Пожалуйста, подтвердите что ID указан верно');
+                return;
+            }
+        }
+
+        // Here will be actual payment processing
+        alert('Переход к оплате... (Платежные системы будут подключены позже)');
+    }
+
+    // Select first product by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstItem = document.querySelector('.product-item');
+        if (firstItem) {
+            // Find the 1800 UC item and select it, otherwise select first
+            const items = document.querySelectorAll('.product-item');
+            let found = false;
+            items.forEach(item => {
+                if (item.querySelector('.product-caption-name')?.textContent.includes('1800')) {
+                    item.click();
+                    found = true;
+                }
+            });
+            if (!found && firstItem) {
+                firstItem.click();
+            }
+        }
+    });
+
+    // Filter games in sidebar
+    function filterGames(query) {
+        const games = document.querySelectorAll('.sidebar-game');
+        const lowerQuery = query.toLowerCase();
+        games.forEach(game => {
+            const name = game.querySelector('.sidebar-game-name')?.textContent.toLowerCase() || '';
+            const subtitle = game.querySelector('.sidebar-game-subtitle')?.textContent.toLowerCase() || '';
+            if (name.includes(lowerQuery) || subtitle.includes(lowerQuery)) {
+                game.style.display = 'flex';
+            } else {
+                game.style.display = 'none';
+            }
+        });
+    }
+</script>
+}

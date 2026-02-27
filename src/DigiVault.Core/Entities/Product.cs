@@ -13,6 +13,7 @@ public class Product
     public string? ImageUrl { get; set; }
     public int StockQuantity { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsFeatured { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

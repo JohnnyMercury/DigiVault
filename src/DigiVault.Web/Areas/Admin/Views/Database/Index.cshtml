@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "База данных";
+    var dbInfo = ViewBag.DatabaseInfo as Dictionary<string, string> ?? new();
+    var tables = ViewBag.Tables as List<string> ?? new();
+}
+
+<div class="row g-4 mb-4">
+    @foreach (var info in dbInfo)
+    {
+        <div class="col-md-4 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-label">@info.Key</div>
+                <div class="stat-value" style="font-size: 1.1rem;">@info.Value</div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title">
+                    <i class="bi bi-table me-2"></i>Таблицы (@tables.Count)
+                </h5>
+                <a asp-action="SqlQuery" class="btn btn-primary btn-sm">
+                    <i class="bi bi-terminal me-1"></i>SQL запрос
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Таблица</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < tables.Count; i++)
+                        {
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td>
+                                    <code style="color: #4facfe;">@tables[i]</code>
+                                </td>
+                                <td>
+                                    <a asp-action="ViewTable" asp-route-name="@tables[i]" class="btn btn-outline-light btn-sm">
+                                        <i class="bi bi-eye"></i> Просмотр
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title">
+                    <i class="bi bi-lightning me-2"></i>Быстрые запросы
+                </h5>
+            </div>
+            <div class="p-3">
+                <form asp-action="SqlQuery" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="query" value="SELECT COUNT(*) as total_users FROM &quot;AspNetUsers&quot;" class="btn btn-outline-light btn-sm text-start">
+                            <i class="bi bi-people me-2"></i>Количество пользователей
+                        </button>
+                        <button type="submit" name="query" value="SELECT COUNT(*) as total_orders, SUM(&quot;TotalAmount&quot;) as revenue FROM &quot;Orders&quot; WHERE &quot;Status&quot; = 2" class="btn btn-outline-light btn-sm text-start">
+                            <i class="bi bi-bag me-2"></i>Завершённые заказы
+                        </button>
+                        <button type="submit" name="query" value="SELECT * FROM &quot;Orders&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 10" class="btn btn-outline-light btn-sm text-start">
+                            <i class="bi bi-clock me-2"></i>Последние 10 заказов
+                        </button>
+                        <button type="submit" name="query" value="SELECT * FROM &quot;PaymentTransactions&quot; ORDER BY &quot;CreatedAt&quot; DESC LIMIT 10" class="btn btn-outline-light btn-sm text-start">
+                            <i class="bi bi-credit-card me-2"></i>Последние транзакции
+                        </button>
+                        <button type="submit" name="query" value="SELECT &quot;UserName&quot;, &quot;Email&quot;, &quot;Balance&quot;, &quot;CreatedAt&quot; FROM &quot;AspNetUsers&quot; ORDER BY &quot;Balance&quot; DESC LIMIT 10" class="btn btn-outline-light btn-sm text-start">
+                            <i class="bi bi-wallet2 me-2"></i>Топ балансы
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,17 +3,6 @@ using DigiVault.Core.Enums;
 
 namespace DigiVault.Web.ViewModels;
 
-public class CatalogViewModel
-{
-    public List<ProductViewModel> Products { get; set; } = new();
-    public ProductCategory? Category { get; set; }
-    public string? SearchQuery { get; set; }
-    public string? SortBy { get; set; }
-    public int CurrentPage { get; set; } = 1;
-    public int TotalPages { get; set; }
-    public int TotalProducts { get; set; }
-}
-
 public class ProductViewModel
 {
     public int Id { get; set; }

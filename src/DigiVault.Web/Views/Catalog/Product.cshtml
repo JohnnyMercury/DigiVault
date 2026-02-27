@@ -1,0 +1,394 @@
+@model DigiVault.Core.Entities.Product
+@{
+    ViewData["Title"] = Model.Name;
+
+    var categoryClass = Model.Category switch {
+        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "vpn",
+        DigiVault.Core.Enums.ProductCategory.GameCurrency => "game",
+        _ => "gift"
+    };
+    var categoryIcon = Model.Category switch {
+        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "bi-shield-check",
+        DigiVault.Core.Enums.ProductCategory.GameCurrency => "bi-controller",
+        _ => "bi-gift"
+    };
+    var categoryName = Model.Category switch {
+        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "VPN подписка",
+        DigiVault.Core.Enums.ProductCategory.GameCurrency => "Игровая валюта",
+        _ => "Подарочная карта"
+    };
+}
+
+<style>
+    .product-page {
+        padding: 3rem 0 5rem;
+    }
+
+    .breadcrumb-nav {
+        margin-bottom: 2rem;
+    }
+
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: #667eea;
+    }
+
+    .breadcrumb-item.active {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .product-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    .product-image-section {
+        height: 350px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8rem;
+        position: relative;
+    }
+
+    .product-image-section.vpn { background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%); color: #667eea; }
+    .product-image-section.game { background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%); color: #4facfe; }
+    .product-image-section.gift { background: linear-gradient(135deg, rgba(240, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%); color: #f093fb; }
+
+    .product-badge {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: var(--secondary-gradient);
+        padding: 0.5rem 1.2rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .product-details {
+        padding: 2.5rem;
+    }
+
+    .product-category-badge {
+        display: inline-block;
+        background: rgba(102, 126, 234, 0.15);
+        color: #667eea;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .product-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .product-description {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin-bottom: 2rem;
+    }
+
+    .product-meta {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .meta-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .meta-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .meta-value {
+        font-weight: 600;
+    }
+
+    .meta-value.in-stock { color: #22c55e; }
+    .meta-value.out-of-stock { color: #ef4444; }
+
+    .price-section {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .product-price {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .price-label {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+    }
+
+    .quantity-selector {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .quantity-label {
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .quantity-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        color: #fff;
+        width: 100px;
+        text-align: center;
+    }
+
+    .quantity-input:focus {
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.15);
+        outline: none;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-buy {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 14px;
+        padding: 1rem 2.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        flex: 1;
+        transition: all 0.3s ease;
+    }
+
+    .btn-buy:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-buy:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-wishlist {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .btn-wishlist:hover {
+        background: rgba(240, 147, 251, 0.1);
+        border-color: rgba(240, 147, 251, 0.3);
+        color: #f093fb;
+    }
+
+    .features-section {
+        margin-top: 3rem;
+    }
+
+    .features-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+    }
+
+    .feature-item i {
+        color: #22c55e;
+        font-size: 1.1rem;
+    }
+
+    .feature-item span {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.95rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-decoration: none;
+        margin-bottom: 2rem;
+        transition: color 0.3s ease;
+    }
+
+    .back-link:hover {
+        color: #667eea;
+    }
+</style>
+
+<section class="product-page">
+    <div class="container">
+        <a href="/Catalog" class="back-link">
+            <i class="bi bi-arrow-left"></i> Назад в каталог
+        </a>
+
+        @{
+            var categoryUrl = Model.Category switch {
+                DigiVault.Core.Enums.ProductCategory.VpnSubscription => "/Catalog/Vpn",
+                DigiVault.Core.Enums.ProductCategory.GameCurrency => "/Catalog/GameCurrency",
+                _ => "/Catalog/GiftCards"
+            };
+        }
+        <nav class="breadcrumb-nav">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Главная</a></li>
+                <li class="breadcrumb-item"><a href="/Catalog">Каталог</a></li>
+                <li class="breadcrumb-item"><a href="@categoryUrl">@categoryName</a></li>
+                <li class="breadcrumb-item active">@Model.Name</li>
+            </ol>
+        </nav>
+
+        <div class="product-card">
+            <div class="row g-0">
+                <div class="col-lg-5">
+                    <div class="product-image-section @categoryClass">
+                        <i class="bi @categoryIcon"></i>
+                        @if (Model.IsFeatured)
+                        {
+                            <span class="product-badge"><i class="bi bi-star-fill me-1"></i>Хит продаж</span>
+                        }
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="product-details">
+                        <span class="product-category-badge">
+                            <i class="bi @categoryIcon me-1"></i> @categoryName
+                        </span>
+                        <h1 class="product-title">@Model.Name</h1>
+                        <p class="product-description">@Model.Description</p>
+
+                        <div class="product-meta">
+                            <div class="meta-item">
+                                <div class="meta-icon">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                <div>
+                                    <div class="meta-label">Наличие</div>
+                                    <div class="meta-value @(Model.StockQuantity > 0 ? "in-stock" : "out-of-stock")">
+                                        @(Model.StockQuantity > 0 ? $"{Model.StockQuantity} шт." : "Нет в наличии")
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-icon">
+                                    <i class="bi bi-lightning-charge-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="meta-label">Доставка</div>
+                                    <div class="meta-value">Мгновенно</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="price-section">
+                            <div>
+                                <div class="price-label">Цена</div>
+                                <div class="product-price">@Model.Price.ToString("N0") ₽</div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <span class="text-muted">@(Model.StockQuantity > 0 ? $"В наличии: {Model.StockQuantity} шт." : "Нет в наличии")</span>
+                        </div>
+
+                        <div class="features-section">
+                            <h3 class="features-title">Преимущества</h3>
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Гарантия качества</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Мгновенная доставка</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Поддержка 24/7</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Безопасная оплата</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

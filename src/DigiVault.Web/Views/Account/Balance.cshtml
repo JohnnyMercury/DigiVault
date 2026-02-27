@@ -1,0 +1,96 @@
+@using DigiVault.Core.Entities
+@{
+    ViewData["Title"] = "Баланс";
+    var balance = (decimal)(ViewBag.Balance ?? 0m);
+    var transactions = ViewBag.Transactions as List<WalletTransaction> ?? new();
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Balance card -->
+            <div class="card border-0 mb-4" style="background: var(--primary-gradient); border-radius: 20px;">
+                <div class="card-body text-center py-5">
+                    <div class="text-white-50 mb-2">Ваш баланс</div>
+                    <div style="font-size: 3rem; font-weight: 800; color: #fff;">@balance.ToString("N2") ₽</div>
+                    <div class="mt-3 d-flex justify-content-center gap-2">
+                        <a asp-action="Deposit" class="btn btn-light btn-lg px-4">
+                            <i class="bi bi-plus-circle me-1"></i>Пополнить
+                        </a>
+                        <a asp-action="WalletHistory" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-clock-history me-1"></i>История
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent transactions -->
+            @if (transactions.Any())
+            {
+                <div class="card bg-dark border-secondary" style="border-radius: 16px;">
+                    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Последние операции</h5>
+                        <a asp-action="WalletHistory" class="btn btn-outline-secondary btn-sm">Все</a>
+                    </div>
+                    <div class="list-group list-group-flush" style="border-radius: 0 0 16px 16px;">
+                        @foreach (var tx in transactions)
+                        {
+                            var isPositive = tx.Amount > 0;
+                            <div class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @switch (tx.Type)
+                                        {
+                                            case WalletTransactionType.Deposit:
+                                                <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
+                                                    <i class="bi bi-arrow-down-circle me-1"></i>Пополнение
+                                                </span>
+                                                break;
+                                            case WalletTransactionType.Purchase:
+                                                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                                    <i class="bi bi-cart me-1"></i>Покупка
+                                                </span>
+                                                break;
+                                            case WalletTransactionType.Refund:
+                                                <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe;">
+                                                    <i class="bi bi-arrow-return-left me-1"></i>Возврат
+                                                </span>
+                                                break;
+                                            case WalletTransactionType.Bonus:
+                                                <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                                                    <i class="bi bi-gift me-1"></i>Бонус
+                                                </span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@tx.Type</span>
+                                                break;
+                                        }
+                                    </div>
+                                    <small class="text-muted">
+                                        @tx.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                        @if (!string.IsNullOrEmpty(tx.Description))
+                                        {
+                                            <span>— @tx.Description</span>
+                                        }
+                                    </small>
+                                </div>
+                                <div>
+                                    <span style="font-weight: 700; font-size: 1.1rem; color: @(isPositive ? "#22c55e" : "#ef4444");">
+                                        @(isPositive ? "+" : "")@tx.Amount.ToString("N2") ₽
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-wallet2" style="font-size: 3rem;"></i>
+                    <p class="mt-2">Транзакций пока нет</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

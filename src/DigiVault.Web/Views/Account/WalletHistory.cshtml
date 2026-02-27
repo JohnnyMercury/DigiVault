@@ -1,0 +1,134 @@
+@using DigiVault.Core.Entities
+@{
+    ViewData["Title"] = "История кошелька";
+    var balance = (decimal)(ViewBag.Balance ?? 0m);
+    var transactions = ViewBag.Transactions as List<WalletTransaction> ?? new();
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1">История кошелька</h3>
+                    <span class="text-muted">Баланс: <strong style="color: #22c55e;">@balance.ToString("N2") ₽</strong> | Всего операций: @totalCount</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="Balance" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-wallet2 me-1"></i>Баланс
+                    </a>
+                    <a asp-action="Deposit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Пополнить
+                    </a>
+                </div>
+            </div>
+
+            @if (transactions.Any())
+            {
+                <div class="card bg-dark border-secondary" style="border-radius: 16px;">
+                    <div class="list-group list-group-flush" style="border-radius: 16px;">
+                        @foreach (var tx in transactions)
+                        {
+                            var isPositive = tx.Amount > 0;
+                            <div class="list-group-item bg-dark border-secondary px-4 py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            @switch (tx.Type)
+                                            {
+                                                case WalletTransactionType.Deposit:
+                                                    <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
+                                                        <i class="bi bi-arrow-down-circle me-1"></i>Пополнение
+                                                    </span>
+                                                    break;
+                                                case WalletTransactionType.Purchase:
+                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                                        <i class="bi bi-cart me-1"></i>Покупка
+                                                    </span>
+                                                    break;
+                                                case WalletTransactionType.Refund:
+                                                    <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe;">
+                                                        <i class="bi bi-arrow-return-left me-1"></i>Возврат
+                                                    </span>
+                                                    break;
+                                                case WalletTransactionType.Bonus:
+                                                    <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
+                                                        <i class="bi bi-gift me-1"></i>Бонус
+                                                    </span>
+                                                    break;
+                                                case WalletTransactionType.Withdrawal:
+                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                                        <i class="bi bi-arrow-up-circle me-1"></i>Вывод
+                                                    </span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@tx.Type</span>
+                                                    break;
+                                            }
+                                            @if (tx.Status != WalletTransactionStatus.Completed)
+                                            {
+                                                <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">@tx.Status</span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(tx.Description))
+                                        {
+                                            <div class="small text-white-50">@tx.Description</div>
+                                        }
+                                        <div class="small text-muted mt-1">
+                                            @tx.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")
+                                            @if (!string.IsNullOrEmpty(tx.Reference))
+                                            {
+                                                <span class="ms-2">Ref: <code style="color: #4facfe; font-size: 0.75rem;">@tx.Reference</code></span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div style="font-weight: 700; font-size: 1.15rem; color: @(isPositive ? "#22c55e" : "#ef4444");">
+                                            @(isPositive ? "+" : "")@tx.Amount.ToString("N2") ₽
+                                        </div>
+                                        <div class="small text-muted">
+                                            Баланс: @tx.BalanceAfterTransaction.ToString("N2") ₽
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav class="mt-4 d-flex justify-content-center">
+                        <ul class="pagination pagination-sm">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item"><a class="page-link" asp-action="WalletHistory" asp-route-page="@(currentPage - 1)">&laquo;</a></li>
+                            }
+                            @for (int i = Math.Max(1, currentPage - 3); i <= Math.Min(totalPages, currentPage + 3); i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" asp-action="WalletHistory" asp-route-page="@i">@i</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item"><a class="page-link" asp-action="WalletHistory" asp-route-page="@(currentPage + 1)">&raquo;</a></li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                    <p class="mt-2">Транзакций пока нет</p>
+                    <a asp-action="Deposit" class="btn btn-primary">Пополнить баланс</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,107 @@
+@model List<DigiVault.Core.Entities.PaymentProviderConfig>
+@{
+    ViewData["Title"] = "Платёжные провайдеры";
+    var stats = ViewBag.Stats as Dictionary<string, dynamic> ?? new();
+}
+
+<div class="mb-4">
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Добавить провайдер
+    </a>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row g-4">
+        @foreach (var provider in Model)
+        {
+            var providerStats = stats.ContainsKey(provider.Name) ? stats[provider.Name] : null;
+            <div class="col-lg-6">
+                <div class="data-card">
+                    <div class="data-card-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="data-card-title mb-0">@provider.DisplayName</h5>
+                            @if (provider.IsEnabled)
+                            {
+                                <span class="badge-status completed">Активен</span>
+                            }
+                            else
+                            {
+                                <span class="badge-status cancelled">Выключен</span>
+                            }
+                            @if (provider.IsTestMode)
+                            {
+                                <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">Тест</span>
+                            }
+                        </div>
+                        <div class="d-flex gap-1">
+                            <form asp-action="Toggle" asp-route-id="@provider.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-light btn-sm" title="@(provider.IsEnabled ? "Выключить" : "Включить")">
+                                    <i class="bi @(provider.IsEnabled ? "bi-toggle-on text-success" : "bi-toggle-off")"></i>
+                                </button>
+                            </form>
+                            <a asp-action="Edit" asp-route-id="@provider.Id" class="btn btn-outline-light btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-3">
+                            <div class="col-4 text-center">
+                                <div class="text-muted small">Имя</div>
+                                <code style="color: #4facfe;">@provider.Name</code>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="text-muted small">Приоритет</div>
+                                <strong>@provider.Priority</strong>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="text-muted small">Комиссия</div>
+                                <strong>@(provider.Commission?.ToString("N1") ?? "—")%</strong>
+                            </div>
+                        </div>
+                        @if (providerStats != null)
+                        {
+                            <hr style="border-color: var(--card-border);">
+                            <div class="row g-3">
+                                <div class="col-4 text-center">
+                                    <div class="text-muted small">Всего</div>
+                                    <strong>@providerStats.Total</strong>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="text-muted small">Успешных</div>
+                                    <strong style="color: #22c55e;">@providerStats.Successful</strong>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="text-muted small">Выручка</div>
+                                    <strong style="color: #22c55e;">@(((decimal)providerStats.Revenue).ToString("N0")) ₽</strong>
+                                </div>
+                            </div>
+                        }
+                        @if (provider.MinAmount.HasValue || provider.MaxAmount.HasValue)
+                        {
+                            <hr style="border-color: var(--card-border);">
+                            <div class="text-muted small">
+                                Лимиты: @(provider.MinAmount?.ToString("N0") ?? "—") — @(provider.MaxAmount?.ToString("N0") ?? "—") ₽
+                            </div>
+                        }
+                        <div class="text-muted small mt-2">
+                            Обновлён: @provider.UpdatedAt.ToString("dd.MM.yyyy HH:mm")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="data-card">
+        <div class="empty-state">
+            <i class="bi bi-credit-card" style="font-size: 3rem;"></i>
+            <p class="mt-2">Нет настроенных провайдеров</p>
+            <p class="text-muted">Добавьте платёжного провайдера для приёма платежей</p>
+        </div>
+    </div>
+}

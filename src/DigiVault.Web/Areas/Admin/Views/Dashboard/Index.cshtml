@@ -1,149 +1,164 @@
+@using DigiVault.Core.Entities
+@using DigiVault.Core.Enums
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Дашборд";
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary bg-opacity-10 rounded p-3 me-3">
-                        <i class="bi bi-people text-primary fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Total Users</div>
-                        <div class="fs-4 fw-bold">@ViewBag.TotalUsers</div>
-                    </div>
-                </div>
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Users" asp-action="Index" class="stat-card d-block text-decoration-none text-white">
+            <div class="stat-icon users">
+                <i class="bi bi-people-fill"></i>
             </div>
-        </div>
+            <div class="stat-value">@ViewBag.TotalUsers</div>
+            <div class="stat-label">Пользователей</div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="bg-success bg-opacity-10 rounded p-3 me-3">
-                        <i class="bi bi-box text-success fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Products</div>
-                        <div class="fs-4 fw-bold">@ViewBag.TotalProducts</div>
-                    </div>
-                </div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Products" asp-action="Index" class="stat-card d-block text-decoration-none text-white">
+            <div class="stat-icon products">
+                <i class="bi bi-box-seam-fill"></i>
             </div>
-        </div>
+            <div class="stat-value">@ViewBag.TotalProducts</div>
+            <div class="stat-label">Товаров</div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="bg-warning bg-opacity-10 rounded p-3 me-3">
-                        <i class="bi bi-receipt text-warning fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Total Orders</div>
-                        <div class="fs-4 fw-bold">@ViewBag.TotalOrders</div>
-                    </div>
-                </div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Orders" asp-action="Index" class="stat-card d-block text-decoration-none text-white">
+            <div class="stat-icon orders">
+                <i class="bi bi-bag-check-fill"></i>
             </div>
-        </div>
+            <div class="stat-value">@ViewBag.TotalOrders</div>
+            <div class="stat-label">Заказов</div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="bg-info bg-opacity-10 rounded p-3 me-3">
-                        <i class="bi bi-currency-dollar text-info fs-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-muted small">Total Revenue</div>
-                        <div class="fs-4 fw-bold">$@(((decimal)ViewBag.TotalRevenue).ToString("F2"))</div>
-                    </div>
-                </div>
+    <div class="col-6 col-lg-3">
+        <a asp-controller="Orders" asp-action="Index" class="stat-card d-block text-decoration-none text-white">
+            <div class="stat-icon revenue">
+                <i class="bi bi-currency-dollar"></i>
             </div>
-        </div>
+            <div class="stat-value">@(((decimal)ViewBag.TotalRevenue).ToString("N0")) ₽</div>
+            <div class="stat-label">Выручка</div>
+        </a>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="card bg-dark border-secondary">
-            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Orders</h5>
-                <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+<div class="row g-3">
+    <!-- Recent Orders -->
+    <div class="col-12 col-xl-7">
+        <div class="data-card h-100">
+            <div class="data-card-header">
+                <h3 class="data-card-title"><i class="bi bi-clock-history me-2"></i>Последние заказы</h3>
+                <a asp-controller="Orders" asp-action="Index" class="btn btn-sm btn-outline-light">
+                    Все заказы <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
-            <div class="table-responsive">
-                <table class="table table-dark table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var order in ViewBag.RecentOrders as List<Order>)
-                        {
+            @{
+                var recentOrders = ViewBag.RecentOrders as List<Order>;
+            }
+            @if (recentOrders != null && recentOrders.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td><code>@order.OrderNumber</code></td>
-                                <td>@order.User?.Email</td>
-                                <td class="text-primary">$@order.TotalAmount.ToString("F2")</td>
-                                <td>
-                                    @{
-                                        var statusClass = order.Status switch
-                                        {
-                                            OrderStatus.Completed => "success",
-                                            OrderStatus.Processing => "info",
-                                            OrderStatus.Pending => "warning",
-                                            _ => "secondary"
-                                        };
-                                    }
-                                    <span class="badge bg-@statusClass">@order.Status</span>
-                                </td>
-                                <td>@order.CreatedAt.ToString("MMM dd, HH:mm")</td>
+                                <th>Заказ</th>
+                                <th>Клиент</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                                <th>Дата</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in recentOrders)
+                            {
+                                var statusClass = order.Status switch
+                                {
+                                    OrderStatus.Completed => "completed",
+                                    OrderStatus.Processing => "pending",
+                                    OrderStatus.Pending => "pending",
+                                    _ => "cancelled"
+                                };
+                                var statusText = order.Status switch
+                                {
+                                    OrderStatus.Completed => "Выполнен",
+                                    OrderStatus.Processing => "В обработке",
+                                    OrderStatus.Pending => "Ожидает",
+                                    _ => "Отменён"
+                                };
+                                <tr>
+                                    <td><code style="color: #667eea;">#@order.Id</code></td>
+                                    <td>@(order.User?.Email ?? "—")</td>
+                                    <td style="color: #4facfe; font-weight: 600;">@order.TotalAmount.ToString("N0") ₽</td>
+                                    <td><span class="badge-status @statusClass">@statusText</span></td>
+                                    <td style="color: rgba(255,255,255,0.5);">@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+                    <p>Заказов пока нет</p>
+                </div>
+            }
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card bg-dark border-secondary">
-            <div class="card-header border-secondary">
-                <h5 class="mb-0">Low Stock Alert</h5>
-            </div>
-            <div class="list-group list-group-flush">
-                @foreach (var product in ViewBag.LowStockProducts as List<Product>)
-                {
-                    <a asp-controller="Products" asp-action="Edit" asp-route-id="@product.Id" class="list-group-item list-group-item-action bg-dark text-white border-secondary">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>@product.Name</span>
-                            <span class="badge bg-danger">@product.StockQuantity left</span>
-                        </div>
-                    </a>
-                }
-                @if (!(ViewBag.LowStockProducts as List<Product>).Any())
-                {
-                    <div class="list-group-item bg-dark text-muted border-secondary">
-                        All products are well stocked
-                    </div>
-                }
-            </div>
-        </div>
 
-        <div class="card bg-dark border-secondary mt-4">
-            <div class="card-body">
-                <h6 class="text-muted mb-3">Today's Stats</h6>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>Orders Today</span>
-                    <span class="fw-bold">@ViewBag.TodayOrders</span>
+    <!-- Side Cards -->
+    <div class="col-12 col-xl-5">
+        <div class="row g-3">
+            <!-- Low Stock -->
+            <div class="col-12 col-md-6 col-xl-12">
+                <div class="data-card">
+                    <div class="data-card-header">
+                        <h3 class="data-card-title"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Мало на складе</h3>
+                    </div>
+                    @{
+                        var lowStock = ViewBag.LowStockProducts as List<Product>;
+                    }
+                    @if (lowStock != null && lowStock.Any())
+                    {
+                        <div class="p-3">
+                            @foreach (var product in lowStock)
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background: rgba(239, 68, 68, 0.1); border-radius: 10px;">
+                                    <span style="font-weight: 500;">@product.Name</span>
+                                    <span class="badge-status cancelled">@product.StockQuantity шт.</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-4 text-center" style="color: rgba(255,255,255,0.4);">
+                            <i class="bi bi-check-circle text-success fs-4 mb-2 d-block"></i>
+                            Все товары в наличии
+                        </div>
+                    }
                 </div>
-                <div class="d-flex justify-content-between">
-                    <span>Monthly Revenue</span>
-                    <span class="fw-bold text-success">$@(((decimal)ViewBag.MonthlyRevenue).ToString("F2"))</span>
+            </div>
+
+            <!-- Today Stats -->
+            <div class="col-12 col-md-6 col-xl-12">
+                <div class="data-card">
+                    <div class="data-card-header">
+                        <h3 class="data-card-title"><i class="bi bi-graph-up me-2"></i>Статистика</h3>
+                    </div>
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 mb-2" style="background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
+                            <span style="color: rgba(255,255,255,0.6);">Заказов сегодня</span>
+                            <span style="font-weight: 700; font-size: 1.25rem;">@ViewBag.TodayOrders</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center p-3" style="background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
+                            <span style="color: rgba(255,255,255,0.6);">Выручка за месяц</span>
+                            <span style="font-weight: 700; font-size: 1.25rem; color: #22c55e;">@(((decimal)ViewBag.MonthlyRevenue).ToString("N0")) ₽</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

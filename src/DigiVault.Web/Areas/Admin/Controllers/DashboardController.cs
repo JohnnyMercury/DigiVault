@@ -17,12 +17,13 @@ public class DashboardController : AdminBaseController
     public async Task<IActionResult> Index()
     {
         var today = DateTime.UtcNow.Date;
-        var thisMonth = new DateTime(today.Year, today.Month, 1);
+        var todayUtc = DateTime.SpecifyKind(today, DateTimeKind.Utc);
+        var thisMonth = DateTime.SpecifyKind(new DateTime(today.Year, today.Month, 1), DateTimeKind.Utc);
 
         ViewBag.TotalUsers = await _context.Users.CountAsync();
         ViewBag.TotalProducts = await _context.Products.CountAsync();
         ViewBag.TotalOrders = await _context.Orders.CountAsync();
-        ViewBag.TodayOrders = await _context.Orders.CountAsync(o => o.CreatedAt.Date == today);
+        ViewBag.TodayOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= todayUtc);
 
         ViewBag.TotalRevenue = await _context.Orders
             .Where(o => o.Status == OrderStatus.Completed)

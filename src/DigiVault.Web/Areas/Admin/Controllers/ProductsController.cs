@@ -1,6 +1,8 @@
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
+using DigiVault.Core.Interfaces;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Web.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,10 +11,12 @@ namespace DigiVault.Web.Areas.Admin.Controllers;
 public class ProductsController : AdminBaseController
 {
     private readonly ApplicationDbContext _context;
+    private readonly IFileService _fileService;
 
-    public ProductsController(ApplicationDbContext context)
+    public ProductsController(ApplicationDbContext context, IFileService fileService)
     {
         _context = context;
+        _fileService = fileService;
     }
 
     public async Task<IActionResult> Index(ProductCategory? category = null, string? search = null)
@@ -37,16 +41,39 @@ public class ProductsController : AdminBaseController
 
     public IActionResult Create()
     {
-        return View(new Product());
+        return View(new ProductCreateViewModel());
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Product product)
+    public async Task<IActionResult> Create(ProductCreateViewModel model)
     {
         if (ModelState.IsValid)
         {
-            product.CreatedAt = DateTime.UtcNow;
+            var product = new Product
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Price = model.Price,
+                OldPrice = model.OldPrice,
+                Category = model.Category,
+                StockQuantity = model.StockQuantity,
+                IsActive = model.IsActive,
+                IsFeatured = model.IsFeatured,
+                Metadata = model.Metadata,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Handle image upload
+            if (model.ImageFile != null)
+            {
+                product.ImageUrl = await _fileService.SaveImageAsync(model.ImageFile);
+            }
+            else if (!string.IsNullOrEmpty(model.ImageUrl))
+            {
+                product.ImageUrl = model.ImageUrl;
+            }
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -54,7 +81,7 @@ public class ProductsController : AdminBaseController
             return RedirectToAction(nameof(Index));
         }
 
-        return View(product);
+        return View(model);
     }
 
     public async Task<IActionResult> Edit(int id)
@@ -63,22 +90,71 @@ public class ProductsController : AdminBaseController
         if (product == null)
             return NotFound();
 
-        return View(product);
+        var model = new ProductEditViewModel
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Price = product.Price,
+            OldPrice = product.OldPrice,
+            Category = product.Category,
+            StockQuantity = product.StockQuantity,
+            IsActive = product.IsActive,
+            IsFeatured = product.IsFeatured,
+            Metadata = product.Metadata,
+            CurrentImageUrl = product.ImageUrl
+        };
+
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Product product)
+    public async Task<IActionResult> Edit(int id, ProductEditViewModel model)
     {
-        if (id != product.Id)
+        if (id != model.Id)
             return NotFound();
 
         if (ModelState.IsValid)
         {
             try
             {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                    return NotFound();
+
+                product.Name = model.Name;
+                product.Description = model.Description;
+                product.Price = model.Price;
+                product.OldPrice = model.OldPrice;
+                product.Category = model.Category;
+                product.StockQuantity = model.StockQuantity;
+                product.IsActive = model.IsActive;
+                product.IsFeatured = model.IsFeatured;
+                product.Metadata = model.Metadata;
                 product.UpdatedAt = DateTime.UtcNow;
-                _context.Update(product);
+
+                // Handle image upload
+                if (model.ImageFile != null)
+                {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(product.ImageUrl))
+                    {
+                        _fileService.DeleteImage(product.ImageUrl);
+                    }
+
+                    product.ImageUrl = await _fileService.SaveImageAsync(model.ImageFile);
+                }
+                else if (!string.IsNullOrEmpty(model.ImageUrl) && model.ImageUrl != model.CurrentImageUrl)
+                {
+                    // URL was changed manually
+                    if (!string.IsNullOrEmpty(product.ImageUrl))
+                    {
+                        _fileService.DeleteImage(product.ImageUrl);
+                    }
+                    product.ImageUrl = model.ImageUrl;
+                }
+
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Product updated successfully";
@@ -92,7 +168,8 @@ public class ProductsController : AdminBaseController
             }
         }
 
-        return View(product);
+        model.CurrentImageUrl = model.CurrentImageUrl;
+        return View(model);
     }
 
     [HttpPost]
@@ -102,6 +179,12 @@ public class ProductsController : AdminBaseController
         var product = await _context.Products.FindAsync(id);
         if (product == null)
             return NotFound();
+
+        // Delete image
+        if (!string.IsNullOrEmpty(product.ImageUrl))
+        {
+            _fileService.DeleteImage(product.ImageUrl);
+        }
 
         product.IsActive = false;
         await _context.SaveChangesAsync();

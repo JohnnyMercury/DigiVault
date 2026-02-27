@@ -1,0 +1,189 @@
+@model DigiVault.Core.Entities.Game
+@using DigiVault.Core.Entities
+@{
+    ViewData["Title"] = $"Товары - {Model.Name}";
+    var currentType = ViewBag.ProductType as GameProductType?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: @Model.Gradient; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <img src="@Model.ImageUrl" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <span>@Model.Icon</span>
+                    }
+                </div>
+                <div>
+                    <h4 class="mb-0">@Model.Name @Model.Subtitle</h4>
+                    <small class="text-muted">@Model.Currency</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <a asp-action="CreateProduct" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Добавить товар
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Filter tabs -->
+<div class="mb-4">
+    <div class="btn-group">
+        <a asp-action="Products" asp-route-id="@Model.Id" class="btn @(currentType == null ? "btn-primary" : "btn-outline-light")">
+            Все (@Model.Products.Count)
+        </a>
+        <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Currency" class="btn @(currentType == GameProductType.Currency ? "btn-primary" : "btn-outline-light")">
+            Валюта (@Model.Products.Count(p => p.ProductType == GameProductType.Currency))
+        </a>
+        <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Pack" class="btn @(currentType == GameProductType.Pack ? "btn-primary" : "btn-outline-light")">
+            Паки (@Model.Products.Count(p => p.ProductType == GameProductType.Pack))
+        </a>
+        <a asp-action="Products" asp-route-id="@Model.Id" asp-route-type="Pass" class="btn @(currentType == GameProductType.Pass ? "btn-primary" : "btn-outline-light")">
+            Пропуски (@Model.Products.Count(p => p.ProductType == GameProductType.Pass))
+        </a>
+    </div>
+</div>
+
+@{
+    var products = currentType.HasValue
+        ? Model.Products.Where(p => p.ProductType == currentType.Value).ToList()
+        : Model.Products.ToList();
+
+    var groupedProducts = products.GroupBy(p => p.ProductType).OrderBy(g => g.Key);
+}
+
+@foreach (var group in groupedProducts)
+{
+    var typeName = group.Key switch
+    {
+        GameProductType.Currency => "💰 Валюта",
+        GameProductType.Pack => "📦 Паки",
+        GameProductType.Pass => "🎫 Пропуски",
+        GameProductType.Subscription => "👑 Подписки",
+        GameProductType.GiftCard => "🎁 Подарочные карты",
+        GameProductType.Promo => "🔥 Акции",
+        _ => "Другое"
+    };
+
+    <div class="data-card mb-4">
+        <h5 class="mb-3" style="font-weight: 600;">@typeName</h5>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Фото</th>
+                        <th>Название</th>
+                        <th>Кол-во</th>
+                        <th>Бонус</th>
+                        <th>Цена</th>
+                        <th>Скидка</th>
+                        <th>Остаток</th>
+                        <th>Статус</th>
+                        <th style="width: 150px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in group.OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
+                    {
+                        <tr style="@(!product.IsActive ? "opacity: 0.5;" : "")">
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;">
+                                }
+                                else
+                                {
+                                    <div style="width: 40px; height: 40px; background: @Model.Gradient; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        @Model.Icon
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <div style="font-weight: 500;">@product.Name</div>
+                                <small class="text-muted">@product.TotalDisplay</small>
+                            </td>
+                            <td><span style="font-weight: 600;">@product.Amount</span></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.Bonus))
+                                {
+                                    <span class="badge bg-success">@product.Bonus</span>
+                                }
+                                @if (!string.IsNullOrEmpty(product.Multiplier))
+                                {
+                                    <span class="badge bg-warning text-dark">@product.Multiplier</span>
+                                }
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #4facfe;">@product.Price.ToString("N0") ₽</span>
+                                @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                {
+                                    <br><small class="text-muted text-decoration-line-through">@product.OldPrice.Value.ToString("N0") ₽</small>
+                                }
+                            </td>
+                            <td>
+                                @if (product.Discount > 0)
+                                {
+                                    <span class="badge bg-danger">-@product.Discount%</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="@(product.StockQuantity < 10 ? "text-danger fw-bold" : "")">@product.StockQuantity</span>
+                            </td>
+                            <td>
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge-status completed">Активен</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status cancelled">Скрыт</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-outline-light" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="DeleteProduct" asp-route-id="@product.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Удалить товар? Это действие необратимо.')" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (!products.Any())
+{
+    <div class="data-card text-center py-5">
+        <i class="bi bi-box-seam fs-1 mb-3" style="color: rgba(255,255,255,0.3);"></i>
+        <h5>Товары не найдены</h5>
+        <p class="text-muted mb-3">Добавьте первый товар для этой игры</p>
+        <a asp-action="CreateProduct" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Добавить товар
+        </a>
+    </div>
+}

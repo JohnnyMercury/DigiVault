@@ -1,0 +1,135 @@
+@using System.Data
+@{
+    ViewData["Title"] = $"Таблица: {ViewBag.TableName}";
+    var data = ViewBag.Data as DataTable;
+    var rowCount = (int)ViewBag.RowCount;
+    var columns = ViewBag.Columns as List<string> ?? new();
+    var currentPage = (int)ViewBag.CurrentPage;
+    var totalPages = (int)ViewBag.TotalPages;
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Назад к таблицам
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-auto">
+        <div class="stat-card" style="padding: 1rem 1.5rem;">
+            <div class="stat-label">Строк</div>
+            <div style="font-size: 1.25rem; font-weight: 700;">@rowCount</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card" style="padding: 1rem 1.5rem;">
+            <div class="stat-label">Колонок</div>
+            <div style="font-size: 1.25rem; font-weight: 700;">@columns.Count</div>
+        </div>
+    </div>
+</div>
+
+@if (columns.Any())
+{
+    <div class="data-card mb-4">
+        <div class="data-card-header">
+            <h5 class="data-card-title"><i class="bi bi-columns me-2"></i>Структура</h5>
+        </div>
+        <div class="p-3">
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var col in columns)
+                {
+                    <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe; padding: 0.5rem 0.75rem;">@col</span>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (data != null && data.Rows.Count > 0)
+{
+    <div class="data-card">
+        <div class="data-card-header">
+            <h5 class="data-card-title"><i class="bi bi-table me-2"></i>Данные</h5>
+            <span class="text-muted">Страница @currentPage из @totalPages</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table" style="white-space: nowrap;">
+                <thead>
+                    <tr>
+                        @foreach (DataColumn col in data.Columns)
+                        {
+                            <th style="font-size: 0.75rem; padding: 0.6rem 0.8rem;">@col.ColumnName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (DataRow row in data.Rows)
+                    {
+                        <tr>
+                            @foreach (DataColumn col in data.Columns)
+                            {
+                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; padding: 0.5rem 0.8rem; font-size: 0.85rem;" title="@row[col]">
+                                    @if (row[col] == DBNull.Value)
+                                    {
+                                        <span class="text-muted fst-italic">NULL</span>
+                                    }
+                                    else if (row[col] is bool b)
+                                    {
+                                        <span class="badge @(b ? "bg-success" : "bg-secondary")">@(b ? "true" : "false")</span>
+                                    }
+                                    else if (row[col] is DateTime dt)
+                                    {
+                                        @dt.ToString("dd.MM.yyyy HH:mm")
+                                    }
+                                    else if (row[col] is decimal d)
+                                    {
+                                        @d.ToString("N2")
+                                    }
+                                    else
+                                    {
+                                        var val = row[col].ToString();
+                                        @(val?.Length > 100 ? val[..100] + "..." : val)
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="d-flex justify-content-center p-3">
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        @if (currentPage > 1)
+                        {
+                            <li class="page-item"><a class="page-link" asp-action="ViewTable" asp-route-name="@ViewBag.TableName" asp-route-page="@(currentPage - 1)">&laquo;</a></li>
+                        }
+                        @for (int i = Math.Max(1, currentPage - 3); i <= Math.Min(totalPages, currentPage + 3); i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" asp-action="ViewTable" asp-route-name="@ViewBag.TableName" asp-route-page="@i">@i</a>
+                            </li>
+                        }
+                        @if (currentPage < totalPages)
+                        {
+                            <li class="page-item"><a class="page-link" asp-action="ViewTable" asp-route-name="@ViewBag.TableName" asp-route-page="@(currentPage + 1)">&raquo;</a></li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="data-card">
+        <div class="empty-state">
+            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+            <p class="mt-2">Таблица пуста</p>
+        </div>
+    </div>
+}

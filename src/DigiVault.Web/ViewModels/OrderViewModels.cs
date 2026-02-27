@@ -2,14 +2,6 @@ using DigiVault.Core.Enums;
 
 namespace DigiVault.Web.ViewModels;
 
-public class CheckoutViewModel
-{
-    public CartViewModel Cart { get; set; } = new();
-    public decimal UserBalance { get; set; }
-    public bool HasSufficientBalance => UserBalance >= Cart.Total;
-    public decimal BalanceAfterPurchase => UserBalance - Cart.Total;
-}
-
 public class OrderViewModel
 {
     public int Id { get; set; }

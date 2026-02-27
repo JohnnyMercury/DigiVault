@@ -1,0 +1,58 @@
+@model DigiVault.Core.Entities.GiftCard
+
+<div class="col-md-6 col-lg-4">
+    <div class="data-card h-100" style="@(Model.IsActive ? "" : "opacity: 0.5;")">
+        <div class="d-flex align-items-start mb-3">
+            <div class="me-3" style="width: 60px; height: 60px; border-radius: 12px; background: @Model.Gradient; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden;">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="@Model.Name" style="width: 100%; height: 100%; object-fit: cover;">
+                }
+                else
+                {
+                    @Model.Icon
+                }
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-0" style="font-weight: 600;">@Model.Name</h5>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <small class="text-muted">@Model.Description</small>
+                }
+                <div class="mt-1">
+                    <span class="badge" style="background: rgba(240, 147, 251, 0.15); color: #f093fb;">
+                        @(Model.Category == DigiVault.Core.Entities.GiftCardCategory.Gaming ? "Игровая" : "Стриминг")
+                    </span>
+                    @if (!Model.IsActive)
+                    {
+                        <span class="badge bg-secondary">Скрыта</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-grow-1">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </a>
+            @if (Model.IsActive)
+            {
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Скрыть карту?')">
+                        <i class="bi bi-eye-slash"></i>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Restore" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>

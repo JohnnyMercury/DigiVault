@@ -1,145 +1,1072 @@
+@model DigiVault.Web.Models.HomeViewModel
 @{
-    ViewData["Title"] = "Digital Goods Marketplace";
-    var featuredProducts = ViewBag.FeaturedProducts as List<ProductViewModel> ?? new List<ProductViewModel>();
+    ViewData["Title"] = "Главная";
 }
 
-<!-- Hero Section -->
-<section class="bg-dark py-5 border-bottom border-secondary">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-3">
-                    <span class="text-primary">Digital Goods</span><br>
-                    Instant Delivery
-                </h1>
-                <p class="lead text-muted mb-4">
-                    VPN subscriptions, game currencies, and gift cards. Buy securely, receive instantly.
-                </p>
-                <div class="d-flex gap-3">
-                    <a asp-controller="Catalog" asp-action="Index" class="btn btn-primary btn-lg">
-                        <i class="bi bi-grid me-2"></i>Browse Catalog
-                    </a>
-                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light btn-lg">
-                        Get Started
-                    </a>
+<style>
+    /* Hero Banner Slider */
+    .hero-slider {
+        padding: 2rem 0;
+        position: relative;
+    }
+
+    .slider-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+    }
+
+    .slider-track {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+    }
+
+    .hero-banner {
+        min-width: 100%;
+        border-radius: 24px;
+        padding: 3rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 280px;
+        display: flex;
+        align-items: center;
+    }
+
+    .hero-banner.banner-1 {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    .hero-banner.banner-1::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+    .hero-banner.banner-2 {
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    }
+    .hero-banner.banner-2::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+    .hero-banner.banner-3 {
+        background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+    }
+    .hero-banner.banner-3::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%);
+        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+
+    .hero-banner-content {
+        position: relative;
+        z-index: 2;
+        max-width: 50%;
+    }
+
+    .hero-banner-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .hero-banner-title span {
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-banner-title .text-cyan { color: #4facfe !important; -webkit-text-fill-color: #4facfe; }
+    .hero-banner-title .text-pink { color: #f093fb !important; -webkit-text-fill-color: #f093fb; }
+
+    .hero-banner-desc {
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .hero-banner-image {
+        position: absolute;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 200px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+
+    .hero-banner-image img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+    }
+
+    .hero-banner-image i {
+        font-size: 8rem;
+        opacity: 0.8;
+    }
+
+    /* Slider Controls */
+    .slider-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .slider-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .slider-dot.active {
+        background: #667eea;
+        width: 30px;
+        border-radius: 5px;
+    }
+
+    .slider-arrows {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 1rem;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .slider-container:hover .slider-arrows {
+        opacity: 1;
+    }
+
+    .slider-arrow {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        pointer-events: all;
+        transition: all 0.3s ease;
+        transform: scale(0.8);
+    }
+
+    .slider-container:hover .slider-arrow {
+        transform: scale(1);
+    }
+
+    .slider-arrow:hover {
+        background: rgba(102, 126, 234, 0.8);
+        transform: scale(1.1);
+    }
+
+    /* Category Tiles */
+    .categories-grid {
+        padding: 2rem 0;
+    }
+
+    .category-tile {
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .category-tile:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border-color: rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .category-tile-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .category-tile-icon.vpn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .category-tile-icon.game { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #0a0a0f; }
+    .category-tile-icon.gift { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .category-tile-icon.ps { background: linear-gradient(135deg, #003791 0%, #0070d1 100%); }
+    .category-tile-icon.xbox { background: linear-gradient(135deg, #107c10 0%, #1db954 100%); }
+
+    .category-tile-content {
+        flex-grow: 1;
+    }
+
+    .category-tile-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .category-tile-count {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .category-tile-arrow {
+        color: rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .category-tile:hover .category-tile-arrow {
+        color: white;
+        transform: translateX(5px);
+    }
+
+    /* Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-title i {
+        color: #667eea;
+    }
+
+    .section-badge {
+        background: rgba(102, 126, 234, 0.2);
+        color: #667eea;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-tab {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .filter-tab:hover, .filter-tab.active {
+        background: var(--primary-gradient);
+        border-color: transparent;
+        color: white;
+    }
+
+    .filter-tab .count {
+        color: rgba(255, 255, 255, 0.4);
+        margin-left: 0.25rem;
+    }
+
+    .filter-tab.active .count, .filter-tab:hover .count {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Product Cards - New Design */
+    .product-card-new {
+        background: #1a1a2e;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card-new:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .product-card-image {
+        position: relative;
+        height: 180px;
+        overflow: hidden;
+    }
+
+    .product-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .product-card-new:hover .product-card-image img {
+        transform: scale(1.05);
+    }
+
+    .product-card-image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+    }
+
+    .product-card-image-placeholder.vpn { background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%); color: #667eea; }
+    .product-card-image-placeholder.game { background: linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%); color: #4facfe; }
+    .product-card-image-placeholder.gift { background: linear-gradient(135deg, rgba(240, 147, 251, 0.3) 0%, rgba(245, 87, 108, 0.3) 100%); color: #f093fb; }
+
+    .product-card-badges {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .product-badge-hit {
+        background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .product-badge-new {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .product-badge-sale {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .product-card-currency {
+        position: absolute;
+        bottom: 0.75rem;
+        left: 0.75rem;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        padding: 0.35rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .product-card-currency i {
+        color: #fbbf24;
+    }
+
+    .product-card-body {
+        padding: 1.25rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: white;
+        line-height: 1.3;
+    }
+
+    .product-card-desc {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        flex-grow: 1;
+    }
+
+    .product-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .product-card-price {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card-price-old {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .product-card-price-current {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #4facfe;
+    }
+
+    .product-card-btn {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .product-card-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Games Grid - Small Icons */
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 1rem;
+    }
+
+    .game-icon-card {
+        aspect-ratio: 1;
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .game-icon-card:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .game-icon-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .game-icon-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .game-icon-name {
+        text-align: center;
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.7);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Promo Banner */
+    .promo-banner {
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .promo-banner:hover {
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .promo-banner-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .promo-banner-icon.telegram { background: linear-gradient(135deg, #0088cc 0%, #00b4d8 100%); }
+    .promo-banner-icon.support { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+
+    .promo-banner-content {
+        flex-grow: 1;
+    }
+
+    .promo-banner-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .promo-banner-desc {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Features Strip */
+    .features-strip {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 3rem 0;
+    }
+
+    .feature-item {
+        text-align: center;
+    }
+
+    .feature-item-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+
+    .feature-item-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .feature-item-desc {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
+<!-- Hero Banner Slider -->
+<section class="hero-slider">
+    <div class="container container-wide">
+        <div class="slider-container">
+            <div class="slider-track" id="sliderTrack">
+                <!-- Banner 1: Main -->
+                <div class="hero-banner banner-1">
+                    <div class="hero-banner-content">
+                        <h1 class="hero-banner-title">
+                            Моментальное пополнение<br>
+                            <span>PSN, Xbox, Netflix</span>
+                        </h1>
+                        <p class="hero-banner-desc">
+                            Пополняйте аккаунты игр и сервисов мгновенно по лучшим ценам. Безопасно и надёжно.
+                        </p>
+                        <a href="/Catalog" class="btn btn-primary">
+                            <i class="bi bi-cart-fill me-2"></i>Перейти в каталог
+                        </a>
+                    </div>
+                    <div class="hero-banner-image">
+                        <i class="bi bi-controller" style="color: #667eea;"></i>
+                    </div>
+                </div>
+
+                <!-- Banner 2: Game Currency -->
+                <div class="hero-banner banner-2">
+                    <div class="hero-banner-content">
+                        <h1 class="hero-banner-title">
+                            Игровая валюта<br>
+                            <span class="text-cyan">V-Bucks, Robux, UC</span>
+                        </h1>
+                        <p class="hero-banner-desc">
+                            Пополняйте валюту любимых игр: Fortnite, Roblox, PUBG Mobile и других!
+                        </p>
+                        <a href="/Catalog/GameCurrency" class="btn btn-info">
+                            <i class="bi bi-coin me-2"></i>Купить валюту
+                        </a>
+                    </div>
+                    <div class="hero-banner-image">
+                        <i class="bi bi-coin" style="color: #4facfe;"></i>
+                    </div>
+                </div>
+
+                <!-- Banner 3: Gift Cards -->
+                <div class="hero-banner banner-3">
+                    <div class="hero-banner-content">
+                        <h1 class="hero-banner-title">
+                            Подарочные карты<br>
+                            <span class="text-pink">Netflix, Spotify, iTunes</span>
+                        </h1>
+                        <p class="hero-banner-desc">
+                            Подарки для себя и близких. Мгновенная доставка кодов на email.
+                        </p>
+                        <a href="/Catalog/GiftCards" class="btn btn-danger">
+                            <i class="bi bi-gift-fill me-2"></i>Выбрать карту
+                        </a>
+                    </div>
+                    <div class="hero-banner-image">
+                        <i class="bi bi-gift-fill" style="color: #f093fb;"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Slider Arrows -->
+            <div class="slider-arrows">
+                <div class="slider-arrow" onclick="prevSlide()">
+                    <i class="bi bi-chevron-left"></i>
+                </div>
+                <div class="slider-arrow" onclick="nextSlide()">
+                    <i class="bi bi-chevron-right"></i>
                 </div>
             </div>
-            <div class="col-lg-6 text-center d-none d-lg-block">
-                <div class="position-relative">
-                    <div class="bg-primary bg-opacity-10 rounded-circle position-absolute" style="width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-                    <i class="bi bi-shield-lock-fill text-primary" style="font-size: 12rem; position: relative; z-index: 1;"></i>
+        </div>
+
+        <!-- Slider Dots -->
+        <div class="slider-dots">
+            <div class="slider-dot active" onclick="goToSlide(0)"></div>
+            <div class="slider-dot" onclick="goToSlide(1)"></div>
+            <div class="slider-dot" onclick="goToSlide(2)"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Category Tiles -->
+<section class="categories-grid">
+    <div class="container container-wide">
+        <div class="row g-3">
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/Vpn" class="category-tile">
+                    <div class="category-tile-icon vpn">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">VPN Подписки</div>
+                        <div class="category-tile-count">@(Model.TotalProducts > 0 ? Model.TotalProducts : 50)+ товаров</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/GameCurrency" class="category-tile">
+                    <div class="category-tile-icon game">
+                        <i class="bi bi-coin"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">Игровая валюта</div>
+                        <div class="category-tile-count">Robux, V-Bucks, UC</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/GiftCards" class="category-tile">
+                    <div class="category-tile-icon gift">
+                        <i class="bi bi-gift-fill"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">Подарочные карты</div>
+                        <div class="category-tile-count">PSN, Xbox, Netflix, Spotify</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/GiftCard/psn" class="category-tile">
+                    <div class="category-tile-icon ps">
+                        <i class="bi bi-playstation"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">PlayStation</div>
+                        <div class="category-tile-count">PS Plus, PSN карты</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/GiftCard/xbox" class="category-tile">
+                    <div class="category-tile-icon xbox">
+                        <i class="bi bi-xbox"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">Xbox</div>
+                        <div class="category-tile-count">Game Pass, подписки</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <a href="/Catalog/GiftCard/netflix" class="category-tile">
+                    <div class="category-tile-icon" style="background: linear-gradient(135deg, #e50914, #b20710);">
+                        <i class="bi bi-film"></i>
+                    </div>
+                    <div class="category-tile-content">
+                        <div class="category-tile-name">Netflix</div>
+                        <div class="category-tile-count">Подписки и подарочные карты</div>
+                    </div>
+                    <i class="bi bi-chevron-right category-tile-arrow"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Products -->
+<section class="py-4">
+    <div class="container container-wide">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-fire"></i>
+                        Популярные товары
+                    </h2>
+                    <a href="/Catalog" class="btn btn-outline-light btn-sm">
+                        Все товары <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="filter-tabs">
+                    <a href="/Catalog" class="filter-tab active">Все</a>
+                    <a href="/Catalog/GameCurrency" class="filter-tab">Игровая валюта</a>
+                    <a href="/Catalog/GiftCards" class="filter-tab">Подарочные карты</a>
+                    <a href="/Catalog/Vpn" class="filter-tab">VPN</a>
+                </div>
+
+                <div class="row g-3">
+                    @if (Model.FeaturedProducts?.Any() == true)
+                    {
+                        @foreach (var product in Model.FeaturedProducts.Take(6))
+                        {
+                            var categoryClass = product.Category switch {
+                                DigiVault.Core.Enums.ProductCategory.VpnSubscription => "vpn",
+                                DigiVault.Core.Enums.ProductCategory.GameCurrency => "game",
+                                _ => "gift"
+                            };
+                            var categoryIcon = product.Category switch {
+                                DigiVault.Core.Enums.ProductCategory.VpnSubscription => "bi-shield-lock",
+                                DigiVault.Core.Enums.ProductCategory.GameCurrency => "bi-controller",
+                                _ => "bi-gift"
+                            };
+
+                            <div class="col-lg-4 col-md-6">
+                                <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
+                                    <div class="product-card-new">
+                                        <div class="product-card-image">
+                                            <div class="product-card-image-placeholder @categoryClass">
+                                                <i class="bi @categoryIcon"></i>
+                                            </div>
+                                            <div class="product-card-badges">
+                                                @if (product.IsFeatured)
+                                                {
+                                                    <span class="product-badge-hit">ХИТ</span>
+                                                }
+                                                @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                                {
+                                                    var discount = (int)Math.Round((1 - product.Price / product.OldPrice.Value) * 100);
+                                                    <span class="product-badge-sale">-@discount%</span>
+                                                }
+                                            </div>
+                                            @if (product.Category == DigiVault.Core.Enums.ProductCategory.GameCurrency)
+                                            {
+                                                <div class="product-card-currency">
+                                                    <i class="bi bi-coin"></i>
+                                                    <span>Валюта</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="product-card-body">
+                                            <h4 class="product-card-title">@product.Name</h4>
+                                            <p class="product-card-desc">@(product.Description?.Length > 60 ? product.Description.Substring(0, 60) + "..." : product.Description)</p>
+                                            <div class="product-card-footer">
+                                                <div class="product-card-price">
+                                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                                    {
+                                                        <span class="product-card-price-old">@product.OldPrice.Value.ToString("N0") ₽</span>
+                                                    }
+                                                    <span class="product-card-price-current">@product.Price.ToString("N0") ₽</span>
+                                                </div>
+                                                <span class="product-card-btn">Купить</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Demo products if no data -->
+                        @for (int i = 0; i < 6; i++)
+                        {
+                            var classes = new[] { "vpn", "game", "gift" };
+                            var icons = new[] { "bi-shield-lock", "bi-controller", "bi-gift" };
+                            var names = new[] { "NordVPN - 1 год", "Fortnite 1000 V-Bucks", "Netflix 3 мес", "ExpressVPN - 6 мес", "Roblox 800 Robux", "PlayStation Plus" };
+                            var prices = new[] { 2999, 799, 4500, 1999, 899, 3499 };
+
+                            <div class="col-lg-4 col-md-6">
+                                <a href="/Catalog" class="text-decoration-none">
+                                    <div class="product-card-new">
+                                        <div class="product-card-image">
+                                            <div class="product-card-image-placeholder @classes[i % 3]">
+                                                <i class="bi @icons[i % 3]"></i>
+                                            </div>
+                                            <div class="product-card-badges">
+                                                @if (i < 2)
+                                                {
+                                                    <span class="product-badge-hit">ХИТ</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="product-card-body">
+                                            <h4 class="product-card-title">@names[i]</h4>
+                                            <p class="product-card-desc">Мгновенная доставка после оплаты</p>
+                                            <div class="product-card-footer">
+                                                <div class="product-card-price">
+                                                    <span class="product-card-price-current">@prices[i].ToString("N0") ₽</span>
+                                                </div>
+                                                <span class="product-card-btn">Купить</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <a href="#" class="promo-banner text-decoration-none text-white">
+                    <div class="promo-banner-icon telegram">
+                        <i class="bi bi-telegram"></i>
+                    </div>
+                    <div class="promo-banner-content">
+                        <div class="promo-banner-title">Наш Telegram</div>
+                        <div class="promo-banner-desc">Новости и акции</div>
+                    </div>
+                </a>
+
+                <a href="#" class="promo-banner text-decoration-none text-white">
+                    <div class="promo-banner-icon support">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                    <div class="promo-banner-content">
+                        <div class="promo-banner-title">Поддержка 24/7</div>
+                        <div class="promo-banner-desc">Всегда на связи</div>
+                    </div>
+                </a>
+
+                <div class="mt-4">
+                    <h6 class="mb-3" style="color: rgba(255,255,255,0.5);">
+                        <i class="bi bi-lightning-fill text-warning me-1"></i>
+                        Быстрые ссылки
+                    </h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="/Catalog/Game/fortnite" class="filter-tab">
+                            <i class="bi bi-controller me-1"></i> Fortnite
+                        </a>
+                        <a href="/Catalog/Game/roblox" class="filter-tab">
+                            <i class="bi bi-controller me-1"></i> Roblox
+                        </a>
+                        <a href="/Catalog/GiftCard/psn" class="filter-tab">
+                            <i class="bi bi-playstation me-1"></i> PlayStation
+                        </a>
+                        <a href="/Catalog/GiftCard/xbox" class="filter-tab">
+                            <i class="bi bi-xbox me-1"></i> Xbox
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Categories Section -->
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-4">Categories</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <a asp-controller="Catalog" asp-action="Vpn" class="text-decoration-none">
-                    <div class="card bg-dark border-secondary h-100 hover-card">
-                        <div class="card-body text-center py-5">
-                            <i class="bi bi-shield-check text-primary display-3 mb-3"></i>
-                            <h4 class="text-white">VPN Subscriptions</h4>
-                            <p class="text-muted mb-0">Protect your privacy online with premium VPN services</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a asp-controller="Catalog" asp-action="GameCurrency" class="text-decoration-none">
-                    <div class="card bg-dark border-secondary h-100 hover-card">
-                        <div class="card-body text-center py-5">
-                            <i class="bi bi-controller text-success display-3 mb-3"></i>
-                            <h4 class="text-white">Game Currency</h4>
-                            <p class="text-muted mb-0">V-Bucks, Robux, and more for your favorite games</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a asp-controller="Catalog" asp-action="GiftCards" class="text-decoration-none">
-                    <div class="card bg-dark border-secondary h-100 hover-card">
-                        <div class="card-body text-center py-5">
-                            <i class="bi bi-gift text-warning display-3 mb-3"></i>
-                            <h4 class="text-white">Gift Cards</h4>
-                            <p class="text-muted mb-0">Steam, PlayStation, Xbox, Netflix and more</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Featured Products -->
-@if (featuredProducts.Any())
-{
-    <section class="py-5 bg-dark border-top border-bottom border-secondary">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Featured Products</h2>
-                <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary">
-                    View All <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
+<!-- Features Strip -->
+<section class="py-4">
+    <div class="container container-wide">
+        <div class="features-strip">
             <div class="row g-4">
-                @foreach (var product in featuredProducts)
-                {
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <partial name="_ProductCard" model="product" />
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-item-icon">
+                            <i class="bi bi-lightning-charge-fill" style="color: #fbbf24;"></i>
+                        </div>
+                        <div class="feature-item-title">Мгновенно</div>
+                        <div class="feature-item-desc">Доставка за секунды</div>
                     </div>
-                }
-            </div>
-        </div>
-    </section>
-}
-
-<!-- Features Section -->
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Why Choose DigiVault?</h2>
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-lightning-fill text-primary fs-2"></i>
-                    </div>
-                    <h5>Instant Delivery</h5>
-                    <p class="text-muted small">Get your digital goods immediately after purchase</p>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-shield-check text-success fs-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-item-icon">
+                            <i class="bi bi-shield-check" style="color: #22c55e;"></i>
+                        </div>
+                        <div class="feature-item-title">Безопасно</div>
+                        <div class="feature-item-desc">Проверенные товары</div>
                     </div>
-                    <h5>Secure Payments</h5>
-                    <p class="text-muted small">Your transactions are protected and encrypted</p>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-headset text-warning fs-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-item-icon">
+                            <i class="bi bi-headset" style="color: #667eea;"></i>
+                        </div>
+                        <div class="feature-item-title">Поддержка</div>
+                        <div class="feature-item-desc">Помощь 24/7</div>
                     </div>
-                    <h5>24/7 Support</h5>
-                    <p class="text-muted small">Our team is always here to help you</p>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-percent text-info fs-2"></i>
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-item">
+                        <div class="feature-item-icon">
+                            <i class="bi bi-percent" style="color: #f093fb;"></i>
+                        </div>
+                        <div class="feature-item-title">Выгодно</div>
+                        <div class="feature-item-desc">Лучшие цены</div>
                     </div>
-                    <h5>Best Prices</h5>
-                    <p class="text-muted small">Competitive prices with regular discounts</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+@section Scripts {
+<script>
+    // Slider functionality
+    let currentSlide = 0;
+    const totalSlides = 3;
+    const sliderTrack = document.getElementById('sliderTrack');
+    const dots = document.querySelectorAll('.slider-dot');
+    let autoSlideInterval;
+
+    function goToSlide(index) {
+        currentSlide = index;
+        sliderTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+        // Update dots
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentSlide);
+        });
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(currentSlide);
+        resetAutoSlide();
+    }
+
+    function prevSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        goToSlide(currentSlide);
+        resetAutoSlide();
+    }
+
+    function resetAutoSlide() {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(nextSlide, 5000);
+    }
+
+    // Start auto-slide
+    autoSlideInterval = setInterval(nextSlide, 5000);
+
+    // Touch/Swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const sliderContainer = document.querySelector('.slider-container');
+
+    sliderContainer.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    sliderContainer.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                nextSlide();
+            } else {
+                prevSlide();
+            }
+        }
+    }
+</script>
+}

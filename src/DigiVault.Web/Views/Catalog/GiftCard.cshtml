@@ -1,0 +1,829 @@
+@using DigiVault.Core.Entities
+@{
+    var card = ViewBag.GiftCard as GiftCard;
+    var allCards = ViewBag.AllGiftCards as List<GiftCard> ?? new List<GiftCard>();
+    ViewData["Title"] = $"{card!.Name} - Подарочные карты";
+
+    var products = card.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList();
+}
+
+<style>
+    .game-page {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    .game-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+    }
+
+    @@media (max-width: 1200px) {
+        .game-sidebar { display: none; }
+    }
+
+    .sidebar-search {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sidebar-search input {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+
+    .sidebar-search input:focus { outline: none; }
+    .sidebar-search input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .sidebar-search i { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
+
+    .sidebar-game {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        margin-bottom: 0.25rem;
+        background: transparent;
+    }
+
+    .sidebar-game:hover, .sidebar-game.active {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .sidebar-game.active {
+        background: rgba(240, 147, 251, 0.15);
+    }
+
+    .sidebar-game-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .sidebar-game-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sidebar-game-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .sidebar-game-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-game-subtitle {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Main Content */
+    .game-main {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    /* Email input */
+    .uid-section {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .uid-section:focus-within {
+        border-color: rgba(240, 147, 251, 0.5);
+        box-shadow: 0 0 20px rgba(240, 147, 251, 0.15);
+    }
+
+    .uid-input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.05rem;
+        padding: 0.5rem 0;
+        font-weight: 500;
+    }
+
+    .uid-input:focus { outline: none; }
+    .uid-input::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 400; }
+
+    .uid-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.9rem;
+        cursor: pointer;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .uid-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #22c55e;
+        cursor: pointer;
+    }
+
+    /* Tabs */
+    .game-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .game-tab {
+        padding: 0.6rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .game-tab:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+    }
+
+    .game-tab.active {
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.3) 0%, rgba(245, 87, 108, 0.3) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.2);
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #ffffff;
+        letter-spacing: 0.01em;
+    }
+
+    /* Product grid */
+    .currency-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .currency-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 900px) {
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 576px) {
+        .currency-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .product-item {
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .currency-card {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1;
+        min-width: 0;
+    }
+
+    .currency-card:hover {
+        border-color: rgba(240, 147, 251, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .product-item.selected .currency-card {
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .currency-card-selected-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 0.2rem;
+        z-index: 10;
+    }
+
+    .product-item.selected .currency-card-selected-badge {
+        display: flex;
+    }
+
+    .currency-card-amount {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        z-index: 10;
+    }
+
+    .currency-card-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .currency-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .currency-card-placeholder {
+        font-size: 3.5rem;
+        opacity: 0.9;
+    }
+
+    .product-caption {
+        padding: 0.5rem 0.25rem;
+        text-align: center;
+    }
+
+    .product-caption-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.1rem;
+    }
+
+    .product-caption-name {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+
+    .product-caption-old-price {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .product-caption-discount {
+        font-size: 0.65rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    /* Payment Sidebar */
+    .payment-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+        align-self: flex-start;
+    }
+
+    @@media (max-width: 992px) {
+        .game-page { flex-direction: column; }
+        .payment-sidebar {
+            width: 100%;
+            position: relative;
+            order: -1;
+        }
+    }
+
+    .payment-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .payment-product {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .payment-product-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        overflow: hidden;
+    }
+
+    .payment-product-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .payment-product-info { flex-grow: 1; }
+    .payment-product-name { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-product-amount { font-size: 1.1rem; font-weight: 700; }
+
+    .payment-section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .payment-method {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 0.75rem 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .payment-method:hover { border-color: rgba(240, 147, 251, 0.3); }
+
+    .payment-method.selected {
+        border-color: #f093fb;
+        background: rgba(240, 147, 251, 0.1);
+    }
+
+    .payment-method-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .payment-method-name { font-size: 0.7rem; color: rgba(255, 255, 255, 0.7); }
+
+    .payment-promo { margin-bottom: 1.25rem; }
+
+    .payment-promo-input {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+
+    .payment-promo-input input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.85rem;
+    }
+
+    .payment-promo-input input:focus { outline: none; }
+    .payment-promo-input input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .payment-promo-input i { color: rgba(255, 255, 255, 0.4); }
+
+    .payment-summary { margin-bottom: 1.25rem; }
+
+    .payment-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .payment-summary-label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-summary-value { font-size: 0.85rem; font-weight: 600; }
+    .payment-summary-value.discount { color: #ef4444; }
+
+    .payment-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-total-label { font-size: 1rem; font-weight: 600; }
+    .payment-total-value { font-size: 1.75rem; font-weight: 800; }
+
+    .payment-button {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .payment-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+    }
+
+    .payment-terms {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-align: center;
+        margin-bottom: 1rem;
+        line-height: 1.4;
+    }
+
+    .payment-terms a { color: rgba(255, 255, 255, 0.6); }
+
+    .payment-delivery {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1rem;
+    }
+
+    .payment-delivery-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .payment-delivery-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+    .payment-delivery-value { font-size: 0.8rem; font-weight: 600; }
+    .payment-delivery-value.highlight { color: #f093fb; }
+
+    /* Region filter badge */
+    .region-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+    }
+</style>
+
+<div class="container container-wide">
+    <div class="game-page">
+        <!-- Sidebar -->
+        <aside class="game-sidebar">
+            <div class="sidebar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Поиск" id="cardSearch" onkeyup="filterCards(this.value)">
+            </div>
+
+            <div id="cardsList">
+            @foreach (var c in allCards)
+            {
+                var isActive = c.Slug == card.Slug;
+                var hasImg = !string.IsNullOrEmpty(c.ImageUrl);
+
+                <a href="/Catalog/GiftCard/@c.Slug" class="sidebar-game @(isActive ? "active" : "")">
+                    <div class="sidebar-game-icon" style="background: @c.Gradient;">
+                        @if (hasImg)
+                        {
+                            <img src="@c.ImageUrl" alt="@c.Name" />
+                        }
+                        else
+                        {
+                            <span>@c.Icon</span>
+                        }
+                    </div>
+                    <div class="sidebar-game-info">
+                        <span class="sidebar-game-name">@c.Name</span>
+                        @if (!string.IsNullOrEmpty(c.Description))
+                        {
+                            <span class="sidebar-game-subtitle">@c.Description</span>
+                        }
+                    </div>
+                </a>
+            }
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="game-main">
+            <!-- Email input for code delivery -->
+            <div class="uid-section">
+                <input type="email" class="uid-input" id="emailInput" placeholder="Введите свой Email" />
+                <label class="uid-checkbox">
+                    <input type="checkbox" id="emailConfirm" />
+                    Я указал верный Email
+                </label>
+            </div>
+
+            <!-- Tab: Gift Cards -->
+            <div class="game-tabs">
+                <button class="game-tab active">Подарочные карты</button>
+            </div>
+
+            <!-- Products Section -->
+            <div class="product-section" id="section-cards">
+                <h2 class="section-title">Подарочные карты</h2>
+                <div class="currency-grid">
+                    @if (products.Any())
+                    {
+                        @foreach (var product in products)
+                        {
+                            var hasImage = !string.IsNullOrEmpty(product.ImageUrl);
+                            var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
+                            var oldPrice = product.OldPrice ?? product.Price;
+
+                            <div class="product-item" onclick="selectProduct(this, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
+                                <div class="currency-card">
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <span class="currency-card-amount">@product.Amount</span>
+                                    <div class="currency-card-image" style="background: @card.Gradient;">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@product.ImageUrl" alt="@product.Name" />
+                                        }
+                                        else if (!string.IsNullOrEmpty(card.ImageUrl))
+                                        {
+                                            <img src="@card.ImageUrl" alt="@card.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">@card.Icon</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @product.Price.ToString("N0") ₽
+                                        @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                        {
+                                            <span class="product-caption-discount">-@product.Discount%</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
+                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                    {
+                                        <div class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: rgba(255,255,255,0.5);">
+                            <i class="bi bi-box-seam" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                            Товары скоро появятся
+                        </div>
+                    }
+                </div>
+            </div>
+        </main>
+
+        <!-- Payment Sidebar -->
+        <aside class="payment-sidebar">
+            <div class="payment-card">
+                <div class="payment-product">
+                    <div class="payment-product-icon" style="background: @card.Gradient;">
+                        @if (!string.IsNullOrEmpty(card.ImageUrl))
+                        {
+                            <img src="@card.ImageUrl" alt="@card.Name" />
+                        }
+                        else
+                        {
+                            <span>@card.Icon</span>
+                        }
+                    </div>
+                    <div class="payment-product-info">
+                        <div class="payment-product-name">@card.Name</div>
+                        <div class="payment-product-amount" id="selectedAmount">Выберите карту</div>
+                    </div>
+                </div>
+
+                <div class="payment-section-title">Способ оплаты</div>
+                <div class="payment-methods">
+                    <div class="payment-method selected" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">💳</div>
+                        <div class="payment-method-name">Карта</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">🏦</div>
+                        <div class="payment-method-name">СБП</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">📱</div>
+                        <div class="payment-method-name">SberPay</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">💰</div>
+                        <div class="payment-method-name">ЮMoney</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">🅿️</div>
+                        <div class="payment-method-name">PayPal</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this)">
+                        <div class="payment-method-icon">₿</div>
+                        <div class="payment-method-name">Crypto</div>
+                    </div>
+                </div>
+
+                <div class="payment-promo">
+                    <div class="payment-promo-input">
+                        <i class="bi bi-ticket-perforated"></i>
+                        <input type="text" placeholder="Промокод" />
+                        <i class="bi bi-info-circle" style="cursor: pointer;"></i>
+                    </div>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Цена</span>
+                        <span class="payment-summary-value" id="originalPrice">0 ₽</span>
+                    </div>
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Выгода</span>
+                        <span class="payment-summary-value discount" id="discount">-0 ₽</span>
+                    </div>
+                    <div class="payment-summary-total">
+                        <span class="payment-total-label">Итого</span>
+                        <span class="payment-total-value" id="totalPrice">0 ₽</span>
+                    </div>
+                </div>
+
+                <button class="payment-button" onclick="processPurchase()">
+                    Купить <span id="buttonPrice">0</span> ₽
+                </button>
+
+                <div class="payment-terms">
+                    Нажимая "Купить", вы принимаете <a href="#">Правила пользования сайтом</a> и <a href="#">Политику конфиденциальности</a>
+                </div>
+
+                <div class="payment-delivery">
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Доставка</span>
+                        <span class="payment-delivery-value highlight">По Email</span>
+                    </div>
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Срок доставки</span>
+                        <span class="payment-delivery-value">Моментально</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let selectedPrice = 0;
+    let selectedOldPrice = 0;
+    let selectedAmount = '';
+
+    function selectProduct(item, amount, displayName, price, oldPrice) {
+        document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
+        item.classList.add('selected');
+
+        selectedPrice = price;
+        selectedOldPrice = oldPrice;
+        selectedAmount = displayName;
+
+        const discount = oldPrice - price;
+        const discountPercent = oldPrice > 0 ? Math.round((discount / oldPrice) * 100) : 0;
+
+        document.getElementById('selectedAmount').textContent = displayName;
+        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
+
+        if (discount > 0) {
+            document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
+        } else {
+            document.getElementById('discount').textContent = '-0 ₽';
+        }
+
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
+    }
+
+    function selectPayment(method) {
+        document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+        method.classList.add('selected');
+    }
+
+    function processPurchase() {
+        const emailInput = document.getElementById('emailInput');
+        const email = emailInput.value.trim();
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!email) {
+            alert('Пожалуйста, введите ваш Email');
+            emailInput.focus();
+            return;
+        }
+
+        if (!emailPattern.test(email)) {
+            alert('Пожалуйста, введите корректный Email адрес');
+            emailInput.focus();
+            return;
+        }
+
+        const emailConfirm = document.getElementById('emailConfirm');
+        if (emailConfirm && !emailConfirm.checked) {
+            alert('Пожалуйста, подтвердите что Email указан верно');
+            return;
+        }
+
+        if (selectedPrice <= 0) {
+            alert('Пожалуйста, выберите карту');
+            return;
+        }
+
+        alert('Переход к оплате... (Платежные системы будут подключены позже)');
+    }
+
+    // Select first product by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstItem = document.querySelector('.product-item');
+        if (firstItem) {
+            firstItem.click();
+        }
+    });
+
+    // Filter cards in sidebar
+    function filterCards(query) {
+        const cards = document.querySelectorAll('.sidebar-game');
+        const lowerQuery = query.toLowerCase();
+        cards.forEach(card => {
+            const name = card.querySelector('.sidebar-game-name')?.textContent.toLowerCase() || '';
+            const subtitle = card.querySelector('.sidebar-game-subtitle')?.textContent.toLowerCase() || '';
+            if (name.includes(lowerQuery) || subtitle.includes(lowerQuery)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+</script>
+}

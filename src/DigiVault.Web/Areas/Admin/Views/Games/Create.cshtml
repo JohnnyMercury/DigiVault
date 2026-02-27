@@ -1,0 +1,129 @@
+@model DigiVault.Core.Entities.Game
+@{
+    ViewData["Title"] = "Добавить игру";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="mb-0">Добавить игру</h4>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Основная информация</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Название игры <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="Fortnite" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Slug (URL) <span class="text-danger">*</span></label>
+                        <input asp-for="Slug" class="form-control" placeholder="fortnite" required>
+                        <small class="text-muted">Латиницей, без пробелов</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Подзаголовок</label>
+                        <input asp-for="Subtitle" class="form-control" placeholder="Bang Bang">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Порядок сортировки</label>
+                        <input asp-for="SortOrder" type="number" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Валюта</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Название валюты</label>
+                        <input asp-for="Currency" class="form-control" placeholder="V-Bucks">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Короткое название</label>
+                        <input asp-for="CurrencyShort" class="form-control" placeholder="V-Bucks">
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Внешний вид</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Иконка (emoji)</label>
+                        <input asp-for="Icon" class="form-control" placeholder="🎮">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Цвет</label>
+                        <input asp-for="Color" class="form-control" placeholder="#667eea">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Градиент</label>
+                        <input asp-for="Gradient" class="form-control" placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Картинка</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">Загрузить файл</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*" id="imageUpload">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Или URL картинки</label>
+                    <input asp-for="ImageUrl" class="form-control" placeholder="/images/games/fortnite.svg">
+                </div>
+
+                <div id="imagePreview" class="text-center" style="display: none;">
+                    <img src="" alt="Preview" style="max-width: 100%; max-height: 200px; border-radius: 12px;">
+                </div>
+            </div>
+
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Статус</h5>
+
+                <div class="form-check form-switch mb-3">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" checked>
+                    <label asp-for="IsActive" class="form-check-label">Активна</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-check-circle me-1"></i>Создать игру
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('imagePreview');
+                preview.style.display = 'block';
+                preview.querySelector('img').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+}

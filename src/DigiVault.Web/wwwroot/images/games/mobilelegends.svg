@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
+  <defs>
+    <linearGradient id="mlbbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a237e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#283593;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3949ab;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mlbbGold" x1="0%" y1="0%" x2="100%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffec8b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#daa520;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mlbbDiamond" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4dd0e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0097a7;stop-opacity:1" />
+    </linearGradient>
+    <filter id="mlbbGlow">
+      <feGaussianBlur stdDeviation="4" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="250" fill="url(#mlbbBg)" rx="12"/>
+
+  <!-- Decorative lines -->
+  <line x1="0" y1="50" x2="100" y2="0" stroke="rgba(255,215,0,0.2)" stroke-width="2"/>
+  <line x1="300" y1="250" x2="400" y2="200" stroke="rgba(255,215,0,0.2)" stroke-width="2"/>
+  <line x1="0" y1="200" x2="50" y2="250" stroke="rgba(255,215,0,0.15)" stroke-width="2"/>
+  <line x1="350" y1="0" x2="400" y2="50" stroke="rgba(255,215,0,0.15)" stroke-width="2"/>
+
+  <!-- Center glow -->
+  <ellipse cx="200" cy="110" rx="80" ry="60" fill="rgba(0,188,212,0.2)" filter="url(#mlbbGlow)"/>
+
+  <!-- Shield shape -->
+  <path d="M 200 40 L 260 70 L 260 130 Q 260 180 200 200 Q 140 180 140 130 L 140 70 Z" fill="url(#mlbbGold)" stroke="#ffd700" stroke-width="3"/>
+  <path d="M 200 55 L 248 80 L 248 128 Q 248 168 200 185 Q 152 168 152 128 L 152 80 Z" fill="url(#mlbbBg)" stroke="#daa520" stroke-width="2"/>
+
+  <!-- Diamond in center -->
+  <g transform="translate(200, 115)">
+    <polygon points="0,-35 25,0 0,35 -25,0" fill="url(#mlbbDiamond)" stroke="#4dd0e1" stroke-width="2"/>
+    <polygon points="0,-25 17,0 0,25 -17,0" fill="rgba(255,255,255,0.3)"/>
+  </g>
+
+  <!-- Swords crossed behind shield -->
+  <g transform="translate(200, 120)">
+    <rect x="-90" y="-5" width="60" height="10" rx="2" fill="url(#mlbbGold)" transform="rotate(-45)"/>
+    <polygon points="-65,-5 -55,0 -65,5" fill="#daa520" transform="rotate(-45)"/>
+
+    <rect x="30" y="-5" width="60" height="10" rx="2" fill="url(#mlbbGold)" transform="rotate(45)"/>
+    <polygon points="65,-5 55,0 65,5" fill="#daa520" transform="rotate(45)"/>
+  </g>
+
+  <!-- Stars -->
+  <polygon points="80,40 82,46 88,46 83,50 85,56 80,52 75,56 77,50 72,46 78,46" fill="#ffd700"/>
+  <polygon points="320,40 322,46 328,46 323,50 325,56 320,52 315,56 317,50 312,46 318,46" fill="#ffd700"/>
+  <polygon points="60,180 62,186 68,186 63,190 65,196 60,192 55,196 57,190 52,186 58,186" fill="#ffd700" opacity="0.7"/>
+  <polygon points="340,180 342,186 348,186 343,190 345,196 340,192 335,196 337,190 332,186 338,186" fill="#ffd700" opacity="0.7"/>
+
+  <!-- Text -->
+  <text x="200" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="url(#mlbbGold)">MOBILE LEGENDS</text>
+  <text x="200" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">BANG BANG</text>
+</svg>

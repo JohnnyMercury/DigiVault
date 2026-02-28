@@ -172,6 +172,36 @@ public class VpnProvidersController : AdminBaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyImageToAllProducts(int id)
+    {
+        var provider = await _context.VpnProviders
+            .Include(v => v.Products)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (provider == null)
+            return NotFound();
+
+        if (string.IsNullOrEmpty(provider.ImageUrl))
+        {
+            TempData["ErrorMessage"] = "У провайдера нет картинки. Сначала загрузите картинку провайдеру.";
+            return RedirectToAction(nameof(Products), new { id });
+        }
+
+        var count = 0;
+        foreach (var product in provider.Products)
+        {
+            product.ImageUrl = provider.ImageUrl;
+            product.UpdatedAt = DateTime.UtcNow;
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Картинка провайдера применена к {count} товарам";
+        return RedirectToAction(nameof(Products), new { id });
+    }
+
     // === Products ===
 
     public async Task<IActionResult> Products(int id)

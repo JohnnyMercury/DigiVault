@@ -1,0 +1,139 @@
+@model DigiVault.Core.Entities.VpnProvider
+@using DigiVault.Core.Entities
+@{
+    ViewData["Title"] = $"Товары - {Model.Name}";
+    var products = Model.Products.ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: @Model.Gradient; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                }
+                else
+                {
+                    <span>@Model.Icon</span>
+                }
+            </div>
+            <div>
+                <h4 class="mb-0">@Model.Name</h4>
+                <small class="text-muted">@Model.Tagline</small>
+            </div>
+        </div>
+    </div>
+    <a asp-action="CreateProduct" asp-route-id="@Model.Id" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Добавить товар
+    </a>
+</div>
+
+@if (products.Any())
+{
+    <div class="data-card">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Фото</th>
+                        <th>Название</th>
+                        <th>Период</th>
+                        <th>Бонус</th>
+                        <th>Цена</th>
+                        <th>Скидка</th>
+                        <th>Остаток</th>
+                        <th>Статус</th>
+                        <th style="width: 150px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in products)
+                    {
+                        <tr style="@(!product.IsActive ? "opacity: 0.5;" : "")">
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;">
+                                }
+                                else
+                                {
+                                    <div style="width: 40px; height: 40px; background: @Model.Gradient; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                        @Model.Icon
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <div style="font-weight: 500;">@product.Name</div>
+                                @if (!string.IsNullOrEmpty(product.TotalDisplay))
+                                {
+                                    <small class="text-muted">@product.TotalDisplay</small>
+                                }
+                            </td>
+                            <td><span style="font-weight: 600;">@product.Amount</span></td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.Bonus))
+                                {
+                                    <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">@product.Bonus</span>
+                                }
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #667eea;">@product.Price.ToString("N0") ₽</span>
+                                @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                {
+                                    <br><small class="text-muted text-decoration-line-through">@product.OldPrice.Value.ToString("N0") ₽</small>
+                                }
+                            </td>
+                            <td>
+                                @if (product.Discount > 0)
+                                {
+                                    <span class="badge bg-danger">-@product.Discount%</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="@(product.StockQuantity < 10 ? "text-danger fw-bold" : "")">@product.StockQuantity</span>
+                            </td>
+                            <td>
+                                @if (product.IsActive)
+                                {
+                                    <span class="badge-status completed">Активен</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-status cancelled">Скрыт</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-outline-light" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="DeleteProduct" asp-route-id="@product.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Удалить товар? Это действие необратимо.')" title="Удалить">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="data-card text-center py-5">
+        <i class="bi bi-box-seam fs-1 mb-3" style="color: rgba(255,255,255,0.3);"></i>
+        <h5>Товары не найдены</h5>
+        <p class="text-muted mb-3">Добавьте первый товар для этого VPN провайдера</p>
+        <a asp-action="CreateProduct" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Добавить товар
+        </a>
+    </div>
+}

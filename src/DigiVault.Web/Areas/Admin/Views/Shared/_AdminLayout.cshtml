@@ -472,6 +472,10 @@
                         <i class="bi bi-gift-fill"></i>
                         <span>Подарочные карты</span>
                     </a>
+                    <a asp-controller="VpnProviders" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "VpnProviders" ? "active" : "")">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <span>VPN провайдеры</span>
+                    </a>
                     <a asp-controller="Products" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
                         <i class="bi bi-box-seam-fill"></i>
                         <span>Товары (старые)</span>

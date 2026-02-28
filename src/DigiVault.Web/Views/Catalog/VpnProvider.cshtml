@@ -262,6 +262,22 @@
         z-index: 10;
     }
 
+    .currency-card-bonus {
+        position: absolute;
+        bottom: 0.5rem;
+        left: 0.5rem;
+        right: 0.5rem;
+        background: rgba(34, 197, 94, 0.9);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-align: center;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+    }
+
     .currency-card-image {
         width: 100%;
         height: 100%;
@@ -618,6 +634,10 @@
                                 <div class="currency-card">
                                     <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
                                     <span class="currency-card-amount">@product.Amount</span>
+                                    @if (!string.IsNullOrEmpty(product.Bonus))
+                                    {
+                                        <span class="currency-card-bonus">@product.Bonus</span>
+                                    }
                                     <div class="currency-card-image" style="background: @provider.Gradient;">
                                         @if (hasImage)
                                         {
@@ -642,7 +662,13 @@
                                             <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
                                         }
                                     </div>
-                                    <div class="product-caption-name">@displayName</div>
+                                    <div class="product-caption-name">
+                                        @displayName
+                                        @if (!string.IsNullOrEmpty(product.Bonus))
+                                        {
+                                            <span style="color: #22c55e; font-weight: 600;"> @product.Bonus</span>
+                                        }
+                                    </div>
                                 </div>
                             </div>
                         }

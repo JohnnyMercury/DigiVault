@@ -3,6 +3,7 @@ using DigiVault.Core.Enums;
 using DigiVault.Infrastructure.Data;
 using DigiVault.Web.Models;
 using DigiVault.Web.Services;
+using DigiVault.Web.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -168,9 +169,26 @@ public class AccountController : Controller
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
-        var model = new OrdersViewModel
+        var model = new OrderHistoryViewModel
         {
-            Orders = orders,
+            Orders = orders.Select(o => new OrderViewModel
+            {
+                Id = o.Id,
+                OrderNumber = o.OrderNumber,
+                TotalAmount = o.TotalAmount,
+                Status = o.Status,
+                CreatedAt = o.CreatedAt,
+                CompletedAt = o.CompletedAt,
+                Items = o.OrderItems.Select(oi => new OrderItemViewModel
+                {
+                    ProductId = oi.ProductId,
+                    ProductName = oi.Product?.Name ?? "Unknown",
+                    ImageUrl = oi.Product?.ImageUrl,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    TotalPrice = oi.TotalPrice
+                }).ToList()
+            }).ToList(),
             CurrentPage = page,
             TotalPages = 1
         };

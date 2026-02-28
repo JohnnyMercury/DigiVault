@@ -121,6 +121,11 @@ app.MapControllerRoute(
     defaults: new { controller = "Catalog", action = "GiftCard" });
 
 app.MapControllerRoute(
+    name: "catalog-vpnprovider",
+    pattern: "Catalog/VpnProvider/{slug}",
+    defaults: new { controller = "Catalog", action = "VpnProvider" });
+
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 

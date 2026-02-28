@@ -174,7 +174,7 @@ public class VpnProvidersController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApplyImageToAllProducts(int id)
+    public async Task<IActionResult> ApplyImageToAllProducts(int id, IFormFile? imageFile, string? imageUrl)
     {
         var provider = await _context.VpnProviders
             .Include(v => v.Products)
@@ -183,22 +183,34 @@ public class VpnProvidersController : AdminBaseController
         if (provider == null)
             return NotFound();
 
-        if (string.IsNullOrEmpty(provider.ImageUrl))
+        // Determine the image URL: uploaded file takes priority, then URL input
+        string? newImageUrl = null;
+
+        if (imageFile != null)
         {
-            TempData["ErrorMessage"] = "У провайдера нет картинки. Сначала загрузите картинку провайдеру.";
+            newImageUrl = await _fileService.SaveImageAsync(imageFile);
+        }
+        else if (!string.IsNullOrEmpty(imageUrl))
+        {
+            newImageUrl = imageUrl;
+        }
+
+        if (string.IsNullOrEmpty(newImageUrl))
+        {
+            TempData["ErrorMessage"] = "Загрузите картинку или вставьте URL";
             return RedirectToAction(nameof(Products), new { id });
         }
 
         var count = 0;
         foreach (var product in provider.Products)
         {
-            product.ImageUrl = provider.ImageUrl;
+            product.ImageUrl = newImageUrl;
             product.UpdatedAt = DateTime.UtcNow;
             count++;
         }
 
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = $"Картинка провайдера применена к {count} товарам";
+        TempData["SuccessMessage"] = $"Картинка применена к {count} товарам";
         return RedirectToAction(nameof(Products), new { id });
     }
 

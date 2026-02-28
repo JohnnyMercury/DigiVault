@@ -174,8 +174,36 @@ public class CatalogController : Controller
         return View("GiftCards");
     }
 
-    public IActionResult Vpn()
+    public async Task<IActionResult> Vpn()
     {
+        var vpnProviders = await _context.VpnProviders
+            .Where(v => v.IsActive)
+            .OrderBy(v => v.SortOrder)
+            .ToListAsync();
+
+        ViewBag.VpnProviders = vpnProviders;
         return View("Vpn");
+    }
+
+    public async Task<IActionResult> VpnProvider(string slug)
+    {
+        if (string.IsNullOrEmpty(slug))
+            return NotFound();
+
+        var provider = await _context.VpnProviders
+            .Include(v => v.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
+            .FirstOrDefaultAsync(v => v.Slug == slug.ToLower() && v.IsActive);
+
+        if (provider == null)
+            return NotFound();
+
+        var allProviders = await _context.VpnProviders
+            .Where(v => v.IsActive)
+            .OrderBy(v => v.SortOrder)
+            .ToListAsync();
+
+        ViewBag.VpnProvider = provider;
+        ViewBag.AllVpnProviders = allProviders;
+        return View("VpnProvider");
     }
 }

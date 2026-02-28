@@ -1,0 +1,879 @@
+@using DigiVault.Core.Entities
+@{
+    var provider = ViewBag.VpnProvider as VpnProvider;
+    var allProviders = ViewBag.AllVpnProviders as List<VpnProvider> ?? new List<VpnProvider>();
+    ViewData["Title"] = $"{provider!.Name} - VPN подписки";
+
+    var products = provider.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList();
+    var features = new List<string>();
+    if (!string.IsNullOrEmpty(provider.Features))
+    {
+        try { features = System.Text.Json.JsonSerializer.Deserialize<List<string>>(provider.Features) ?? new List<string>(); }
+        catch { }
+    }
+}
+
+<style>
+    .game-page {
+        display: flex;
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    .game-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+    }
+
+    @@media (max-width: 1200px) {
+        .game-sidebar { display: none; }
+    }
+
+    .sidebar-search {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sidebar-search input {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 0.85rem;
+        width: 100%;
+    }
+
+    .sidebar-search input:focus { outline: none; }
+    .sidebar-search input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .sidebar-search i { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
+
+    .sidebar-game {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        margin-bottom: 0.25rem;
+        background: transparent;
+    }
+
+    .sidebar-game:hover, .sidebar-game.active {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .sidebar-game.active {
+        background: rgba(102, 126, 234, 0.15);
+    }
+
+    .sidebar-game-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .sidebar-game-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sidebar-game-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .sidebar-game-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-game-subtitle {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Main Content */
+    .game-main {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    /* Features Banner */
+    .vpn-features-banner {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.15);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .vpn-feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .vpn-feature-item i {
+        color: #22c55e;
+    }
+
+    /* Tabs */
+    .game-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .game-tab {
+        padding: 0.6rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .game-tab:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+    }
+
+    .game-tab.active {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #ffffff;
+        letter-spacing: 0.01em;
+    }
+
+    /* Product grid */
+    .currency-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .currency-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 900px) {
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 576px) {
+        .currency-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .product-item {
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .currency-card {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1;
+        min-width: 0;
+    }
+
+    .currency-card:hover {
+        border-color: rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .product-item.selected .currency-card {
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .currency-card-selected-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 0.2rem;
+        z-index: 10;
+    }
+
+    .product-item.selected .currency-card-selected-badge {
+        display: flex;
+    }
+
+    .currency-card-amount {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: #667eea;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        z-index: 10;
+    }
+
+    .currency-card-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .currency-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .currency-card-placeholder {
+        font-size: 3.5rem;
+        opacity: 0.9;
+    }
+
+    .product-caption {
+        padding: 0.5rem 0.25rem;
+        text-align: left;
+    }
+
+    .product-caption-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.1rem;
+    }
+
+    .product-caption-name {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+
+    .product-caption-old-price {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .product-caption-discount {
+        font-size: 0.65rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    /* Payment Sidebar */
+    .payment-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+        align-self: flex-start;
+    }
+
+    @@media (max-width: 992px) {
+        .game-page { flex-direction: column; }
+        .payment-sidebar {
+            width: 100%;
+            position: relative;
+            order: -1;
+        }
+    }
+
+    .payment-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .payment-product {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .payment-product-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        overflow: hidden;
+    }
+
+    .payment-product-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .payment-product-info { flex-grow: 1; }
+    .payment-product-name { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-product-amount { font-size: 1.1rem; font-weight: 700; }
+
+    .payment-summary { margin-bottom: 1.25rem; }
+
+    .payment-summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .payment-summary-label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-summary-value { font-size: 0.85rem; font-weight: 600; }
+    .payment-summary-value.discount { color: #ef4444; }
+
+    .payment-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .payment-total-label { font-size: 1rem; font-weight: 600; }
+    .payment-total-value { font-size: 1.75rem; font-weight: 800; }
+
+    .payment-button {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .payment-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .payment-delivery {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 1rem;
+    }
+
+    .payment-delivery-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .payment-delivery-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+    .payment-delivery-value { font-size: 0.8rem; font-weight: 600; }
+    .payment-delivery-value.highlight { color: #667eea; }
+
+    /* Trust Badge */
+    .trust-badge {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .trust-badge-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .trust-badge-icon { font-size: 1.6rem; }
+
+    .trust-badge-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.3;
+    }
+
+    .trust-badge-divider {
+        width: 1px;
+        height: 2.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 0 0.75rem;
+    }
+
+    /* Purchase Modal */
+    .purchase-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .purchase-overlay.active { display: flex; }
+
+    .purchase-modal {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    .purchase-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .purchase-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: white; }
+    .purchase-modal-close { background: none; border: none; color: rgba(255, 255, 255, 0.5); font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1; }
+
+    .purchase-modal-body { display: flex; gap: 1.5rem; padding: 1.5rem; }
+    @@media (max-width: 600px) {
+        .purchase-modal-body { flex-direction: column; }
+        .purchase-modal-left { width: 100% !important; }
+    }
+
+    .purchase-modal-left { width: 220px; flex-shrink: 0; text-align: center; }
+    .purchase-modal-image { width: 100%; aspect-ratio: 1; border-radius: 14px; overflow: hidden; background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; }
+    .purchase-modal-image img { width: 100%; height: 100%; object-fit: cover; }
+    .purchase-modal-image .modal-placeholder { font-size: 3rem; }
+    .purchase-modal-product-name { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.25rem; }
+    .purchase-modal-product-desc { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem; }
+    .purchase-modal-price-row { font-size: 0.9rem; color: white; font-weight: 600; }
+    .purchase-modal-price-row .old-price { text-decoration: line-through; color: rgba(255, 255, 255, 0.4); font-size: 0.8rem; margin-left: 0.25rem; }
+
+    .purchase-modal-right { flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+
+    .modal-label { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.4rem; }
+    .modal-input { width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 0.7rem 1rem; color: white; font-size: 0.9rem; }
+    .modal-input:focus { outline: none; border-color: rgba(102, 126, 234, 0.5); }
+    .modal-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+    .modal-hint { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 0.3rem; }
+    .modal-info-banner { background: rgba(102, 126, 234, 0.08); border: 1px solid rgba(102, 126, 234, 0.15); border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); line-height: 1.4; }
+    .modal-info-banner a { color: #667eea; }
+
+    .modal-payment-categories { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+    .modal-pay-cat { display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.05); border: 2px solid transparent; border-radius: 10px; padding: 0.55rem 0.7rem; cursor: pointer; transition: all 0.2s ease; }
+    .modal-pay-cat:hover { border-color: rgba(102, 126, 234, 0.3); }
+    .modal-pay-cat.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+    .modal-pay-cat-icon { font-size: 1.1rem; }
+    .modal-pay-cat-name { font-size: 0.8rem; color: rgba(255, 255, 255, 0.8); }
+
+    .modal-agreement { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); cursor: pointer; }
+    .modal-agreement input { margin-top: 0.15rem; }
+    .modal-agreement a { color: #667eea; }
+
+    .modal-pay-button { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+    .modal-pay-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+</style>
+
+<div class="container container-wide">
+    <div class="game-page">
+        <!-- Sidebar -->
+        <aside class="game-sidebar">
+            <div class="sidebar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Поиск" id="providerSearch" onkeyup="filterProviders(this.value)">
+            </div>
+
+            <div id="providersList">
+            @foreach (var p in allProviders)
+            {
+                var isActive = p.Slug == provider.Slug;
+                var hasImg = !string.IsNullOrEmpty(p.ImageUrl);
+
+                <a href="/Catalog/VpnProvider/@p.Slug" class="sidebar-game @(isActive ? "active" : "")">
+                    <div class="sidebar-game-icon" style="background: @p.Gradient;">
+                        @if (hasImg)
+                        {
+                            <img src="@p.ImageUrl" alt="@p.Name" />
+                        }
+                        else
+                        {
+                            <span>@p.Icon</span>
+                        }
+                    </div>
+                    <div class="sidebar-game-info">
+                        <span class="sidebar-game-name">@p.Name</span>
+                        @if (!string.IsNullOrEmpty(p.Tagline))
+                        {
+                            <span class="sidebar-game-subtitle">@p.Tagline</span>
+                        }
+                    </div>
+                </a>
+            }
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="game-main">
+            <!-- Features Banner -->
+            @if (features.Any())
+            {
+                <div class="vpn-features-banner">
+                    @foreach (var feature in features)
+                    {
+                        <div class="vpn-feature-item">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>@feature</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Tab -->
+            <div class="game-tabs">
+                <button class="game-tab active">VPN подписки</button>
+            </div>
+
+            <!-- Products Section -->
+            <div class="product-section">
+                <h2 class="section-title">@provider.Name — подписки</h2>
+                <div class="currency-grid">
+                    @if (products.Any())
+                    {
+                        @foreach (var product in products)
+                        {
+                            var hasImage = !string.IsNullOrEmpty(product.ImageUrl);
+                            var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
+                            var oldPrice = product.OldPrice ?? product.Price;
+
+                            <div class="product-item" onclick="selectProduct(this, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
+                                <div class="currency-card">
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <span class="currency-card-amount">@product.Amount</span>
+                                    <div class="currency-card-image" style="background: @provider.Gradient;">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@product.ImageUrl" alt="@product.Name" />
+                                        }
+                                        else if (!string.IsNullOrEmpty(provider.ImageUrl))
+                                        {
+                                            <img src="@provider.ImageUrl" alt="@provider.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">@provider.Icon</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @product.Price.ToString("N0") ₽
+                                        @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                        {
+                                            <span class="product-caption-discount">-@product.Discount%</span>
+                                            <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: rgba(255,255,255,0.5);">
+                            <i class="bi bi-box-seam" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                            Товары скоро появятся
+                        </div>
+                    }
+                </div>
+            </div>
+        </main>
+
+        <!-- Payment Sidebar -->
+        <aside class="payment-sidebar">
+            <div class="payment-card">
+                <div class="payment-product">
+                    <div class="payment-product-icon" style="background: @provider.Gradient;">
+                        @if (!string.IsNullOrEmpty(provider.ImageUrl))
+                        {
+                            <img src="@provider.ImageUrl" alt="@provider.Name" />
+                        }
+                        else
+                        {
+                            <span>@provider.Icon</span>
+                        }
+                    </div>
+                    <div class="payment-product-info">
+                        <div class="payment-product-name">@provider.Name</div>
+                        <div class="payment-product-amount" id="selectedAmount">Выберите подписку</div>
+                    </div>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Цена</span>
+                        <span class="payment-summary-value" id="originalPrice">0 ₽</span>
+                    </div>
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Выгода</span>
+                        <span class="payment-summary-value discount" id="discount">-0 ₽</span>
+                    </div>
+                    <div class="payment-summary-total">
+                        <span class="payment-total-label">Итого</span>
+                        <span class="payment-total-value" id="totalPrice">0 ₽</span>
+                    </div>
+                </div>
+
+                <button class="payment-button" onclick="openPurchaseModal()">
+                    Купить <span id="buttonPrice">0</span> ₽
+                </button>
+
+                <div class="payment-delivery">
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Доставка</span>
+                        <span class="payment-delivery-value highlight">По Email</span>
+                    </div>
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Срок доставки</span>
+                        <span class="payment-delivery-value">Моментально</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Badge -->
+            <div class="trust-badge">
+                <div class="trust-badge-item">
+                    <i class="bi bi-shield-check trust-badge-icon" style="color: #667eea;"></i>
+                    <span class="trust-badge-text">Безопасная<br>покупка</span>
+                </div>
+                <div class="trust-badge-divider"></div>
+                <div class="trust-badge-item">
+                    <i class="bi bi-bag-check trust-badge-icon" style="color: #764ba2;"></i>
+                    <span class="trust-badge-text">100K+<br>продаж</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<!-- Purchase Modal -->
+<div class="purchase-overlay" id="purchaseOverlay" onclick="if(event.target===this)closePurchaseModal()">
+    <div class="purchase-modal">
+        <div class="purchase-modal-header">
+            <h3>Купить подписку</h3>
+            <button class="purchase-modal-close" onclick="closePurchaseModal()">&times;</button>
+        </div>
+        <div class="purchase-modal-body">
+            <div class="purchase-modal-left">
+                <div class="purchase-modal-image" id="modalImage" style="background: @provider.Gradient;">
+                    <span class="modal-placeholder">@provider.Icon</span>
+                </div>
+                <div class="purchase-modal-product-name" id="modalProductName">@provider.Name</div>
+                <div class="purchase-modal-product-desc" id="modalProductDesc">Выберите подписку</div>
+                <div class="purchase-modal-price-row">
+                    Цена: <span style="color: #ef4444;" id="modalPrice">0 ₽</span>
+                    <span class="old-price" id="modalOldPrice" style="display:none;">0 ₽</span>
+                </div>
+            </div>
+            <div class="purchase-modal-right">
+                <div>
+                    <div class="modal-label">Ваш Email:</div>
+                    <input type="text" class="modal-input" id="modalInput" placeholder="example@@email.com" />
+                    <div class="modal-hint">На этот адрес будет отправлен ключ подписки</div>
+                </div>
+
+                <div class="modal-info-banner">
+                    <i class="bi bi-info-circle" style="color: #667eea; margin-right: 0.3rem;"></i>
+                    Рекомендуем <a href="/Account/Register">зарегистрироваться</a> для сохранения истории покупок и использования баланса
+                </div>
+
+                <div>
+                    <div class="modal-label">Способ оплаты:</div>
+                    <div class="modal-payment-categories">
+                        <div class="modal-pay-cat selected" onclick="selectModalPayment(this)">
+                            <span class="modal-pay-cat-icon">💳</span>
+                            <span class="modal-pay-cat-name">Банковская карта</span>
+                        </div>
+                        <div class="modal-pay-cat" onclick="selectModalPayment(this)">
+                            <span class="modal-pay-cat-icon">🏦</span>
+                            <span class="modal-pay-cat-name">СБП</span>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="modal-agreement">
+                    <input type="checkbox" id="modalAgree" checked />
+                    Я согласен с условиями <a href="#">пользовательского соглашения</a>
+                </label>
+
+                <button class="modal-pay-button" onclick="processPurchase()">
+                    <i class="bi bi-cart-check"></i> Оплатить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let selectedPrice = 0;
+    let selectedOldPrice = 0;
+    let selectedAmount = '';
+    let selectedImageUrl = '';
+
+    function selectProduct(item, amount, displayName, price, oldPrice) {
+        document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
+        item.classList.add('selected');
+
+        const cardImg = item.querySelector('.currency-card-image img');
+        selectedImageUrl = cardImg ? cardImg.src : '';
+
+        selectedPrice = price;
+        selectedOldPrice = oldPrice;
+        selectedAmount = displayName;
+
+        const discount = oldPrice - price;
+        const discountPercent = oldPrice > 0 ? Math.round((discount / oldPrice) * 100) : 0;
+
+        document.getElementById('selectedAmount').textContent = displayName;
+        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
+
+        if (discount > 0) {
+            document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
+        } else {
+            document.getElementById('discount').textContent = '-0 ₽';
+        }
+
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
+    }
+
+    function openPurchaseModal() {
+        if (selectedPrice <= 0) {
+            alert('Пожалуйста, выберите подписку');
+            return;
+        }
+        document.getElementById('modalProductDesc').textContent = selectedAmount;
+        document.getElementById('modalPrice').textContent = selectedPrice.toLocaleString('ru-RU') + ' ₽';
+        if (selectedOldPrice > selectedPrice) {
+            document.getElementById('modalOldPrice').textContent = selectedOldPrice.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('modalOldPrice').style.display = '';
+        } else {
+            document.getElementById('modalOldPrice').style.display = 'none';
+        }
+        const modalImg = document.getElementById('modalImage');
+        if (selectedImageUrl) {
+            modalImg.innerHTML = '<img src="' + selectedImageUrl + '" alt="Product" />';
+        }
+        document.getElementById('purchaseOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePurchaseModal() {
+        document.getElementById('purchaseOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function selectModalPayment(el) {
+        document.querySelectorAll('.modal-pay-cat').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    function processPurchase() {
+        const input = document.getElementById('modalInput');
+        const val = input.value.trim();
+        const agree = document.getElementById('modalAgree');
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!val) { alert('Пожалуйста, введите Email для доставки'); input.focus(); return; }
+        if (!emailPattern.test(val)) { alert('Введите корректный Email адрес'); input.focus(); return; }
+        if (!agree.checked) { alert('Пожалуйста, примите условия пользовательского соглашения'); return; }
+
+        alert('Переход к оплате... (Платежные системы будут подключены позже)');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstItem = document.querySelector('.product-item');
+        if (firstItem) firstItem.click();
+    });
+
+    function filterProviders(query) {
+        const items = document.querySelectorAll('.sidebar-game');
+        const lowerQuery = query.toLowerCase();
+        items.forEach(item => {
+            const name = item.querySelector('.sidebar-game-name')?.textContent.toLowerCase() || '';
+            const subtitle = item.querySelector('.sidebar-game-subtitle')?.textContent.toLowerCase() || '';
+            item.style.display = (name.includes(lowerQuery) || subtitle.includes(lowerQuery)) ? 'flex' : 'none';
+        });
+    }
+</script>
+}

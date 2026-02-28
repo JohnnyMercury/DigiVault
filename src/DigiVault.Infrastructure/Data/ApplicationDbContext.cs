@@ -27,6 +27,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // Gift Cards
     public DbSet<GiftCard> GiftCards => Set<GiftCard>();
 
+    // VPN Providers
+    public DbSet<VpnProvider> VpnProviders => Set<VpnProvider>();
+
     // Email & Wallet
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
@@ -218,8 +221,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.GiftCardId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.VpnProvider)
+                .WithMany(v => v.Products)
+                .HasForeignKey(e => e.VpnProviderId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.GameId);
             entity.HasIndex(e => e.GiftCardId);
+            entity.HasIndex(e => e.VpnProviderId);
             entity.HasIndex(e => e.ProductType);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.SortOrder);
@@ -237,6 +246,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Gradient).HasMaxLength(200);
             entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.SortOrder);
+        });
+
+        // VpnProvider configuration
+        builder.Entity<VpnProvider>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Tagline).HasMaxLength(200);
+            entity.Property(e => e.Features).HasMaxLength(2000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(10);
+            entity.Property(e => e.Gradient).HasMaxLength(200);
+            entity.HasIndex(e => e.Slug).IsUnique();
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.SortOrder);
         });

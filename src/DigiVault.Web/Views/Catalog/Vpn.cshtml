@@ -1,5 +1,7 @@
+@using DigiVault.Core.Entities
 @{
     ViewData["Title"] = "VPN подписки";
+    var vpnProviders = ViewBag.VpnProviders as List<VpnProvider> ?? new List<VpnProvider>();
 }
 
 <style>
@@ -48,133 +50,85 @@
         color: white;
     }
 
-    /* VPN Cards Grid */
-    .vpn-grid {
+    /* Cards Grid */
+    .cards-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        padding: 2rem 0;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 1.25rem;
+        padding: 1rem 0 2rem;
     }
 
+    @@media (max-width: 1400px) {
+        .cards-grid { grid-template-columns: repeat(5, 1fr); }
+    }
+    @@media (max-width: 1200px) {
+        .cards-grid { grid-template-columns: repeat(4, 1fr); }
+    }
     @@media (max-width: 992px) {
-        .vpn-grid { grid-template-columns: repeat(2, 1fr); }
+        .cards-grid { grid-template-columns: repeat(3, 1fr); }
     }
-    @@media (max-width: 576px) {
-        .vpn-grid { grid-template-columns: 1fr; }
+    @@media (max-width: 768px) {
+        .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 480px) {
+        .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
     }
 
-    .vpn-card {
-        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
-        border-radius: 20px;
-        overflow: hidden;
+    .card-item {
+        text-decoration: none;
+        color: white;
+        display: block;
         transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .vpn-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
-        border-color: rgba(102, 126, 234, 0.3);
+    .card-item:hover {
+        transform: translateY(-5px);
+        color: white;
     }
 
-    .vpn-card-header {
-        padding: 2rem;
-        text-align: center;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-    }
-
-    .vpn-card-logo {
-        width: 80px;
-        height: 80px;
-        margin: 0 auto 1rem;
+    .card-item-image {
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
+        margin-bottom: 0.75rem;
     }
 
-    .vpn-card-logo img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
+    .card-item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transition: transform 0.3s ease;
     }
 
-    .vpn-card-name {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+    .card-item:hover .card-item-image img {
+        transform: scale(1.05);
     }
 
-    .vpn-card-tagline {
-        color: rgba(255, 255, 255, 0.5);
+    .card-item-icon {
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .card-item-name {
         font-size: 0.9rem;
-    }
-
-    .vpn-card-body {
-        padding: 1.5rem 2rem 2rem;
-    }
-
-    .vpn-features {
-        margin-bottom: 1.5rem;
-    }
-
-    .vpn-feature {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 0;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.9rem;
-    }
-
-    .vpn-feature i {
-        color: #22c55e;
-    }
-
-    .vpn-plans {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .vpn-plan {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 12px;
-        text-decoration: none;
-        color: white;
-        transition: all 0.3s ease;
-        border: 1px solid transparent;
-    }
-
-    .vpn-plan:hover {
-        background: rgba(102, 126, 234, 0.1);
-        border-color: rgba(102, 126, 234, 0.3);
-        color: white;
-    }
-
-    .vpn-plan-duration {
         font-weight: 600;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .vpn-plan-price {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-    }
-
-    .vpn-plan-price-old {
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.4);
-        text-decoration: line-through;
-    }
-
-    .vpn-plan-price-current {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #4facfe;
+    .card-item-tagline {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Info Banner */
@@ -249,128 +203,33 @@
     </div>
 </section>
 
-<!-- VPN Grid -->
-<section class="pb-5">
-    <div class="container">
-        <div class="vpn-grid">
-            <!-- NordVPN -->
-            <div class="vpn-card">
-                <div class="vpn-card-header">
-                    <div class="vpn-card-logo">
-                        <img src="/images/products/nordvpn.svg" alt="NordVPN" />
-                    </div>
-                    <h3 class="vpn-card-name">NordVPN</h3>
-                    <p class="vpn-card-tagline">5500+ серверов в 60 странах</p>
-                </div>
-                <div class="vpn-card-body">
-                    <div class="vpn-features">
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Защита до 6 устройств</span>
+@if (vpnProviders.Any())
+{
+    <section class="pb-5">
+        <div class="container">
+            <div class="cards-grid">
+                @foreach (var provider in vpnProviders)
+                {
+                    var hasImage = !string.IsNullOrEmpty(provider.ImageUrl);
+                    <a href="/Catalog/VpnProvider/@provider.Slug" class="card-item">
+                        <div class="card-item-image" style="background: @provider.Gradient;">
+                            @if (hasImage)
+                            {
+                                <img src="@provider.ImageUrl" alt="@provider.Name" />
+                            }
+                            else
+                            {
+                                <span class="card-item-icon">@provider.Icon</span>
+                            }
                         </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Блокировка рекламы</span>
-                        </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Высокая скорость</span>
-                        </div>
-                    </div>
-                    <div class="vpn-plans">
-                        <a href="/Catalog?search=NordVPN+1+Month" class="vpn-plan">
-                            <span class="vpn-plan-duration">1 месяц</span>
-                            <div class="vpn-plan-price">
-                                <span class="vpn-plan-price-current">13 ₽</span>
-                            </div>
-                        </a>
-                        <a href="/Catalog?search=NordVPN+1+Year" class="vpn-plan">
-                            <span class="vpn-plan-duration">1 год</span>
-                            <div class="vpn-plan-price">
-                                <span class="vpn-plan-price-old">156 ₽</span>
-                                <span class="vpn-plan-price-current">60 ₽</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ExpressVPN -->
-            <div class="vpn-card">
-                <div class="vpn-card-header">
-                    <div class="vpn-card-logo">
-                        <img src="/images/products/expressvpn.svg" alt="ExpressVPN" />
-                    </div>
-                    <h3 class="vpn-card-name">ExpressVPN</h3>
-                    <p class="vpn-card-tagline">Серверы в 94 странах</p>
-                </div>
-                <div class="vpn-card-body">
-                    <div class="vpn-features">
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Защита до 8 устройств</span>
-                        </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Ультра-быстрый протокол</span>
-                        </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Поддержка стриминга</span>
-                        </div>
-                    </div>
-                    <div class="vpn-plans">
-                        <a href="/Catalog?search=ExpressVPN+1+Month" class="vpn-plan">
-                            <span class="vpn-plan-duration">1 месяц</span>
-                            <div class="vpn-plan-price">
-                                <span class="vpn-plan-price-current">15 ₽</span>
-                            </div>
-                        </a>
-                        <a href="/Catalog?search=ExpressVPN+1+Year" class="vpn-plan">
-                            <span class="vpn-plan-duration">1 год</span>
-                            <div class="vpn-plan-price">
-                                <span class="vpn-plan-price-old">180 ₽</span>
-                                <span class="vpn-plan-price-current">90 ₽</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Surfshark -->
-            <div class="vpn-card">
-                <div class="vpn-card-header">
-                    <div class="vpn-card-logo">
-                        <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: #1dcdfe;"></i>
-                    </div>
-                    <h3 class="vpn-card-name">Surfshark</h3>
-                    <p class="vpn-card-tagline">Безлимитные устройства</p>
-                </div>
-                <div class="vpn-card-body">
-                    <div class="vpn-features">
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Неограниченное кол-во устройств</span>
-                        </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>CleanWeb (блокировка рекламы)</span>
-                        </div>
-                        <div class="vpn-feature">
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Camouflage Mode</span>
-                        </div>
-                    </div>
-                    <div class="vpn-plans">
-                        <a href="/Catalog?search=Surfshark" class="vpn-plan">
-                            <span class="vpn-plan-duration">1 месяц</span>
-                            <div class="vpn-plan-price">
-                                <span class="vpn-plan-price-current">Скоро</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                        <div class="card-item-name">@provider.Name</div>
+                        @if (!string.IsNullOrEmpty(provider.Tagline))
+                        {
+                            <div class="card-item-tagline">@provider.Tagline</div>
+                        }
+                    </a>
+                }
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}

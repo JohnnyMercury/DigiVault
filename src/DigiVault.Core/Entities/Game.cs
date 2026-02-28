@@ -32,6 +32,7 @@ public class GameProduct
     public int Id { get; set; }
     public int? GameId { get; set; }
     public int? GiftCardId { get; set; }
+    public int? VpnProviderId { get; set; }
 
     // Product info
     public string Name { get; set; } = string.Empty; // "1000 V-Bucks"
@@ -64,6 +65,7 @@ public class GameProduct
     // Navigation
     public virtual Game? Game { get; set; }
     public virtual GiftCard? GiftCard { get; set; }
+    public virtual VpnProvider? VpnProvider { get; set; }
     public virtual ICollection<ProductKey> ProductKeys { get; set; } = new List<ProductKey>();
 }
 

@@ -170,6 +170,47 @@ public class GamesController : AdminBaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyImageToAllProducts(int id, IFormFile? imageFile, string? imageUrl)
+    {
+        var game = await _context.Games
+            .Include(g => g.Products)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (game == null)
+            return NotFound();
+
+        string? newImageUrl = null;
+
+        if (imageFile != null)
+        {
+            newImageUrl = await _fileService.SaveImageAsync(imageFile);
+        }
+        else if (!string.IsNullOrEmpty(imageUrl))
+        {
+            newImageUrl = imageUrl;
+        }
+
+        if (string.IsNullOrEmpty(newImageUrl))
+        {
+            TempData["ErrorMessage"] = "Загрузите картинку или вставьте URL";
+            return RedirectToAction(nameof(Products), new { id });
+        }
+
+        var count = 0;
+        foreach (var product in game.Products)
+        {
+            product.ImageUrl = newImageUrl;
+            product.UpdatedAt = DateTime.UtcNow;
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Картинка применена к {count} товарам";
+        return RedirectToAction(nameof(Products), new { id });
+    }
+
     // GET: Admin/Games/Products/5
     public async Task<IActionResult> Products(int id, GameProductType? type = null)
     {

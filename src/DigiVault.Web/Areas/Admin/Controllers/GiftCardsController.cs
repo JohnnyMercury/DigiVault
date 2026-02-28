@@ -172,6 +172,47 @@ public class GiftCardsController : AdminBaseController
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyImageToAllProducts(int id, IFormFile? imageFile, string? imageUrl)
+    {
+        var card = await _context.GiftCards
+            .Include(g => g.Products)
+            .FirstOrDefaultAsync(g => g.Id == id);
+
+        if (card == null)
+            return NotFound();
+
+        string? newImageUrl = null;
+
+        if (imageFile != null)
+        {
+            newImageUrl = await _fileService.SaveImageAsync(imageFile);
+        }
+        else if (!string.IsNullOrEmpty(imageUrl))
+        {
+            newImageUrl = imageUrl;
+        }
+
+        if (string.IsNullOrEmpty(newImageUrl))
+        {
+            TempData["ErrorMessage"] = "Загрузите картинку или вставьте URL";
+            return RedirectToAction(nameof(Products), new { id });
+        }
+
+        var count = 0;
+        foreach (var product in card.Products)
+        {
+            product.ImageUrl = newImageUrl;
+            product.UpdatedAt = DateTime.UtcNow;
+            count++;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Картинка применена к {count} товарам";
+        return RedirectToAction(nameof(Products), new { id });
+    }
+
     // === Products ===
 
     public async Task<IActionResult> Products(int id)

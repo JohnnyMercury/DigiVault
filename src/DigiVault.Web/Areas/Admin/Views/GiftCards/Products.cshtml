@@ -34,6 +34,45 @@
 
 @if (products.Any())
 {
+    <div class="data-card mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="bi bi-images me-2"></i>Картинка для всех товаров</h5>
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#bulkImageBlock">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+        </div>
+        <div class="collapse" id="bulkImageBlock">
+            <form asp-action="ApplyImageToAllProducts" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="row align-items-end g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Загрузить картинку</label>
+                        <div class="bulk-upload-zone" id="bulkUploadZone" onclick="document.getElementById('bulkImageUpload').click()">
+                            <input type="file" name="imageFile" class="d-none" accept="image/*" id="bulkImageUpload">
+                            <div class="bulk-upload-content" id="bulkUploadContent">
+                                <i class="bi bi-cloud-arrow-up text-primary me-2"></i>
+                                <span>Нажмите или перетащите файл</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Или вставьте URL</label>
+                        <input type="text" name="imageUrl" class="form-control" placeholder="https://example.com/image.png">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-info w-100" onclick="return confirm('Применить эту картинку ко всем @products.Count товарам?')">
+                            <i class="bi bi-check2-all me-1"></i>Применить
+                        </button>
+                    </div>
+                </div>
+                <div id="bulkPreview" class="mt-3" style="display: none;">
+                    <img src="" alt="Preview" style="max-height: 80px; border-radius: 8px;">
+                    <span class="text-success small ms-2"><i class="bi bi-check-circle"></i> <span id="bulkFileName"></span></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="data-card">
         <div class="table-responsive">
             <table class="table">
@@ -132,4 +171,61 @@ else
             <i class="bi bi-plus-circle me-1"></i>Добавить товар
         </a>
     </div>
+}
+
+@section Styles {
+<style>
+    .bulk-upload-zone {
+        border: 2px dashed rgba(102, 126, 234, 0.3);
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .bulk-upload-zone:hover, .bulk-upload-zone.dragover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+    .bulk-upload-content {
+        display: flex;
+        align-items: center;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+    const zone = document.getElementById('bulkUploadZone');
+    if (zone) {
+        const input = document.getElementById('bulkImageUpload');
+        const preview = document.getElementById('bulkPreview');
+        const content = document.getElementById('bulkUploadContent');
+        const fileName = document.getElementById('bulkFileName');
+
+        input.addEventListener('change', function(e) { showFile(e.target.files[0]); });
+
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) { input.files = e.dataTransfer.files; showFile(file); }
+        });
+
+        function showFile(file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.style.display = 'block';
+                    preview.querySelector('img').src = e.target.result;
+                    fileName.textContent = file.name;
+                    content.innerHTML = '<i class="bi bi-check-circle text-success me-2"></i><span class="text-success">' + file.name + '</span>';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+</script>
 }

@@ -193,44 +193,6 @@ public class ProductsController : AdminBaseController
         return RedirectToAction(nameof(Index));
     }
 
-    public async Task<IActionResult> Keys(int id)
-    {
-        var product = await _context.Products
-            .Include(p => p.ProductKeys)
-            .FirstOrDefaultAsync(p => p.Id == id);
-
-        if (product == null)
-            return NotFound();
-
-        return View(product);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddKeys(int productId, string keys)
-    {
-        var product = await _context.Products.FindAsync(productId);
-        if (product == null)
-            return NotFound();
-
-        var keyList = keys.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-            .Select(k => k.Trim())
-            .Where(k => !string.IsNullOrEmpty(k))
-            .ToList();
-
-        foreach (var key in keyList)
-        {
-            _context.ProductKeys.Add(new ProductKey
-            {
-                ProductId = productId,
-                KeyValue = key
-            });
-        }
-
-        product.StockQuantity += keyList.Count;
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = $"Added {keyList.Count} keys";
-        return RedirectToAction(nameof(Keys), new { id = productId });
-    }
+    // Keys are now auto-generated during purchase (GUID-based)
+    // Legacy Keys/AddKeys actions removed
 }

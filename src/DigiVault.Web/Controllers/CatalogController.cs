@@ -1,23 +1,51 @@
+using System.Security.Claims;
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
 using DigiVault.Core.Interfaces;
 using DigiVault.Infrastructure.Data;
 using DigiVault.Web.Models;
+using DigiVault.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DigiVault.Web.Controllers;
 
+public class PurchaseRequest
+{
+    public int GameProductId { get; set; }
+    public string? DeliveryInfo { get; set; }
+    public string PaymentMethod { get; set; } = "balance";
+}
+
 public class CatalogController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly IGameService _gameService;
+    private readonly IOrderService _orderService;
     private const int PageSize = 12;
 
-    public CatalogController(ApplicationDbContext context, IGameService gameService)
+    public CatalogController(ApplicationDbContext context, IGameService gameService, IOrderService orderService)
     {
         _context = context;
         _gameService = gameService;
+        _orderService = orderService;
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Purchase([FromBody] PurchaseRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Json(new PurchaseResult { Success = false, ErrorMessage = "Необходимо войти в аккаунт" });
+
+        if (request.PaymentMethod != "balance")
+            return Json(new PurchaseResult { Success = false, ErrorMessage = "Пока доступна только оплата с баланса" });
+
+        var result = await _orderService.CreatePurchaseAsync(userId, request.GameProductId, 1, request.DeliveryInfo);
+        return Json(result);
     }
 
     public async Task<IActionResult> Index(ProductCategory? category = null, string? search = null, string? sort = null, int page = 1)

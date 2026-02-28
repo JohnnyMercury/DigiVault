@@ -38,7 +38,7 @@
                             <div class="flex-grow-1">
                                 <h6>@item.ProductName</h6>
                                 <div class="text-muted small mb-2">
-                                    Qty: @item.Quantity x $@item.UnitPrice.ToString("F2") = <span class="text-primary fw-bold">$@item.TotalPrice.ToString("F2")</span>
+                                    Кол-во: @item.Quantity x @item.UnitPrice.ToString("N0") ₽ = <span class="text-primary fw-bold">@item.TotalPrice.ToString("N0") ₽</span>
                                 </div>
                                 @if (item.ProductKeys.Any())
                                 {
@@ -84,8 +84,8 @@
                     }
                     <hr class="border-secondary">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fs-5">Total</span>
-                        <span class="fs-4 fw-bold text-primary">$@Model.TotalAmount.ToString("F2")</span>
+                        <span class="fs-5">Итого</span>
+                        <span class="fs-4 fw-bold text-primary">@Model.TotalAmount.ToString("N0") ₽</span>
                     </div>
                 </div>
             </div>

@@ -66,6 +66,7 @@ public class GameProduct
     public virtual Game? Game { get; set; }
     public virtual GiftCard? GiftCard { get; set; }
     public virtual VpnProvider? VpnProvider { get; set; }
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public virtual ICollection<ProductKey> ProductKeys { get; set; } = new List<ProductKey>();
 }
 

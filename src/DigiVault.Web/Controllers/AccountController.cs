@@ -164,7 +164,7 @@ public class AccountController : Controller
 
         var orders = await _context.Orders
             .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
+            .ThenInclude(oi => oi.GameProduct)
             .Where(o => o.UserId == user.Id)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
@@ -181,9 +181,9 @@ public class AccountController : Controller
                 CompletedAt = o.CompletedAt,
                 Items = o.OrderItems.Select(oi => new OrderItemViewModel
                 {
-                    ProductId = oi.ProductId,
-                    ProductName = oi.Product?.Name ?? "Unknown",
-                    ImageUrl = oi.Product?.ImageUrl,
+                    ProductId = oi.GameProductId,
+                    ProductName = oi.GameProduct?.Name ?? "Unknown",
+                    ImageUrl = oi.GameProduct?.ImageUrl,
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
                     TotalPrice = oi.TotalPrice
@@ -383,7 +383,7 @@ public class AccountController : Controller
 
         var order = await _context.Orders
             .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
+                .ThenInclude(oi => oi.GameProduct)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.ProductKeys)
             .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);

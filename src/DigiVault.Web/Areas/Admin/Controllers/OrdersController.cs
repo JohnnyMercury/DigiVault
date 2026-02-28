@@ -51,7 +51,7 @@ public class OrdersController : AdminBaseController
         var order = await _context.Orders
             .Include(o => o.User)
             .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
+                .ThenInclude(oi => oi.GameProduct)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.ProductKeys)
             .FirstOrDefaultAsync(o => o.Id == id);

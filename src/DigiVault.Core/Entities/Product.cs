@@ -19,7 +19,4 @@ public class Product
 
     // For VPN: duration in days, for game currency: amount, for gift cards: nominal value
     public string? Metadata { get; set; }
-
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-    public virtual ICollection<ProductKey> ProductKeys { get; set; } = new List<ProductKey>();
 }

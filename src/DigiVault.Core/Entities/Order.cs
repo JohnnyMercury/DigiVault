@@ -11,6 +11,7 @@ public class Order
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; set; }
+    public string? DeliveryInfo { get; set; } // Email, UID, PlayerID для доставки
 
     public virtual ApplicationUser User { get; set; } = null!;
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

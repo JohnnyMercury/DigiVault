@@ -630,7 +630,7 @@
                             var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
                             var oldPrice = product.OldPrice ?? product.Price;
 
-                            <div class="product-item" onclick="selectProduct(this, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
+                            <div class="product-item" onclick="selectProduct(this, @product.Id, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
                                 <div class="currency-card">
                                     <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
                                     <span class="currency-card-amount">@product.Amount</span>
@@ -751,6 +751,8 @@
     </div>
 </div>
 
+@Html.AntiForgeryToken()
+
 <!-- Purchase Modal -->
 <div class="purchase-overlay" id="purchaseOverlay" onclick="if(event.target===this)closePurchaseModal()">
     <div class="purchase-modal">
@@ -815,14 +817,16 @@
     let selectedOldPrice = 0;
     let selectedAmount = '';
     let selectedImageUrl = '';
+    let selectedProductId = 0;
 
-    function selectProduct(item, amount, displayName, price, oldPrice) {
+    function selectProduct(item, productId, amount, displayName, price, oldPrice) {
         document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
         item.classList.add('selected');
 
         const cardImg = item.querySelector('.currency-card-image img');
         selectedImageUrl = cardImg ? cardImg.src : '';
 
+        selectedProductId = productId;
         selectedPrice = price;
         selectedOldPrice = oldPrice;
         selectedAmount = displayName;
@@ -883,8 +887,65 @@
         if (!val) { alert('Пожалуйста, введите Email для доставки'); input.focus(); return; }
         if (!emailPattern.test(val)) { alert('Введите корректный Email адрес'); input.focus(); return; }
         if (!agree.checked) { alert('Пожалуйста, примите условия пользовательского соглашения'); return; }
+        if (!selectedProductId) { alert('Пожалуйста, выберите подписку'); return; }
 
-        alert('Переход к оплате... (Платежные системы будут подключены позже)');
+        @if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            <text>
+            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            return;
+            </text>
+        }
+
+        const btn = document.querySelector('.modal-pay-button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка...';
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        fetch('/Catalog/Purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+            } else {
+                alert(data.errorMessage || 'Ошибка при покупке');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+            }
+        })
+        .catch(() => {
+            alert('Ошибка соединения');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+        });
+    }
+
+    function showPurchaseSuccess(orderNumber, productKey, newBalance) {
+        const modal = document.querySelector('.purchase-modal-body');
+        modal.innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                <h3 style="color: #22c55e; margin-bottom: 0.5rem;">Заказ оформлен!</h3>
+                <p style="color: rgba(255,255,255,0.6); margin-bottom: 1.5rem;">Номер заказа: <code>${orderNumber}</code></p>
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 0.5rem;">Ваш ключ:</div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                        <code style="font-size: 1.1rem; color: #667eea; word-break: break-all;">${productKey}</code>
+                        <button onclick="navigator.clipboard.writeText('${productKey}');this.innerHTML='<i class=\\'bi bi-check\\'></i>'" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 0.3rem 0.5rem; border-radius: 6px; cursor: pointer;">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                ${newBalance !== null ? '<p style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Баланс: ' + Math.floor(newBalance).toLocaleString('ru-RU') + ' ₽</p>' : ''}
+                <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem;">
+                    <a href="/Account/Orders" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.6rem 1.5rem; border-radius: 10px; text-decoration: none; font-weight: 500;">Мои заказы</a>
+                    <button onclick="closePurchaseModal();location.reload();" style="background: rgba(255,255,255,0.1); color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 10px; cursor: pointer;">Продолжить</button>
+                </div>
+            </div>`;
     }
 
     document.addEventListener('DOMContentLoaded', function() {

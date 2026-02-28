@@ -63,9 +63,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.KeyValue).HasMaxLength(500).IsRequired();
-            entity.HasOne(e => e.Product)
-                .WithMany(p => p.ProductKeys)
-                .HasForeignKey(e => e.ProductId)
+            entity.HasOne(e => e.GameProduct)
+                .WithMany(gp => gp.ProductKeys)
+                .HasForeignKey(e => e.GameProductId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.OrderItem)
                 .WithMany(oi => oi.ProductKeys)
@@ -80,6 +80,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(e => e.Id);
             entity.Property(e => e.OrderNumber).HasMaxLength(50).IsRequired();
             entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
+            entity.Property(e => e.DeliveryInfo).HasMaxLength(500);
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(e => e.UserId)
@@ -98,9 +99,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(o => o.OrderItems)
                 .HasForeignKey(e => e.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Product)
-                .WithMany(p => p.OrderItems)
-                .HasForeignKey(e => e.ProductId)
+            entity.HasOne(e => e.GameProduct)
+                .WithMany(gp => gp.OrderItems)
+                .HasForeignKey(e => e.GameProductId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

@@ -1,13 +1,13 @@
 @model OrderViewModel
 @{
-    ViewData["Title"] = $"Order {Model.OrderNumber}";
+    ViewData["Title"] = $"Заказ {Model.OrderNumber}";
 }
 
 <div class="container py-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="Profile" class="text-primary">Profile</a></li>
-            <li class="breadcrumb-item"><a asp-action="Orders" class="text-primary">Orders</a></li>
+            <li class="breadcrumb-item"><a asp-action="Profile" class="text-primary">Профиль</a></li>
+            <li class="breadcrumb-item"><a asp-action="Orders" class="text-primary">Заказы</a></li>
             <li class="breadcrumb-item active">@Model.OrderNumber</li>
         </ol>
     </nav>
@@ -16,7 +16,7 @@
         <div class="col-lg-8">
             <div class="card bg-dark border-secondary mb-4">
                 <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>Order Items</h5>
+                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>Товары</h5>
                     <span class="badge bg-@Model.StatusClass">@Model.StatusName</span>
                 </div>
                 <div class="card-body">
@@ -43,7 +43,7 @@
                                 @if (item.ProductKeys.Any())
                                 {
                                     <div class="mt-2">
-                                        <label class="text-muted small">Your Keys:</label>
+                                        <label class="text-muted small">Ваши ключи:</label>
                                         @foreach (var key in item.ProductKeys)
                                         {
                                             <div class="input-group input-group-sm mt-1">
@@ -64,21 +64,21 @@
         <div class="col-lg-4">
             <div class="card bg-dark border-secondary">
                 <div class="card-header border-secondary">
-                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Информация о заказе</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <div class="text-muted small">Order Number</div>
+                        <div class="text-muted small">Номер заказа</div>
                         <code>@Model.OrderNumber</code>
                     </div>
                     <div class="mb-3">
-                        <div class="text-muted small">Order Date</div>
+                        <div class="text-muted small">Дата заказа</div>
                         <div>@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</div>
                     </div>
                     @if (Model.CompletedAt.HasValue)
                     {
                         <div class="mb-3">
-                            <div class="text-muted small">Completed</div>
+                            <div class="text-muted small">Выполнен</div>
                             <div>@Model.CompletedAt.Value.ToString("MMMM dd, yyyy HH:mm")</div>
                         </div>
                     }

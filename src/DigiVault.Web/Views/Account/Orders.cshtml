@@ -1,10 +1,10 @@
 @model OrderHistoryViewModel
 @{
-    ViewData["Title"] = "My Orders";
+    ViewData["Title"] = "Мои заказы";
 }
 
 <div class="container py-4">
-    <h2 class="mb-4"><i class="bi bi-box me-2"></i>My Orders</h2>
+    <h2 class="mb-4"><i class="bi bi-box me-2"></i>Мои заказы</h2>
 
     @if (Model.Orders.Any())
     {
@@ -13,11 +13,11 @@
                 <table class="table table-dark table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Order #</th>
-                            <th>Date</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Status</th>
+                            <th>Заказ</th>
+                            <th>Дата</th>
+                            <th>Товары</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -27,14 +27,14 @@
                             <tr>
                                 <td><code>@order.OrderNumber</code></td>
                                 <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
-                                <td>@order.Items.Count item(s)</td>
-                                <td class="text-primary fw-bold">$@order.TotalAmount.ToString("F2")</td>
+                                <td>@order.Items.Count шт.</td>
+                                <td class="text-primary fw-bold">@order.TotalAmount.ToString("N0") ₽</td>
                                 <td>
                                     <span class="badge bg-@order.StatusClass">@order.StatusName</span>
                                 </td>
                                 <td>
                                     <a asp-action="OrderDetails" asp-route-orderNumber="@order.OrderNumber" class="btn btn-sm btn-outline-primary">
-                                        View
+                                        Подробнее
                                     </a>
                                 </td>
                             </tr>
@@ -62,10 +62,10 @@
     {
         <div class="text-center py-5">
             <i class="bi bi-box display-1 text-muted"></i>
-            <h4 class="mt-3">No orders yet</h4>
-            <p class="text-muted">Start shopping to see your orders here</p>
+            <h4 class="mt-3">Заказов пока нет</h4>
+            <p class="text-muted">Начните покупки, чтобы увидеть заказы здесь</p>
             <a asp-controller="Catalog" asp-action="Index" class="btn btn-primary">
-                <i class="bi bi-grid me-2"></i>Browse Products
+                <i class="bi bi-grid me-2"></i>Каталог
             </a>
         </div>
     }

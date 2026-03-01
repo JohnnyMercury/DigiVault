@@ -46,7 +46,7 @@
                     <tr>
                         <td><code>@order.OrderNumber</code></td>
                         <td>@order.User?.Email</td>
-                        <td class="text-primary fw-bold">$@order.TotalAmount.ToString("F2")</td>
+                        <td class="text-primary fw-bold">@order.TotalAmount.ToString("N0") ₽</td>
                         <td><span class="badge bg-@statusClass">@order.Status</span></td>
                         <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
                         <td>

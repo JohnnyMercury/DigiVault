@@ -544,12 +544,25 @@
     .modal-info-banner { background: rgba(102, 126, 234, 0.08); border: 1px solid rgba(102, 126, 234, 0.15); border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); line-height: 1.4; }
     .modal-info-banner a { color: #667eea; }
 
-    .modal-payment-categories { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
-    .modal-pay-cat { display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.05); border: 2px solid transparent; border-radius: 10px; padding: 0.55rem 0.7rem; cursor: pointer; transition: all 0.2s ease; }
-    .modal-pay-cat:hover { border-color: rgba(102, 126, 234, 0.3); }
-    .modal-pay-cat.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
-    .modal-pay-cat-icon { font-size: 1.1rem; }
-    .modal-pay-cat-name { font-size: 0.8rem; color: rgba(255, 255, 255, 0.8); }
+    .modal-payment-methods { display: flex; flex-direction: column; gap: 0.5rem; }
+    .modal-pay-method { display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.75rem 1rem; cursor: pointer; transition: all 0.2s ease; }
+    .modal-pay-method:hover:not(.disabled) { border-color: rgba(102, 126, 234, 0.4); }
+    .modal-pay-method.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.08); }
+    .modal-pay-method.disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-pay-method-left { display: flex; align-items: center; gap: 0.75rem; }
+    .modal-pay-method-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; flex-shrink: 0; }
+    .modal-pay-method-title { font-size: 0.9rem; font-weight: 600; color: rgba(255, 255, 255, 0.95); }
+    .modal-pay-method-desc { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.1rem; }
+    .modal-pay-method-right { display: flex; align-items: center; gap: 0.5rem; }
+    .modal-pay-badge-instant { font-size: 0.7rem; color: #22c55e; font-weight: 600; }
+    .modal-pay-badge-soon { font-size: 0.65rem; background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); padding: 0.2rem 0.5rem; border-radius: 6px; }
+    .modal-pay-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2); position: relative; flex-shrink: 0; }
+    .modal-pay-radio.active { border-color: #667eea; }
+    .modal-pay-radio.active::after { content: ''; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: #667eea; }
+    .modal-promo-section { margin-top: 0; }
+    .modal-promo-row { display: flex; gap: 0.5rem; }
+    .modal-promo-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 0.7rem 1.2rem; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+    .modal-promo-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
     .modal-agreement { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); cursor: pointer; }
     .modal-agreement input { margin-top: 0.15rem; }
@@ -779,28 +792,68 @@
                     <div class="modal-hint">На этот адрес будет отправлен ключ подписки</div>
                 </div>
 
-                <div class="modal-info-banner">
-                    <i class="bi bi-info-circle" style="color: #667eea; margin-right: 0.3rem;"></i>
-                    Рекомендуем <a href="/Account/Register">зарегистрироваться</a> для сохранения истории покупок и использования баланса
-                </div>
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div class="modal-info-banner">
+                        <i class="bi bi-info-circle" style="color: #667eea; margin-right: 0.3rem;"></i>
+                        Рекомендуем <a href="/Account/Register">зарегистрироваться</a> для сохранения истории покупок и использования баланса
+                    </div>
+                }
 
                 <div>
                     <div class="modal-label">Способ оплаты:</div>
-                    <div class="modal-payment-categories">
-                        <div class="modal-pay-cat selected" onclick="selectModalPayment(this)">
-                            <span class="modal-pay-cat-icon">💳</span>
-                            <span class="modal-pay-cat-name">Банковская карта</span>
+                    <div class="modal-payment-methods">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="modal-pay-method selected" data-method="balance" onclick="selectModalPayment(this)">
+                                <div class="modal-pay-method-left">
+                                    <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);"><i class="bi bi-wallet2"></i></span>
+                                    <div>
+                                        <div class="modal-pay-method-title">Баланс аккаунта</div>
+                                        <div class="modal-pay-method-desc">Доступно: <span id="userBalanceDisplay">@(ViewBag.UserBalance?.ToString("N2") ?? "0.00")</span> ₽</div>
+                                    </div>
+                                </div>
+                                <div class="modal-pay-method-right">
+                                    <span class="modal-pay-badge-instant">Мгновенно</span>
+                                    <span class="modal-pay-radio active"></span>
+                                </div>
+                            </div>
+                        }
+                        <div class="modal-pay-method disabled" data-method="card">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-credit-card"></i></span>
+                                <div><div class="modal-pay-method-title">Банковская карта</div><div class="modal-pay-method-desc">Visa, MasterCard, МИР</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
                         </div>
-                        <div class="modal-pay-cat" onclick="selectModalPayment(this)">
-                            <span class="modal-pay-cat-icon">🏦</span>
-                            <span class="modal-pay-cat-name">СБП</span>
+                        <div class="modal-pay-method disabled" data-method="sbp">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"><i class="bi bi-lightning-charge"></i></span>
+                                <div><div class="modal-pay-method-title">СБП</div><div class="modal-pay-method-desc">Система быстрых платежей</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
                         </div>
+                        <div class="modal-pay-method disabled" data-method="qr">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="bi bi-qr-code"></i></span>
+                                <div><div class="modal-pay-method-title">QR-код</div><div class="modal-pay-method-desc">Оплата по QR-коду</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-promo-section">
+                    <div class="modal-label">Промокод (необязательно)</div>
+                    <div class="modal-promo-row">
+                        <input type="text" class="modal-input" id="promoInput" placeholder="Введите промокод" style="flex: 1;" />
+                        <button class="modal-promo-btn" onclick="alert('Промокоды скоро будут доступны!')">Применить</button>
                     </div>
                 </div>
 
                 <label class="modal-agreement">
                     <input type="checkbox" id="modalAgree" checked />
-                    Я согласен с условиями <a href="#">пользовательского соглашения</a>
+                    Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a>
                 </label>
 
                 <button class="modal-pay-button" onclick="processPurchase()">
@@ -874,8 +927,15 @@
     }
 
     function selectModalPayment(el) {
-        document.querySelectorAll('.modal-pay-cat').forEach(c => c.classList.remove('selected'));
+        if (el.classList.contains('disabled')) return;
+        document.querySelectorAll('.modal-pay-method').forEach(c => {
+            c.classList.remove('selected');
+            const radio = c.querySelector('.modal-pay-radio');
+            if (radio) radio.classList.remove('active');
+        });
         el.classList.add('selected');
+        const radio = el.querySelector('.modal-pay-radio');
+        if (radio) radio.classList.add('active');
     }
 
     function processPurchase() {

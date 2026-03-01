@@ -28,7 +28,7 @@
                 {
                     <tr>
                         <td>@user.Email</td>
-                        <td class="text-primary">$@user.Balance.ToString("F2")</td>
+                        <td class="text-primary">@user.Balance.ToString("N2") ₽</td>
                         <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td>@(user.LastLoginAt?.ToString("MMM dd, HH:mm") ?? "-")</td>
                         <td>

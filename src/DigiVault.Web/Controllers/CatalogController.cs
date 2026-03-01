@@ -32,6 +32,16 @@ public class CatalogController : Controller
         _orderService = orderService;
     }
 
+    private async Task SetUserBalanceAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var user = await _context.Users.FindAsync(userId);
+            ViewBag.UserBalance = user?.Balance ?? 0m;
+        }
+    }
+
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
@@ -136,6 +146,7 @@ public class CatalogController : Controller
             ViewBag.GameSlug = slug;
             ViewBag.GameName = GetGameDisplayName(slug);
             ViewBag.Game = null;
+            await SetUserBalanceAsync();
             return View("Game", products);
         }
 
@@ -146,6 +157,7 @@ public class CatalogController : Controller
         ViewBag.GameName = game.Name;
         ViewBag.Game = game;
         ViewBag.AllGames = allGames;
+        await SetUserBalanceAsync();
 
         return View("Game", new List<Product>());
     }
@@ -187,6 +199,7 @@ public class CatalogController : Controller
 
         ViewBag.GiftCard = card;
         ViewBag.AllGiftCards = allCards;
+        await SetUserBalanceAsync();
         return View("GiftCard");
     }
 
@@ -232,6 +245,7 @@ public class CatalogController : Controller
 
         ViewBag.VpnProvider = provider;
         ViewBag.AllVpnProviders = allProviders;
+        await SetUserBalanceAsync();
         return View("VpnProvider");
     }
 }

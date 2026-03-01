@@ -93,7 +93,7 @@ public class UsersController : AdminBaseController
 
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Balance adjusted by ${amount:F2}";
+        TempData["SuccessMessage"] = $"Баланс изменён на {amount:N2} ₽";
         return RedirectToAction(nameof(Details), new { id });
     }
 }

@@ -226,13 +226,26 @@ public class AccountController : Controller
 
         model.CurrentBalance = user.Balance;
 
+        // Только админ может пополнять без оплаты
+        if (!User.IsInRole("Admin"))
+        {
+            TempData["Error"] = "Пополнение пока недоступно";
+            return RedirectToAction("Dashboard");
+        }
+
         if (model.Amount <= 0)
         {
             ModelState.AddModelError("Amount", "Сумма должна быть больше нуля");
             return View(model);
         }
 
-        // Stub: просто добавляем баланс
+        if (model.Amount > 100000)
+        {
+            ModelState.AddModelError("Amount", "Максимальная сумма — 100 000 ₽");
+            return View(model);
+        }
+
+        // Админ-начисление: добавляем баланс напрямую
         user.Balance += model.Amount;
         await _userManager.UpdateAsync(user);
 
@@ -242,13 +255,13 @@ public class AccountController : Controller
             UserId = user.Id,
             Amount = model.Amount,
             Type = TransactionType.Deposit,
-            Description = "Пополнение баланса",
+            Description = "Админ-начисление",
             CreatedAt = DateTime.UtcNow
         };
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
 
-        TempData["Success"] = $"Баланс успешно пополнен на {model.Amount:N0} ₽";
+        TempData["Success"] = $"Баланс пополнен на {model.Amount:N0} ₽. Новый баланс: {user.Balance:N0} ₽";
         return RedirectToAction("Dashboard");
     }
 

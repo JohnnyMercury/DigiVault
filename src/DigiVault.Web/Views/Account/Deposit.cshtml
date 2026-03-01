@@ -1,12 +1,12 @@
 @model DepositViewModel
 @{
     ViewData["Title"] = "Пополнение баланса";
-    var currentBalance = ViewBag.CurrentBalance as decimal? ?? 0;
+    var isAdmin = User.IsInRole("Admin");
 }
 
 <style>
     .deposit-page {
-        max-width: 560px;
+        max-width: 520px;
         margin: 0 auto;
         padding: 2rem 1rem;
     }
@@ -20,7 +20,7 @@
     }
 
     .deposit-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 700;
         margin-bottom: 1.5rem;
         display: flex;
@@ -31,8 +31,8 @@
     .deposit-balance {
         background: rgba(102, 126, 234, 0.1);
         border: 1px solid rgba(102, 126, 234, 0.2);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
         margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
@@ -40,26 +40,27 @@
     }
 
     .deposit-balance i { font-size: 1.25rem; color: #667eea; }
-    .deposit-balance-text { font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); }
-    .deposit-balance-value { font-weight: 700; color: white; }
+    .deposit-balance-text { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .deposit-balance-value { font-weight: 700; color: white; font-size: 1.15rem; }
 
-    .deposit-demo {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.2);
+    .deposit-admin-badge {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.25);
         border-radius: 12px;
-        padding: 1rem 1.25rem;
+        padding: 0.85rem 1.25rem;
         margin-bottom: 1.5rem;
         font-size: 0.85rem;
         color: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
     }
-
-    .deposit-demo i { color: #f59e0b; margin-right: 0.5rem; }
-    .deposit-demo strong { color: #f59e0b; }
+    .deposit-admin-badge i { color: #22c55e; font-size: 1rem; }
 
     .deposit-label {
         font-size: 0.9rem;
         font-weight: 600;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.6rem;
         color: rgba(255, 255, 255, 0.8);
     }
 
@@ -67,127 +68,93 @@
         display: flex;
         align-items: center;
         background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 12px;
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.5rem;
         gap: 0.5rem;
+        transition: border-color 0.2s ease;
+    }
+    .deposit-input-wrap:focus-within {
+        border-color: rgba(102, 126, 234, 0.5);
     }
 
-    .deposit-input-wrap span { color: rgba(255, 255, 255, 0.4); font-size: 1.25rem; font-weight: 600; }
+    .deposit-input-wrap .currency { color: rgba(255, 255, 255, 0.4); font-size: 1.15rem; font-weight: 600; }
 
     .deposit-input-wrap input {
         flex-grow: 1;
         background: transparent;
         border: none;
         color: white;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 600;
     }
-
     .deposit-input-wrap input:focus { outline: none; }
-    .deposit-input-wrap input::placeholder { color: rgba(255, 255, 255, 0.3); }
+    .deposit-input-wrap input::placeholder { color: rgba(255, 255, 255, 0.25); }
 
     .quick-amounts {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.75rem;
+        margin-top: 0.75rem;
     }
 
     .quick-btn {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        padding: 0.55rem 1.1rem;
         color: white;
         font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
     }
-
     .quick-btn:hover {
         border-color: rgba(102, 126, 234, 0.4);
         background: rgba(102, 126, 234, 0.1);
     }
-
-    /* Payment Categories (Level 1) */
-    .payment-categories {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .payment-category {
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px solid transparent;
-        border-radius: 10px;
-        padding: 0.6rem 0.4rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: center;
-    }
-
-    .payment-category:hover { border-color: rgba(102, 126, 234, 0.3); }
-
-    .payment-category.selected {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.1);
-    }
-
-    .payment-category-icon { font-size: 1.25rem; margin-bottom: 0.15rem; }
-    .payment-category-name { font-size: 0.65rem; color: rgba(255, 255, 255, 0.7); line-height: 1.2; }
-
-    /* Payment Methods (Level 2) */
-    .payment-methods-container { margin-bottom: 1.5rem; }
-
-    .payment-methods-group {
-        display: none;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
-    }
-
-    .payment-methods-group.active { display: grid; }
-
-    .payment-method {
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px solid transparent;
-        border-radius: 10px;
-        padding: 0.75rem 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: center;
-    }
-
-    .payment-method:hover { border-color: rgba(102, 126, 234, 0.3); }
-
-    .payment-method.selected {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.1);
-    }
-
-    .payment-method-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
-    .payment-method-name { font-size: 0.7rem; color: rgba(255, 255, 255, 0.7); }
 
     .deposit-submit {
         width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
         border-radius: 12px;
-        padding: 1rem;
+        padding: 0.95rem;
         color: white;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
-
     .deposit-submit:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
     }
+
+    .deposit-back {
+        display: block;
+        text-align: center;
+        margin-top: 1.25rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    .deposit-back:hover { color: rgba(255, 255, 255, 0.8); }
+
+    .deposit-no-access {
+        text-align: center;
+        padding: 3rem 1.5rem;
+    }
+    .deposit-no-access i { font-size: 3rem; color: rgba(255, 255, 255, 0.2); margin-bottom: 1rem; }
+    .deposit-no-access h4 { color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem; }
+    .deposit-no-access p { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
 </style>
 
 <div class="deposit-page">
@@ -201,132 +168,64 @@
             <i class="bi bi-wallet2"></i>
             <div>
                 <div class="deposit-balance-text">Текущий баланс</div>
-                <div class="deposit-balance-value">$@currentBalance.ToString("F2")</div>
+                <div class="deposit-balance-value">@Model.CurrentBalance.ToString("N0") ₽</div>
             </div>
         </div>
 
-        <div class="deposit-demo">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>Демо режим:</strong> Это платёжная заглушка. В продакшене будут подключены реальные платёжные провайдеры.
-        </div>
-
-        <form asp-action="Deposit" method="post">
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-            <div class="deposit-label">Сумма (USD)</div>
-            <div class="deposit-input-wrap">
-                <span>$</span>
-                <input asp-for="Amount" placeholder="0.00" />
-            </div>
-            <span asp-validation-for="Amount" class="text-danger small d-block mb-3"></span>
-
-            <div class="deposit-label">Быстрая сумма</div>
-            <div class="quick-amounts">
-                <button type="button" class="quick-btn" data-amount="10">$10</button>
-                <button type="button" class="quick-btn" data-amount="25">$25</button>
-                <button type="button" class="quick-btn" data-amount="50">$50</button>
-                <button type="button" class="quick-btn" data-amount="100">$100</button>
+        @if (isAdmin)
+        {
+            <div class="deposit-admin-badge">
+                <i class="bi bi-shield-check"></i>
+                <span>Админ-режим: начисление средств без оплаты</span>
             </div>
 
-            <div class="deposit-label">Способ оплаты</div>
+            <form asp-action="Deposit" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-            <!-- Payment Categories (Level 1) -->
-            <div class="payment-categories">
-                <div class="payment-category selected" onclick="selectCategory(this, 'card')">
-                    <div class="payment-category-icon">💳</div>
-                    <div class="payment-category-name">Банковская карта</div>
+                <div class="deposit-label">Сумма пополнения</div>
+                <div class="deposit-input-wrap">
+                    <span class="currency">₽</span>
+                    <input asp-for="Amount" placeholder="0" type="number" min="1" step="1" />
                 </div>
-                <div class="payment-category" onclick="selectCategory(this, 'p2p')">
-                    <div class="payment-category-icon">🔄</div>
-                    <div class="payment-category-name">P2P карты</div>
+                <span asp-validation-for="Amount" class="text-danger small d-block"></span>
+
+                <div class="quick-amounts">
+                    <button type="button" class="quick-btn" data-amount="100">100 ₽</button>
+                    <button type="button" class="quick-btn" data-amount="500">500 ₽</button>
+                    <button type="button" class="quick-btn" data-amount="1000">1 000 ₽</button>
+                    <button type="button" class="quick-btn" data-amount="5000">5 000 ₽</button>
+                    <button type="button" class="quick-btn" data-amount="10000">10 000 ₽</button>
                 </div>
-                <div class="payment-category" onclick="selectCategory(this, 'sbp')">
-                    <div class="payment-category-icon">🏦</div>
-                    <div class="payment-category-name">СБП</div>
-                </div>
-                <div class="payment-category" onclick="selectCategory(this, 'qr')">
-                    <div class="payment-category-icon">📱</div>
-                    <div class="payment-category-name">QR код</div>
-                </div>
+
+                <input type="hidden" name="PaymentMethod" value="admin" />
+
+                <button type="submit" class="deposit-submit">
+                    <i class="bi bi-check-circle"></i> Начислить
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="deposit-no-access">
+                <i class="bi bi-lock"></i>
+                <h4>Пополнение скоро будет доступно</h4>
+                <p>Мы работаем над подключением платёжных систем. Следите за обновлениями!</p>
             </div>
+        }
 
-            <!-- Payment Methods (Level 2) -->
-            <div class="payment-methods-container">
-                <div class="payment-methods-group active" data-category="card">
-                    <div class="payment-method selected" onclick="selectPayment(this, 'card')">
-                        <div class="payment-method-icon">💳</div>
-                        <div class="payment-method-name">Карта</div>
-                    </div>
-                </div>
-                <div class="payment-methods-group" data-category="p2p">
-                    <div class="payment-method" onclick="selectPayment(this, 'yoomoney')">
-                        <div class="payment-method-icon">💰</div>
-                        <div class="payment-method-name">ЮMoney</div>
-                    </div>
-                    <div class="payment-method" onclick="selectPayment(this, 'paypal')">
-                        <div class="payment-method-icon">🅿️</div>
-                        <div class="payment-method-name">PayPal</div>
-                    </div>
-                    <div class="payment-method" onclick="selectPayment(this, 'crypto')">
-                        <div class="payment-method-icon">₿</div>
-                        <div class="payment-method-name">Crypto</div>
-                    </div>
-                </div>
-                <div class="payment-methods-group" data-category="sbp">
-                    <div class="payment-method" onclick="selectPayment(this, 'sbp')">
-                        <div class="payment-method-icon">🏦</div>
-                        <div class="payment-method-name">СБП</div>
-                    </div>
-                    <div class="payment-method" onclick="selectPayment(this, 'sberpay')">
-                        <div class="payment-method-icon">📱</div>
-                        <div class="payment-method-name">SberPay</div>
-                    </div>
-                </div>
-                <div class="payment-methods-group" data-category="qr">
-                    <div class="payment-method" onclick="selectPayment(this, 'qr')">
-                        <div class="payment-method-icon">📱</div>
-                        <div class="payment-method-name">QR оплата</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hidden input for the selected payment method -->
-            <input type="hidden" name="PaymentMethod" id="selectedPaymentMethod" value="card" />
-
-            <button type="submit" class="deposit-submit">
-                <i class="bi bi-check-circle me-2"></i>Пополнить
-            </button>
-        </form>
+        <a href="/Account/Dashboard" class="deposit-back">
+            <i class="bi bi-arrow-left me-1"></i> Вернуться в личный кабинет
+        </a>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Quick amount buttons
         document.querySelectorAll('.quick-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.getElementById('Amount').value = this.dataset.amount;
             });
         });
-
-        function selectPayment(method, value) {
-            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
-            method.classList.add('selected');
-            document.getElementById('selectedPaymentMethod').value = value || 'card';
-        }
-
-        function selectCategory(el, category) {
-            document.querySelectorAll('.payment-category').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-
-            document.querySelectorAll('.payment-methods-group').forEach(g => g.classList.remove('active'));
-            const group = document.querySelector('.payment-methods-group[data-category="' + category + '"]');
-            if (group) {
-                group.classList.add('active');
-                const firstMethod = group.querySelector('.payment-method');
-                if (firstMethod) firstMethod.click();
-            }
-        }
     </script>
 }

@@ -564,9 +564,11 @@
     .modal-promo-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 0.7rem 1.2rem; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
     .modal-promo-btn:hover { background: rgba(255, 255, 255, 0.15); }
 
-    .modal-agreement { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); cursor: pointer; }
-    .modal-agreement input { margin-top: 0.15rem; }
-    .modal-agreement a { color: #667eea; }
+    .modal-agreement { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.5); cursor: pointer; line-height: 1.4; }
+    .modal-agreement input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; accent-color: #667eea; cursor: pointer; }
+    .modal-agreement span { flex: 1; }
+    .modal-agreement a { color: #667eea; text-decoration: none; }
+    .modal-agreement a:hover { text-decoration: underline; }
 
     .modal-pay-button { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
     .modal-pay-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
@@ -853,7 +855,7 @@
 
                 <label class="modal-agreement">
                     <input type="checkbox" id="modalAgree" checked />
-                    Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a>
+                    <span>Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a></span>
                 </label>
 
                 <button class="modal-pay-button" onclick="processPurchase()">

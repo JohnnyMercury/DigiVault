@@ -1173,13 +1173,23 @@
 
     .modal-agreement {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 0.5rem;
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        line-height: 1.4;
     }
-    .modal-agreement input { margin-top: 0.15rem; }
-    .modal-agreement a { color: #667eea; }
+    .modal-agreement input[type="checkbox"] {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+        cursor: pointer;
+    }
+    .modal-agreement span { flex: 1; }
+    .modal-agreement a { color: #667eea; text-decoration: none; }
+    .modal-agreement a:hover { text-decoration: underline; }
 
     .modal-pay-button {
         width: 100%;
@@ -1784,7 +1794,7 @@
 
                 <label class="modal-agreement">
                     <input type="checkbox" id="modalAgree" checked />
-                    Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a>
+                    <span>Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a></span>
                 </label>
 
                 <button class="modal-pay-button" onclick="processPurchase()">

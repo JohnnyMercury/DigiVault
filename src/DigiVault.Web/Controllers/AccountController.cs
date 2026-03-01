@@ -17,17 +17,20 @@ public class AccountController : Controller
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ApplicationDbContext _context;
     private readonly IPaymentService _paymentService;
+    private readonly IOrderService _orderService;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ApplicationDbContext context,
-        IPaymentService paymentService)
+        IPaymentService paymentService,
+        IOrderService orderService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _context = context;
         _paymentService = paymentService;
+        _orderService = orderService;
     }
 
     [HttpGet]
@@ -376,25 +379,13 @@ public class AccountController : Controller
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> OrderDetails(int id)
+    public async Task<IActionResult> OrderDetails(string orderNumber)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return RedirectToAction("Login");
 
-        var order = await _context.Orders
-            .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.GameProduct)
-            .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.ProductKeys)
-            .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);
-
-        if (order == null) return NotFound();
-
-        var model = new OrderDetailsViewModel
-        {
-            Order = order,
-            Keys = order.OrderItems.SelectMany(oi => oi.ProductKeys)
-        };
+        var model = await _orderService.GetOrderByNumberAsync(user.Id, orderNumber);
+        if (model == null) return NotFound();
 
         return View(model);
     }

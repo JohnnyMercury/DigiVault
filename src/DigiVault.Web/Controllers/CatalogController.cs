@@ -60,57 +60,119 @@ public class CatalogController : Controller
 
     public async Task<IActionResult> Index(string? category = null, string? search = null, string? sort = null, int page = 1)
     {
-        var query = _context.GameProducts
-            .Include(p => p.Game)
-            .Include(p => p.GiftCard)
-            .Include(p => p.VpnProvider)
-            .Where(p => p.IsActive && p.StockQuantity > 0);
+        var items = new List<CatalogItemViewModel>();
 
-        // Фильтр по категории
-        if (!string.IsNullOrWhiteSpace(category))
+        // Собираем родительские товары из трёх таблиц
+        var showGames = string.IsNullOrWhiteSpace(category) || category == "games";
+        var showGiftCards = string.IsNullOrWhiteSpace(category) || category == "giftcards";
+        var showVpn = string.IsNullOrWhiteSpace(category) || category == "vpn";
+
+        if (showGames)
         {
-            query = category.ToLower() switch
+            var games = await _context.Games
+                .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
+                .Where(g => g.IsActive)
+                .ToListAsync();
+
+            items.AddRange(games.Select(g => new CatalogItemViewModel
             {
-                "games" => query.Where(p => p.GameId != null),
-                "giftcards" => query.Where(p => p.GiftCardId != null),
-                "vpn" => query.Where(p => p.VpnProviderId != null),
-                _ => query
-            };
+                Id = g.Id,
+                Name = g.Name,
+                Slug = g.Slug,
+                ImageUrl = g.ImageUrl,
+                Icon = g.Icon,
+                Gradient = g.Gradient,
+                Category = "games",
+                CategoryDisplay = "Игровая валюта",
+                DetailUrl = $"/Catalog/Game/{g.Slug}",
+                ProductCount = g.Products.Count,
+                MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null,
+                MaxDiscount = g.Products.Any() ? g.Products.Max(p => p.Discount) : null
+            }));
+        }
+
+        if (showGiftCards)
+        {
+            var giftCards = await _context.GiftCards
+                .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
+                .Where(g => g.IsActive)
+                .ToListAsync();
+
+            items.AddRange(giftCards.Select(g => new CatalogItemViewModel
+            {
+                Id = g.Id,
+                Name = g.Name,
+                Slug = g.Slug,
+                ImageUrl = g.ImageUrl,
+                Icon = g.Icon,
+                Gradient = g.Gradient,
+                Category = "giftcards",
+                CategoryDisplay = "Подарочная карта",
+                DetailUrl = $"/Catalog/GiftCard/{g.Slug}",
+                ProductCount = g.Products.Count,
+                MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null,
+                MaxDiscount = g.Products.Any() ? g.Products.Max(p => p.Discount) : null
+            }));
+        }
+
+        if (showVpn)
+        {
+            var vpnProviders = await _context.VpnProviders
+                .Include(v => v.Products.Where(p => p.IsActive && p.StockQuantity > 0))
+                .Where(v => v.IsActive)
+                .ToListAsync();
+
+            items.AddRange(vpnProviders.Select(v => new CatalogItemViewModel
+            {
+                Id = v.Id,
+                Name = v.Name,
+                Slug = v.Slug,
+                ImageUrl = v.ImageUrl,
+                Icon = v.Icon,
+                Gradient = v.Gradient,
+                Category = "vpn",
+                CategoryDisplay = "VPN",
+                DetailUrl = $"/Catalog/VpnProvider/{v.Slug}",
+                ProductCount = v.Products.Count,
+                MinPrice = v.Products.Any() ? v.Products.Min(p => p.Price) : null,
+                MaxDiscount = v.Products.Any() ? v.Products.Max(p => p.Discount) : null
+            }));
         }
 
         // Поиск
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(p => p.Name.ToLower().Contains(search.ToLower()) ||
-                                    (p.Game != null && p.Game.Name.ToLower().Contains(search.ToLower())) ||
-                                    (p.GiftCard != null && p.GiftCard.Name.ToLower().Contains(search.ToLower())) ||
-                                    (p.VpnProvider != null && p.VpnProvider.Name.ToLower().Contains(search.ToLower())));
+        {
+            var searchLower = search.ToLower();
+            items = items.Where(i => i.Name.ToLower().Contains(searchLower)).ToList();
+        }
 
         // Сортировка
-        query = sort switch
+        items = sort switch
         {
-            "price_asc" => query.OrderBy(p => p.Price),
-            "price_desc" => query.OrderByDescending(p => p.Price),
-            "name" => query.OrderBy(p => p.Name),
-            "newest" => query.OrderByDescending(p => p.CreatedAt),
-            _ => query.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.CreatedAt)
+            "price_asc" => items.OrderBy(i => i.MinPrice ?? decimal.MaxValue).ToList(),
+            "price_desc" => items.OrderByDescending(i => i.MinPrice ?? 0).ToList(),
+            "name" => items.OrderBy(i => i.Name).ToList(),
+            _ => items.OrderBy(i => i.Category).ThenBy(i => i.Name).ToList()
         };
 
-        var totalProducts = await query.CountAsync();
-        var totalPages = (int)Math.Ceiling(totalProducts / (double)PageSize);
+        var totalItems = items.Count;
+        var totalPages = (int)Math.Ceiling(totalItems / (double)PageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(1, totalPages)));
 
-        var products = await query
+        var pagedItems = items
             .Skip((page - 1) * PageSize)
             .Take(PageSize)
-            .ToListAsync();
+            .ToList();
 
         var model = new CatalogViewModel
         {
-            Products = products,
+            Items = pagedItems,
             CategoryFilter = category,
             SearchQuery = search,
             SortBy = sort,
             CurrentPage = page,
-            TotalPages = totalPages
+            TotalPages = totalPages,
+            TotalItems = totalItems
         };
 
         await SetUserBalanceAsync();

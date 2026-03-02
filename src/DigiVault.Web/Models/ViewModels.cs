@@ -26,14 +26,34 @@ public class HomeViewModel
     public int TotalUsers { get; set; }
 }
 
+/// <summary>
+/// Unified catalog item representing a parent product (Game, GiftCard, or VpnProvider)
+/// </summary>
+public class CatalogItemViewModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public string Icon { get; set; } = "🎮";
+    public string Gradient { get; set; } = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    public string Category { get; set; } = string.Empty; // "games", "giftcards", "vpn"
+    public string CategoryDisplay { get; set; } = string.Empty; // "Игровая валюта", "Подарочная карта", "VPN"
+    public string DetailUrl { get; set; } = string.Empty;
+    public int ProductCount { get; set; }
+    public decimal? MinPrice { get; set; }
+    public decimal? MaxDiscount { get; set; }
+}
+
 public class CatalogViewModel
 {
-    public IEnumerable<GameProduct>? Products { get; set; }
+    public IEnumerable<CatalogItemViewModel>? Items { get; set; }
     public string? CategoryFilter { get; set; }
     public string? SearchQuery { get; set; }
     public string? SortBy { get; set; }
     public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; }
+    public int TotalItems { get; set; }
 }
 
 public class DashboardViewModel

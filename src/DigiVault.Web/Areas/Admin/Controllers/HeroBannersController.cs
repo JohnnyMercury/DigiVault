@@ -37,9 +37,17 @@ public class HeroBannersController : AdminBaseController
     {
         if (ModelState.IsValid)
         {
-            if (imageFile != null)
+            if (imageFile != null && imageFile.Length > 0)
             {
-                banner.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                try
+                {
+                    banner.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                }
+                catch (ArgumentException)
+                {
+                    ModelState.AddModelError("imageFile", "Неверный формат файла. Поддерживаются: JPG, PNG, WEBP, GIF");
+                    return View(banner);
+                }
             }
 
             _context.HeroBanners.Add(banner);
@@ -85,13 +93,22 @@ public class HeroBannersController : AdminBaseController
             existing.SortOrder = banner.SortOrder;
             existing.IsActive = banner.IsActive;
 
-            if (imageFile != null)
+            if (imageFile != null && imageFile.Length > 0)
             {
-                if (!string.IsNullOrEmpty(existing.ImageUrl) && existing.ImageUrl.StartsWith("/images/uploads/"))
+                try
                 {
-                    _fileService.DeleteImage(existing.ImageUrl);
+                    var oldUrl = existing.ImageUrl;
+                    existing.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                    if (!string.IsNullOrEmpty(oldUrl))
+                    {
+                        _fileService.DeleteImage(oldUrl);
+                    }
                 }
-                existing.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                catch (ArgumentException)
+                {
+                    ModelState.AddModelError("imageFile", "Неверный формат файла. Поддерживаются: JPG, PNG, WEBP, GIF");
+                    return View(banner);
+                }
             }
             else if (!string.IsNullOrEmpty(banner.ImageUrl))
             {

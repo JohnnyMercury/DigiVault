@@ -186,7 +186,7 @@ public class MinioStorageService : IFileService
     }
 
     private static bool IsImageExtension(string ext) =>
-        new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" }.Contains(ext);
+        new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg", ".avif", ".ico" }.Contains(ext);
 
     private static string GetContentType(string ext) => ext switch
     {
@@ -195,6 +195,9 @@ public class MinioStorageService : IFileService
         ".gif" => "image/gif",
         ".webp" => "image/webp",
         ".bmp" => "image/bmp",
+        ".svg" => "image/svg+xml",
+        ".avif" => "image/avif",
+        ".ico" => "image/x-icon",
         _ => "application/octet-stream"
     };
 }

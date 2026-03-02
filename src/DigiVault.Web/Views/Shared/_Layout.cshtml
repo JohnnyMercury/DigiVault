@@ -478,14 +478,20 @@
             background: linear-gradient(180deg, #764ba2, #667eea);
         }
 
+        /* Dropdown slide animation */
+        @@keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* Mobile hamburger menu */
         @@media (max-width: 991.98px) {
-            /* Kill desktop underline effect in mobile */
+            /* Kill desktop underline */
             .navbar-collapse .nav-link::before {
                 display: none !important;
             }
 
-            /* Remove Bootstrap flex spacing that creates gaps */
+            /* Remove Bootstrap flex gaps */
             .navbar-collapse .navbar-nav.me-auto {
                 margin-right: 0 !important;
                 margin-bottom: 0 !important;
@@ -495,6 +501,16 @@
                 margin-bottom: 0 !important;
             }
 
+            .navbar-collapse .nav-item.me-2 {
+                margin-right: 0 !important;
+            }
+
+            /* Force left-align everything */
+            .navbar-collapse .navbar-nav.align-items-center {
+                align-items: flex-start !important;
+            }
+
+            /* Container */
             .navbar-collapse {
                 background: linear-gradient(145deg, rgba(18, 18, 32, 0.99) 0%, rgba(12, 12, 24, 0.99) 100%);
                 backdrop-filter: blur(20px);
@@ -506,20 +522,22 @@
             }
 
             .navbar-collapse .navbar-nav {
-                gap: 2px;
+                gap: 1px;
             }
 
+            /* Nav links — normal size, left-aligned */
             .navbar-collapse .nav-link {
-                padding: 0.7rem 1rem !important;
+                padding: 0.6rem 0.9rem !important;
                 border-radius: 10px;
-                font-size: 0.9rem;
+                font-size: 0.9rem !important;
                 margin: 0 !important;
                 color: rgba(255, 255, 255, 0.9) !important;
                 transition: background 0.2s ease;
+                text-align: left !important;
             }
 
             .navbar-collapse .nav-link i {
-                width: 22px;
+                width: 20px;
                 text-align: center;
                 font-size: 0.85rem;
                 opacity: 0.7;
@@ -527,102 +545,96 @@
 
             .navbar-collapse .nav-link:hover,
             .navbar-collapse .nav-link:active {
-                background: rgba(102, 126, 234, 0.15);
+                background: rgba(102, 126, 234, 0.12) !important;
             }
 
-            /* === ALL DROPDOWNS IN MOBILE — animated, compact === */
+            /* === DROPDOWNS — slide animation === */
             .navbar-collapse .dropdown-menu {
-                background: rgba(102, 126, 234, 0.08) !important;
+                background: rgba(102, 126, 234, 0.06) !important;
                 border: none !important;
-                border-left: 2px solid rgba(102, 126, 234, 0.4) !important;
+                border-left: 2px solid rgba(102, 126, 234, 0.35) !important;
                 box-shadow: none !important;
                 border-radius: 0 8px 8px 0 !important;
-                margin: 1px 0 1px 1rem !important;
+                margin: 2px 0 2px 1rem !important;
+                padding: 0.25rem 0.3rem !important;
                 position: static !important;
                 transform: none !important;
-                max-height: 0;
-                overflow: hidden;
-                opacity: 0;
-                padding: 0 0.4rem !important;
-                transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.25s ease;
+                display: none;
             }
 
             .navbar-collapse .dropdown-menu.show {
-                max-height: 400px !important;
-                opacity: 1 !important;
-                padding: 0.2rem 0.4rem !important;
+                display: block !important;
+                animation: slideDown 0.2s ease-out !important;
             }
 
-            /* Kill ALL dividers in mobile */
+            /* Hide dividers */
             .navbar-collapse .dropdown-divider {
                 display: none !important;
             }
 
-            /* All dropdown items — small & tight */
+            /* Dropdown items — normal font, left-aligned */
             .navbar-collapse .dropdown-item {
-                font-size: 0.78rem !important;
-                padding: 0.3rem 0.65rem !important;
-                color: rgba(255, 255, 255, 0.75) !important;
+                font-size: 0.85rem !important;
+                padding: 0.45rem 0.75rem !important;
+                color: rgba(255, 255, 255, 0.7) !important;
                 border-radius: 6px !important;
                 transition: background 0.15s ease !important;
-                line-height: 1.3 !important;
+                text-align: left !important;
             }
 
             .navbar-collapse .dropdown-item:hover,
             .navbar-collapse .dropdown-item:active {
-                background: rgba(102, 126, 234, 0.18) !important;
+                background: rgba(102, 126, 234, 0.15) !important;
                 color: #fff !important;
                 transform: none !important;
             }
 
             .navbar-collapse .dropdown-item i {
-                font-size: 0.7rem !important;
-                opacity: 0.5;
-                margin-right: 0.3rem !important;
+                font-size: 0.78rem !important;
+                opacity: 0.6;
+                margin-right: 0.4rem !important;
             }
 
-            /* Email text in profile dropdown */
+            /* Email in profile dropdown */
             .navbar-collapse .dropdown-item-text {
-                padding: 0.15rem 0.65rem !important;
-                font-size: 0.68rem !important;
-                color: rgba(255, 255, 255, 0.35) !important;
+                padding: 0.2rem 0.75rem !important;
+                font-size: 0.75rem !important;
+                color: rgba(255, 255, 255, 0.4) !important;
+                text-align: left !important;
             }
 
-            /* === USER SECTION === */
+            /* === USER SECTION — left-aligned === */
             .navbar-collapse .align-items-center {
                 border-top: 1px solid rgba(102, 126, 234, 0.12);
-                margin-top: 0.15rem;
-                padding-top: 0.25rem;
+                margin-top: 0.2rem;
+                padding-top: 0.3rem;
             }
 
-            .navbar-collapse .nav-item.me-2 {
-                margin-right: 0 !important;
-            }
-
-            /* Balance badge — tight */
+            /* Balance badge — LEFT aligned, not centered */
             .navbar-collapse .nav-item .balance-badge {
-                display: flex;
-                justify-content: center;
-                margin: 0.05rem 0;
-                padding: 0.4rem 0.8rem;
+                display: inline-flex !important;
+                justify-content: flex-start !important;
+                margin: 0.1rem 0 0.1rem 0.9rem;
+                padding: 0.45rem 0.9rem;
                 border-radius: 8px;
-                font-size: 0.82rem;
-                width: 100%;
+                font-size: 0.85rem;
+                width: auto !important;
             }
 
-            /* Profile icon trigger — no border, tight */
+            /* Profile trigger — left-aligned, no border */
             .navbar-collapse .align-items-center .nav-item.dropdown .nav-link {
                 display: flex;
                 align-items: center;
-                gap: 0.35rem;
-                padding: 0.3rem 0.8rem !important;
+                gap: 0.4rem;
+                padding: 0.5rem 0.9rem !important;
                 border: none !important;
                 outline: none !important;
                 box-shadow: none !important;
+                justify-content: flex-start !important;
             }
 
             .navbar-collapse .align-items-center .nav-item.dropdown .nav-link i {
-                font-size: 1rem !important;
+                font-size: 1.1rem !important;
             }
 
             /* Login/Register for non-auth */
@@ -631,7 +643,7 @@
                 text-align: center;
                 margin-top: 0.4rem;
                 margin-left: 0 !important;
-                padding: 0.6rem 1rem;
+                padding: 0.55rem 1rem;
                 font-size: 0.9rem;
             }
 

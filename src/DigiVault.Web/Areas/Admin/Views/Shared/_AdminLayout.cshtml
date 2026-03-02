@@ -434,6 +434,84 @@
             box-shadow: 0 0 15px rgba(102, 126, 234, 0.15);
             color: #fff;
         }
+
+        /* Mobile toggle button - hidden on desktop */
+        .sidebar-toggle {
+            display: none;
+        }
+
+        /* Sidebar backdrop - hidden on desktop */
+        .sidebar-backdrop {
+            display: none;
+        }
+
+        @@media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1050;
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                color: rgba(255, 255, 255, 0.7);
+                padding: 0.4rem 0.6rem;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .sidebar-toggle:hover {
+                background: var(--card-hover);
+                color: #fff;
+            }
+
+            .sidebar-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease, visibility 0.3s ease;
+            }
+
+            .sidebar-backdrop.show {
+                display: block;
+                opacity: 1;
+                visibility: visible;
+            }
+
+            .topbar {
+                padding: 0.75rem 1rem;
+            }
+
+            .topbar-title {
+                font-size: 1.1rem;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .topbar-actions .btn-topbar span {
+                display: none;
+            }
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -548,6 +626,9 @@
         <!-- Main content -->
         <div class="main-content">
             <div class="topbar">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
                 <h1 class="topbar-title">@ViewData["Title"]</h1>
                 <div class="topbar-actions">
                     <a href="/" class="btn-topbar">
@@ -577,7 +658,24 @@
         </div>
     </div>
 
+    <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+            document.querySelector('.sidebar-backdrop').classList.toggle('show');
+        }
+        // Close sidebar when clicking a nav link on mobile
+        document.querySelectorAll('.sidebar .nav-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 992) {
+                    document.querySelector('.sidebar').classList.remove('show');
+                    document.querySelector('.sidebar-backdrop').classList.remove('show');
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

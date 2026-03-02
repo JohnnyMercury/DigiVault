@@ -140,6 +140,15 @@
                     <input asp-for="SubtitleColor" class="form-control" id="subtitleColorInput">
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label">Раскладка</label>
+                    <select asp-for="Layout" class="form-select">
+                        <option value="right-diagonal">Картинка справа наискось</option>
+                        <option value="left-diagonal">Картинка слева наискось</option>
+                        <option value="full-overlay">Картинка на весь фон</option>
+                    </select>
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Класс кнопки</label>

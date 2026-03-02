@@ -57,12 +57,10 @@
 
     .hero-banner-image {
         position: absolute;
-        right: 0;
         top: 0;
         width: 55%;
         height: 100%;
         z-index: 1;
-        clip-path: polygon(25% 0, 100% 0, 100% 100%, 0% 100%);
         overflow: hidden;
     }
 
@@ -76,10 +74,58 @@
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
         width: 40%;
         height: 100%;
+    }
+
+    /* Layout: right-diagonal (default) — text left, image right diagonal */
+    .hero-banner.layout-right-diagonal .hero-banner-image {
+        right: 0;
+        clip-path: polygon(25% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+    .hero-banner.layout-right-diagonal .hero-banner-image::after {
+        left: 0;
         background: linear-gradient(to right, rgba(0, 0, 0, 0.6), transparent);
+    }
+
+    /* Layout: left-diagonal — image left diagonal, text right */
+    .hero-banner.layout-left-diagonal {
+        justify-content: flex-end;
+    }
+    .hero-banner.layout-left-diagonal .hero-banner-content {
+        text-align: right;
+    }
+    .hero-banner.layout-left-diagonal .hero-banner-image {
+        left: 0;
+        clip-path: polygon(0 0, 100% 0, 75% 100%, 0% 100%);
+    }
+    .hero-banner.layout-left-diagonal .hero-banner-image::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.6), transparent);
+    }
+    .hero-banner.layout-left-diagonal .btn {
+        margin-left: auto;
+    }
+
+    /* Layout: full-overlay — image covers everything, centered text */
+    .hero-banner.layout-full-overlay .hero-banner-content {
+        max-width: 70%;
+        text-align: center;
+        margin: 0 auto;
+    }
+    .hero-banner.layout-full-overlay .hero-banner-image {
+        width: 100%;
+        left: 0;
+        clip-path: none;
+    }
+    .hero-banner.layout-full-overlay .hero-banner-image::after {
+        width: 100%;
+        left: 0;
+        background: rgba(0, 0, 0, 0.5);
+    }
+    .hero-banner.layout-full-overlay .btn {
+        margin: 0 auto;
+        display: inline-flex;
     }
 
     /* Slider Controls */
@@ -412,7 +458,7 @@
             <div class="slider-track" id="sliderTrack">
                 @foreach (var banner in banners)
                 {
-                    <div class="hero-banner" style="background: @banner.Gradient;">
+                    <div class="hero-banner layout-@banner.Layout" style="background: @banner.Gradient;">
                         <div class="hero-banner-content">
                             <h1 class="hero-banner-title">
                                 @banner.Title

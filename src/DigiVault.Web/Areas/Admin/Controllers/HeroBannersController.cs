@@ -81,6 +81,7 @@ public class HeroBannersController : AdminBaseController
             existing.Gradient = banner.Gradient;
             existing.SubtitleColor = banner.SubtitleColor;
             existing.ButtonClass = banner.ButtonClass;
+            existing.Layout = banner.Layout;
             existing.SortOrder = banner.SortOrder;
             existing.IsActive = banner.IsActive;
 

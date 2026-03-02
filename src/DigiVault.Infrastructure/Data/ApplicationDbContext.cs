@@ -284,6 +284,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Gradient).HasMaxLength(300);
             entity.Property(e => e.SubtitleColor).HasMaxLength(50);
             entity.Property(e => e.ButtonClass).HasMaxLength(50);
+            entity.Property(e => e.Layout).HasMaxLength(30);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.SortOrder);
         });

@@ -58,18 +58,34 @@ public class CatalogController : Controller
         return Json(result);
     }
 
-    public async Task<IActionResult> Index(ProductCategory? category = null, string? search = null, string? sort = null, int page = 1)
+    public async Task<IActionResult> Index(string? category = null, string? search = null, string? sort = null, int page = 1)
     {
-        var query = _context.Products
-            .Where(p => p.IsActive);
+        var query = _context.GameProducts
+            .Include(p => p.Game)
+            .Include(p => p.GiftCard)
+            .Include(p => p.VpnProvider)
+            .Where(p => p.IsActive && p.StockQuantity > 0);
 
-        if (category.HasValue)
-            query = query.Where(p => p.Category == category.Value);
+        // Фильтр по категории
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = category.ToLower() switch
+            {
+                "games" => query.Where(p => p.GameId != null),
+                "giftcards" => query.Where(p => p.GiftCardId != null),
+                "vpn" => query.Where(p => p.VpnProviderId != null),
+                _ => query
+            };
+        }
 
+        // Поиск
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(p => p.Name.ToLower().Contains(search.ToLower()) ||
-                                    p.Description.ToLower().Contains(search.ToLower()));
+                                    (p.Game != null && p.Game.Name.ToLower().Contains(search.ToLower())) ||
+                                    (p.GiftCard != null && p.GiftCard.Name.ToLower().Contains(search.ToLower())) ||
+                                    (p.VpnProvider != null && p.VpnProvider.Name.ToLower().Contains(search.ToLower())));
 
+        // Сортировка
         query = sort switch
         {
             "price_asc" => query.OrderBy(p => p.Price),
@@ -90,17 +106,14 @@ public class CatalogController : Controller
         var model = new CatalogViewModel
         {
             Products = products,
-            SelectedCategory = category,
+            CategoryFilter = category,
             SearchQuery = search,
             SortBy = sort,
             CurrentPage = page,
             TotalPages = totalPages
         };
 
-        // Получаем игры для отображения на главной каталога
-        var games = await _gameService.GetAllGamesAsync();
-        ViewBag.Games = games;
-
+        await SetUserBalanceAsync();
         return View(model);
     }
 

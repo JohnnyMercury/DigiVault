@@ -28,8 +28,8 @@ public class HomeViewModel
 
 public class CatalogViewModel
 {
-    public IEnumerable<Product>? Products { get; set; }
-    public ProductCategory? SelectedCategory { get; set; }
+    public IEnumerable<GameProduct>? Products { get; set; }
+    public string? CategoryFilter { get; set; }
     public string? SearchQuery { get; set; }
     public string? SortBy { get; set; }
     public int CurrentPage { get; set; } = 1;

@@ -1,10 +1,9 @@
 @model DigiVault.Web.Models.CatalogViewModel
 @using DigiVault.Core.Entities
+@inject DigiVault.Core.Interfaces.IGameService _gameService
 @{
     ViewData["Title"] = "Каталог";
-
-    // Получаем игры из контроллера (из базы данных)
-    var games = ViewBag.Games as List<Game> ?? new List<Game>();
+    var games = await _gameService.GetAllGamesAsync();
 }
 
 <style>
@@ -444,12 +443,13 @@
             {
                 <span>Результаты поиска: "@Model.SearchQuery"</span>
             }
-            else if (Model.SelectedCategory.HasValue)
+            else if (!string.IsNullOrEmpty(Model.CategoryFilter))
             {
-                var catName = Model.SelectedCategory switch {
-                    DigiVault.Core.Enums.ProductCategory.VpnSubscription => "VPN подписки",
-                    DigiVault.Core.Enums.ProductCategory.GameCurrency => "Игровая валюта",
-                    _ => "Подарочные карты"
+                var catName = Model.CategoryFilter switch {
+                    "vpn" => "VPN подписки",
+                    "games" => "Игровая валюта",
+                    "giftcards" => "Подарочные карты",
+                    _ => "Все товары"
                 };
                 <span>@catName</span>
             }
@@ -462,7 +462,7 @@
     </div>
 </section>
 
-@if (string.IsNullOrEmpty(Model.SearchQuery) && !Model.SelectedCategory.HasValue)
+@if (string.IsNullOrEmpty(Model.SearchQuery) && string.IsNullOrEmpty(Model.CategoryFilter))
 {
     <!-- Game Tiles -->
     <section class="games-section">
@@ -540,28 +540,28 @@
 <!-- Products Section -->
 <section class="pb-5">
     <div class="container container-wide">
-        @if (!string.IsNullOrEmpty(Model.SearchQuery) || Model.SelectedCategory.HasValue)
+        @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.CategoryFilter))
         {
             <!-- Filters Bar -->
             <div class="filters-bar">
                 <div class="filter-pills">
-                    <a href="/Catalog" class="filter-pill @(Model.SelectedCategory == null && string.IsNullOrEmpty(Model.SearchQuery) ? "active" : "")">
+                    <a href="/Catalog" class="filter-pill @(string.IsNullOrEmpty(Model.CategoryFilter) && string.IsNullOrEmpty(Model.SearchQuery) ? "active" : "")">
                         <i class="bi bi-grid-3x3-gap me-1"></i> Все
                     </a>
-                    <a href="/Catalog/Vpn" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.VpnSubscription ? "active" : "")">
+                    <a href="/Catalog?category=vpn" class="filter-pill @(Model.CategoryFilter == "vpn" ? "active" : "")">
                         <i class="bi bi-shield-check me-1"></i> VPN
                     </a>
-                    <a href="/Catalog/GameCurrency" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.GameCurrency ? "active" : "")">
+                    <a href="/Catalog?category=games" class="filter-pill @(Model.CategoryFilter == "games" ? "active" : "")">
                         <i class="bi bi-controller me-1"></i> Игры
                     </a>
-                    <a href="/Catalog/GiftCards" class="filter-pill @(Model.SelectedCategory == DigiVault.Core.Enums.ProductCategory.GiftCard ? "active" : "")">
+                    <a href="/Catalog?category=giftcards" class="filter-pill @(Model.CategoryFilter == "giftcards" ? "active" : "")">
                         <i class="bi bi-gift me-1"></i> Подарки
                     </a>
                 </div>
                 <form action="/Catalog" method="get" class="search-form">
-                    @if (Model.SelectedCategory.HasValue)
+                    @if (!string.IsNullOrEmpty(Model.CategoryFilter))
                     {
-                        <input type="hidden" name="category" value="@Model.SelectedCategory" />
+                        <input type="hidden" name="category" value="@Model.CategoryFilter" />
                     }
                     <input type="search" name="search" value="@Model.SearchQuery" class="search-input" placeholder="Поиск..." />
                     <button type="submit" class="btn btn-primary">
@@ -594,42 +594,43 @@
             <div class="products-grid">
                 @foreach (var product in Model.Products)
                 {
-                    var categoryClass = product.Category switch {
-                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "vpn",
-                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "game",
-                        _ => "gift"
-                    };
-                    var categoryIcon = product.Category switch {
-                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "bi-shield-lock",
-                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "bi-controller",
-                        _ => "bi-gift"
-                    };
-                    var categoryName = product.Category switch {
-                        DigiVault.Core.Enums.ProductCategory.VpnSubscription => "VPN",
-                        DigiVault.Core.Enums.ProductCategory.GameCurrency => "Игровая валюта",
-                        _ => "Подарочная карта"
-                    };
+                    var categoryClass = product.VpnProviderId != null ? "vpn" : product.GiftCardId != null ? "gift" : "game";
+                    var categoryIcon = product.VpnProviderId != null ? "bi-shield-lock" : product.GiftCardId != null ? "bi-gift" : "bi-controller";
+                    var categoryName = product.VpnProviderId != null ? "VPN" : product.GiftCardId != null ? "Подарочная карта" : "Игровая валюта";
+                    var parentName = product.Game?.Name ?? product.GiftCard?.Name ?? product.VpnProvider?.Name ?? "";
+                    var imageUrl = product.ImageUrl ?? product.Game?.ImageUrl ?? product.GiftCard?.ImageUrl ?? product.VpnProvider?.ImageUrl;
+
+                    // Ссылка на страницу категории
+                    var detailUrl = product.GameId != null ? $"/Catalog/Game/{product.Game?.Slug}" :
+                                    product.GiftCardId != null ? $"/Catalog/GiftCard/{product.GiftCard?.Slug}" :
+                                    product.VpnProviderId != null ? $"/Catalog/VpnProvider/{product.VpnProvider?.Slug}" : "/Catalog";
 
                     <div class="product-card">
-                        <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
+                        <a href="@detailUrl" class="text-decoration-none">
                             <div class="product-card-image @categoryClass">
-                                <i class="bi @categoryIcon"></i>
+                                @if (imageUrl != null)
+                                {
+                                    <img src="@imageUrl" alt="@product.Name" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" />
+                                }
+                                else
+                                {
+                                    <i class="bi @categoryIcon"></i>
+                                }
                                 <div class="product-card-badges">
                                     @if (product.IsFeatured)
                                     {
                                         <span class="badge-hit">ХИТ</span>
                                     }
-                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                    @if (product.Discount > 0)
                                     {
-                                        var discount = (int)Math.Round((1 - product.Price / product.OldPrice.Value) * 100);
-                                        <span class="badge-sale">-@discount%</span>
+                                        <span class="badge-sale">-@product.Discount%</span>
                                     }
                                 </div>
                             </div>
                         </a>
                         <div class="product-card-body">
-                            <div class="product-card-category">@categoryName</div>
-                            <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
+                            <div class="product-card-category">@categoryName · @parentName</div>
+                            <a href="@detailUrl" class="text-decoration-none">
                                 <h4 class="product-card-title">@product.Name</h4>
                             </a>
                             <div class="product-card-footer">
@@ -639,11 +640,8 @@
                                         <span class="price-old">@product.OldPrice.Value.ToString("N0") ₽</span>
                                     }
                                     <span class="price-current">@product.Price.ToString("N0") ₽</span>
-                                    <span class="stock-info @(product.StockQuantity > 0 ? "" : "out")">
-                                        @(product.StockQuantity > 0 ? $"В наличии: {product.StockQuantity}" : "Нет в наличии")
-                                    </span>
                                 </div>
-                                <a href="/Catalog/Product/@product.Id" class="btn-buy">
+                                <a href="@detailUrl" class="btn-buy">
                                     <i class="bi bi-bag"></i>
                                 </a>
                             </div>
@@ -658,9 +656,12 @@
                 <i class="bi bi-search d-block"></i>
                 <h3>Товары не найдены</h3>
                 <p>Попробуйте изменить параметры поиска</p>
-                <a href="/Catalog" class="btn btn-primary mt-3">
-                    <i class="bi bi-arrow-left me-2"></i>Показать все товары
-                </a>
+                @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.CategoryFilter))
+                {
+                    <a href="/Catalog" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-left me-2"></i>Показать все товары
+                    </a>
+                }
             </div>
         }
     </div>

@@ -17,7 +17,7 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd /var/www/digivault
-            git checkout -- . && git pull origin master
+            git checkout -- . && git pull origin main
             docker build --no-cache --network=host -t digivault:latest -f src/DigiVault.Web/Dockerfile .
             docker compose -f docker-compose.prod.yml stop web
             docker compose -f docker-compose.prod.yml up -d web

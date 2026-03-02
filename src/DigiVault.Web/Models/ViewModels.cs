@@ -20,8 +20,7 @@ public class RegisterViewModel
 
 public class HomeViewModel
 {
-    public IEnumerable<Product>? FeaturedProducts { get; set; }
-    public IEnumerable<Product>? LatestProducts { get; set; }
+    public IEnumerable<CatalogItemViewModel>? FeaturedItems { get; set; }
     public int TotalProducts { get; set; }
     public int TotalUsers { get; set; }
 }

@@ -293,295 +293,121 @@
         font-weight: 600;
     }
 
-    /* Filter Tabs */
-    .filter-tabs {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        margin-bottom: 1.5rem;
+    /* Home Products Grid - Square Cards */
+    .home-products-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.25rem;
     }
 
-    .filter-tab {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
+    @@media (max-width: 1200px) {
+        .home-products-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @@media (max-width: 992px) {
+        .home-products-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @@media (max-width: 768px) {
+        .home-products-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 480px) {
+        .home-products-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    }
+
+    .home-product-square {
         text-decoration: none;
+        color: white;
+        display: block;
+        transition: all 0.3s ease;
     }
 
-    .filter-tab:hover, .filter-tab.active {
-        background: var(--primary-gradient);
-        border-color: transparent;
+    .home-product-square:hover {
+        transform: translateY(-6px);
         color: white;
     }
 
-    .filter-tab .count {
-        color: rgba(255, 255, 255, 0.4);
-        margin-left: 0.25rem;
-    }
-
-    .filter-tab.active .count, .filter-tab:hover .count {
-        color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* Product Cards - New Design */
-    .product-card-new {
-        background: #1a1a2e;
-        border-radius: 16px;
+    .home-product-image {
+        aspect-ratio: 1;
+        border-radius: 18px;
         overflow: hidden;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        height: 100%;
         display: flex;
-        flex-direction: column;
-    }
-
-    .product-card-new:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-        border-color: rgba(102, 126, 234, 0.3);
-    }
-
-    .product-card-image {
+        align-items: center;
+        justify-content: center;
         position: relative;
-        height: 180px;
-        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.3s ease;
     }
 
-    .product-card-image img {
+    .home-product-square:hover .home-product-image {
+        border-color: rgba(102, 126, 234, 0.3);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-product-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         transition: transform 0.3s ease;
     }
 
-    .product-card-new:hover .product-card-image img {
+    .home-product-square:hover .home-product-image img {
         transform: scale(1.05);
     }
 
-    .product-card-image-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 4rem;
+    .home-product-icon {
+        font-size: 3.5rem;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
     }
 
-    .product-card-image-placeholder.vpn { background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%); color: #667eea; }
-    .product-card-image-placeholder.game { background: linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%); color: #4facfe; }
-    .product-card-image-placeholder.gift { background: linear-gradient(135deg, rgba(240, 147, 251, 0.3) 0%, rgba(245, 87, 108, 0.3) 100%); color: #f093fb; }
-
-    .product-card-badges {
+    .home-product-badge {
         position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
+        top: 0.6rem;
+        left: 0.6rem;
+        z-index: 2;
     }
 
-    .product-badge-hit {
-        background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
-        padding: 0.25rem 0.75rem;
+    .home-product-badge span {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        padding: 0.2rem 0.6rem;
         border-radius: 6px;
         font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .product-badge-new {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        padding: 0.25rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    .product-badge-sale {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        padding: 0.25rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 700;
-    }
-
-    .product-card-currency {
-        position: absolute;
-        bottom: 0.75rem;
-        left: 0.75rem;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(10px);
-        padding: 0.35rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-    }
-
-    .product-card-currency i {
-        color: #fbbf24;
-    }
-
-    .product-card-body {
-        padding: 1.25rem;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-card-title {
         font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-        color: white;
-        line-height: 1.3;
+        color: rgba(255, 255, 255, 0.9);
     }
 
-    .product-card-desc {
-        color: rgba(255, 255, 255, 0.5);
+    .home-product-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1.5rem 0.75rem 0.75rem;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+        border-radius: 0 0 18px 18px;
+    }
+
+    .home-product-price {
         font-size: 0.85rem;
-        margin-bottom: 1rem;
-        flex-grow: 1;
-    }
-
-    .product-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-    }
-
-    .product-card-price {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-card-price-old {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.4);
-        text-decoration: line-through;
-    }
-
-    .product-card-price-current {
-        font-size: 1.25rem;
         font-weight: 700;
         color: #4facfe;
     }
 
-    .product-card-btn {
-        background: var(--primary-gradient);
-        border: none;
-        border-radius: 10px;
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: white;
-        transition: all 0.3s ease;
+    .home-product-info {
+        padding: 0.6rem 0.2rem 0;
     }
 
-    .product-card-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    /* Games Grid - Small Icons */
-    .games-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 1rem;
-    }
-
-    .game-icon-card {
-        aspect-ratio: 1;
-        border-radius: 16px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .game-icon-card:hover {
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .game-icon-card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .game-icon-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
+    .home-product-name {
         font-weight: 700;
-        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
-        color: rgba(255, 255, 255, 0.3);
-    }
-
-    .game-icon-name {
-        text-align: center;
-        margin-top: 0.5rem;
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        line-height: 1.25;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    /* Promo Banner */
-    .promo-banner {
-        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
-        border-radius: 16px;
-        padding: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
-    }
-
-    .promo-banner:hover {
-        border-color: rgba(102, 126, 234, 0.3);
-    }
-
-    .promo-banner-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .promo-banner-icon.telegram { background: linear-gradient(135deg, #0088cc 0%, #00b4d8 100%); }
-    .promo-banner-icon.support { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
-
-    .promo-banner-content {
-        flex-grow: 1;
-    }
-
-    .promo-banner-title {
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .promo-banner-desc {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.5);
+    .home-product-category {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.45);
+        margin-top: 0.15rem;
     }
 
     /* Features Strip */
@@ -783,176 +609,64 @@
     </div>
 </section>
 
-<!-- Popular Products -->
+<!-- Popular Products (square cards, full width) -->
 <section class="py-4">
     <div class="container container-wide">
-        <div class="row">
-            <!-- Main Content -->
-            <div class="col-lg-9">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <i class="bi bi-fire"></i>
-                        Популярные товары
-                    </h2>
-                    <a href="/Catalog" class="btn btn-outline-light btn-sm">
-                        Все товары <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                </div>
-
-                <div class="filter-tabs">
-                    <a href="/Catalog" class="filter-tab active">Все</a>
-                    <a href="/Catalog/GameCurrency" class="filter-tab">Игровая валюта</a>
-                    <a href="/Catalog/GiftCards" class="filter-tab">Подарочные карты</a>
-                    <a href="/Catalog/Vpn" class="filter-tab">VPN</a>
-                </div>
-
-                <div class="row g-3">
-                    @if (Model.FeaturedProducts?.Any() == true)
-                    {
-                        @foreach (var product in Model.FeaturedProducts.Take(6))
-                        {
-                            var categoryClass = product.Category switch {
-                                DigiVault.Core.Enums.ProductCategory.VpnSubscription => "vpn",
-                                DigiVault.Core.Enums.ProductCategory.GameCurrency => "game",
-                                _ => "gift"
-                            };
-                            var categoryIcon = product.Category switch {
-                                DigiVault.Core.Enums.ProductCategory.VpnSubscription => "bi-shield-lock",
-                                DigiVault.Core.Enums.ProductCategory.GameCurrency => "bi-controller",
-                                _ => "bi-gift"
-                            };
-
-                            <div class="col-lg-4 col-md-6">
-                                <a href="/Catalog/Product/@product.Id" class="text-decoration-none">
-                                    <div class="product-card-new">
-                                        <div class="product-card-image">
-                                            <div class="product-card-image-placeholder @categoryClass">
-                                                <i class="bi @categoryIcon"></i>
-                                            </div>
-                                            <div class="product-card-badges">
-                                                @if (product.IsFeatured)
-                                                {
-                                                    <span class="product-badge-hit">ХИТ</span>
-                                                }
-                                                @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
-                                                {
-                                                    var discount = (int)Math.Round((1 - product.Price / product.OldPrice.Value) * 100);
-                                                    <span class="product-badge-sale">-@discount%</span>
-                                                }
-                                            </div>
-                                            @if (product.Category == DigiVault.Core.Enums.ProductCategory.GameCurrency)
-                                            {
-                                                <div class="product-card-currency">
-                                                    <i class="bi bi-coin"></i>
-                                                    <span>Валюта</span>
-                                                </div>
-                                            }
-                                        </div>
-                                        <div class="product-card-body">
-                                            <h4 class="product-card-title">@product.Name</h4>
-                                            <p class="product-card-desc">@(product.Description?.Length > 60 ? product.Description.Substring(0, 60) + "..." : product.Description)</p>
-                                            <div class="product-card-footer">
-                                                <div class="product-card-price">
-                                                    @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
-                                                    {
-                                                        <span class="product-card-price-old">@product.OldPrice.Value.ToString("N0") ₽</span>
-                                                    }
-                                                    <span class="product-card-price-current">@product.Price.ToString("N0") ₽</span>
-                                                </div>
-                                                <span class="product-card-btn">Купить</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <!-- Demo products if no data -->
-                        @for (int i = 0; i < 6; i++)
-                        {
-                            var classes = new[] { "vpn", "game", "gift" };
-                            var icons = new[] { "bi-shield-lock", "bi-controller", "bi-gift" };
-                            var names = new[] { "NordVPN - 1 год", "Fortnite 1000 V-Bucks", "Netflix 3 мес", "ExpressVPN - 6 мес", "Roblox 800 Robux", "PlayStation Plus" };
-                            var prices = new[] { 2999, 799, 4500, 1999, 899, 3499 };
-
-                            <div class="col-lg-4 col-md-6">
-                                <a href="/Catalog" class="text-decoration-none">
-                                    <div class="product-card-new">
-                                        <div class="product-card-image">
-                                            <div class="product-card-image-placeholder @classes[i % 3]">
-                                                <i class="bi @icons[i % 3]"></i>
-                                            </div>
-                                            <div class="product-card-badges">
-                                                @if (i < 2)
-                                                {
-                                                    <span class="product-badge-hit">ХИТ</span>
-                                                }
-                                            </div>
-                                        </div>
-                                        <div class="product-card-body">
-                                            <h4 class="product-card-title">@names[i]</h4>
-                                            <p class="product-card-desc">Мгновенная доставка после оплаты</p>
-                                            <div class="product-card-footer">
-                                                <div class="product-card-price">
-                                                    <span class="product-card-price-current">@prices[i].ToString("N0") ₽</span>
-                                                </div>
-                                                <span class="product-card-btn">Купить</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-
-            <!-- Sidebar -->
-            <div class="col-lg-3">
-                <a href="#" class="promo-banner text-decoration-none text-white">
-                    <div class="promo-banner-icon telegram">
-                        <i class="bi bi-telegram"></i>
-                    </div>
-                    <div class="promo-banner-content">
-                        <div class="promo-banner-title">Наш Telegram</div>
-                        <div class="promo-banner-desc">Новости и акции</div>
-                    </div>
-                </a>
-
-                <a href="#" class="promo-banner text-decoration-none text-white">
-                    <div class="promo-banner-icon support">
-                        <i class="bi bi-headset"></i>
-                    </div>
-                    <div class="promo-banner-content">
-                        <div class="promo-banner-title">Поддержка 24/7</div>
-                        <div class="promo-banner-desc">Всегда на связи</div>
-                    </div>
-                </a>
-
-                <div class="mt-4">
-                    <h6 class="mb-3" style="color: rgba(255,255,255,0.5);">
-                        <i class="bi bi-lightning-fill text-warning me-1"></i>
-                        Быстрые ссылки
-                    </h6>
-                    <div class="d-flex flex-column gap-2">
-                        <a href="/Catalog/Game/fortnite" class="filter-tab">
-                            <i class="bi bi-controller me-1"></i> Fortnite
-                        </a>
-                        <a href="/Catalog/Game/roblox" class="filter-tab">
-                            <i class="bi bi-controller me-1"></i> Roblox
-                        </a>
-                        <a href="/Catalog/GiftCard/psn" class="filter-tab">
-                            <i class="bi bi-playstation me-1"></i> PlayStation
-                        </a>
-                        <a href="/Catalog/GiftCard/xbox" class="filter-tab">
-                            <i class="bi bi-xbox me-1"></i> Xbox
-                        </a>
-                    </div>
-                </div>
-            </div>
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-fire"></i>
+                Популярные товары
+            </h2>
+            <a href="/Catalog" class="btn btn-outline-light btn-sm">
+                Все товары <i class="bi bi-arrow-right ms-1"></i>
+            </a>
         </div>
+
+        @if (Model.FeaturedItems?.Any() == true)
+        {
+            <div class="home-products-grid">
+                @foreach (var item in Model.FeaturedItems.Take(10))
+                {
+                    var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
+
+                    <a href="@item.DetailUrl" class="home-product-square">
+                        <div class="home-product-image" style="background: @item.Gradient;">
+                            @if (hasImage)
+                            {
+                                <img src="@item.ImageUrl" alt="@item.Name" />
+                            }
+                            else
+                            {
+                                <span class="home-product-icon">@item.Icon</span>
+                            }
+                            @if (item.ProductCount > 0)
+                            {
+                                <div class="home-product-badge">
+                                    <span>@item.ProductCount вариантов</span>
+                                </div>
+                            }
+                            @if (item.MinPrice.HasValue)
+                            {
+                                <div class="home-product-overlay">
+                                    <span class="home-product-price">от @item.MinPrice.Value.ToString("N0") ₽</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="home-product-info">
+                            <div class="home-product-name">@item.Name</div>
+                            <div class="home-product-category">@item.CategoryDisplay</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5" style="color: rgba(255,255,255,0.4);">
+                <i class="bi bi-box-seam d-block" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p>Товары скоро появятся</p>
+            </div>
+        }
     </div>
 </section>
 

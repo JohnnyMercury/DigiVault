@@ -530,22 +530,33 @@
                 background: rgba(102, 126, 234, 0.15);
             }
 
-            /* Categories dropdown */
+            /* Dropdown animation — smooth expand */
             .navbar-collapse .dropdown-menu {
                 background: rgba(102, 126, 234, 0.08);
                 border: none;
                 border-left: 2px solid rgba(102, 126, 234, 0.35);
                 box-shadow: none;
                 border-radius: 0 10px 10px 0;
-                padding: 0.35rem 0.5rem;
                 margin: 2px 0 2px 1.2rem;
                 position: static !important;
                 transform: none !important;
+                /* Animation */
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                padding: 0 0.5rem;
+                transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.25s ease;
+            }
+
+            .navbar-collapse .dropdown-menu.show {
+                max-height: 500px;
+                opacity: 1;
+                padding: 0.3rem 0.5rem;
             }
 
             .navbar-collapse .dropdown-item {
-                font-size: 0.85rem;
-                padding: 0.55rem 0.9rem;
+                font-size: 0.82rem;
+                padding: 0.45rem 0.8rem;
                 color: rgba(255, 255, 255, 0.7);
                 border-radius: 8px;
                 transition: background 0.2s ease, color 0.2s ease;
@@ -558,63 +569,81 @@
             }
 
             .navbar-collapse .dropdown-item i {
-                font-size: 0.8rem;
+                font-size: 0.78rem;
                 opacity: 0.6;
             }
 
             /* Separator between nav and user section */
             .navbar-collapse .align-items-center {
-                border-top: 1px solid rgba(102, 126, 234, 0.15);
-                margin-top: 0.35rem;
-                padding-top: 0.5rem;
+                border-top: 1px solid rgba(102, 126, 234, 0.12);
+                margin-top: 0.25rem;
+                padding-top: 0.35rem;
+            }
+
+            /* Remove me-2 margin on mobile */
+            .navbar-collapse .nav-item.me-2 {
+                margin-right: 0 !important;
             }
 
             /* Balance badge */
             .navbar-collapse .nav-item .balance-badge {
                 display: flex;
                 justify-content: center;
-                margin: 0.15rem 0;
-                padding: 0.6rem 1rem;
+                margin: 0.1rem 0;
+                padding: 0.5rem 1rem;
                 border-radius: 10px;
-                font-size: 0.9rem;
+                font-size: 0.88rem;
                 width: 100%;
             }
 
-            /* User dropdown trigger — compact */
+            /* User dropdown trigger — compact, no border */
             .navbar-collapse .align-items-center .nav-item.dropdown .nav-link {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
-                padding: 0.55rem 1rem !important;
+                padding: 0.45rem 1rem !important;
+                border: none !important;
+                outline: none !important;
+                box-shadow: none !important;
             }
 
-            /* User dropdown menu */
+            /* User dropdown menu — animated */
             .navbar-collapse .align-items-center .dropdown-menu {
                 background: rgba(102, 126, 234, 0.06);
                 border: none;
                 border-left: 2px solid rgba(102, 126, 234, 0.25);
                 border-radius: 0 10px 10px 0;
                 box-shadow: none;
-                padding: 0.35rem 0.5rem;
                 margin: 2px 0 0 1.2rem;
                 position: static !important;
                 transform: none !important;
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                padding: 0 0.5rem;
+                transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.25s ease;
+            }
+
+            .navbar-collapse .align-items-center .dropdown-menu.show {
+                max-height: 500px;
+                opacity: 1;
+                padding: 0.3rem 0.5rem;
             }
 
             .navbar-collapse .align-items-center .dropdown-item {
-                padding: 0.55rem 0.9rem;
-                font-size: 0.85rem;
+                padding: 0.45rem 0.8rem;
+                font-size: 0.82rem;
                 transition: background 0.2s ease;
             }
 
             .navbar-collapse .align-items-center .dropdown-item-text {
-                padding: 0.35rem 0.9rem;
-                font-size: 0.78rem;
+                padding: 0.25rem 0.8rem;
+                font-size: 0.75rem;
             }
 
             .navbar-collapse .align-items-center .dropdown-divider {
-                margin: 0.2rem 0;
-                border-color: rgba(255, 255, 255, 0.06);
+                margin: 0.15rem 0;
+                border-color: rgba(255, 255, 255, 0.05);
             }
 
             /* Login/Register for non-auth */

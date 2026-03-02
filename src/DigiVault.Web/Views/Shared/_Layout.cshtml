@@ -503,6 +503,8 @@
             padding: 0.5rem 0 !important;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            flex: 1;
         }
 
         /* Profile card */
@@ -762,93 +764,94 @@
                 </ul>
             </div>
 
-            <!-- MOBILE OFFCANVAS -->
-            <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileMenu">
-                <div class="offcanvas-header">
-                    <h5 class="offcanvas-title">
-                        <i class="bi bi-shield-lock-fill me-2"></i>DigiVault
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-                </div>
-                <div class="offcanvas-body">
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        var userMobile = await UserManager.GetUserAsync(User);
-                        <!-- Profile card -->
-                        <div class="mobile-profile-card">
-                            <div class="d-flex align-items-center gap-3">
-                                <i class="bi bi-person-circle mobile-avatar"></i>
-                                <div>
-                                    <div class="mobile-email">@userMobile?.Email</div>
-                                    <div class="mobile-balance"><i class="bi bi-wallet2 me-1"></i>@userMobile?.Balance.ToString("N2") ₽</div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                    <!-- Navigation -->
-                    <div class="mobile-section-label">Навигация</div>
-                    <nav class="mobile-nav">
-                        <a href="/Catalog" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-grid-3x3-gap-fill"></i>Каталог
-                        </a>
-                        <a href="/Catalog/Vpn" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-shield-check"></i>VPN подписки
-                        </a>
-                        <a href="/Catalog/GameCurrency" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-controller"></i>Игровая валюта
-                        </a>
-                        <a href="/Catalog/GiftCards" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-gift"></i>Подарочные карты
-                        </a>
-                    </nav>
-
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        <!-- Account -->
-                        <div class="mobile-section-label">Аккаунт</div>
-                        <nav class="mobile-nav">
-                            <a href="/Account/Dashboard" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                                <i class="bi bi-speedometer2"></i>Личный кабинет
-                            </a>
-                            <a href="/Account/Orders" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                                <i class="bi bi-bag-check"></i>Мои заказы
-                            </a>
-                            <a href="/Account/Deposit" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                                <i class="bi bi-plus-circle"></i>Пополнить баланс
-                            </a>
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <a href="/Admin/Dashboard" class="mobile-nav-item mobile-nav-admin" data-bs-dismiss="offcanvas">
-                                    <i class="bi bi-gear"></i>Админ-панель
-                                </a>
-                            }
-                        </nav>
-
-                        <!-- Logout -->
-                        <div class="mobile-nav mt-auto">
-                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="mobile-nav-item mobile-nav-logout w-100 text-start border-0">
-                                    <i class="bi bi-box-arrow-right"></i>Выйти
-                                </button>
-                            </form>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="mobile-section-label">Аккаунт</div>
-                        <nav class="mobile-nav">
-                            <a href="/Account/Login" class="mobile-nav-item" data-bs-dismiss="offcanvas">
-                                <i class="bi bi-box-arrow-in-right"></i>Войти
-                            </a>
-                        </nav>
-                        <a href="/Account/Register" class="btn btn-primary w-100 mt-3">Регистрация</a>
-                    }
-                </div>
-            </div>
         </div>
     </nav>
+
+    <!-- MOBILE OFFCANVAS — вне navbar чтобы избежать stacking context от backdrop-filter -->
+    <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileMenu">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">
+                <i class="bi bi-shield-lock-fill me-2"></i>DigiVault
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            @if (SignInManager.IsSignedIn(User))
+            {
+                var userMobile = await UserManager.GetUserAsync(User);
+                <!-- Profile card -->
+                <div class="mobile-profile-card">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-person-circle mobile-avatar"></i>
+                        <div>
+                            <div class="mobile-email">@userMobile?.Email</div>
+                            <div class="mobile-balance"><i class="bi bi-wallet2 me-1"></i>@userMobile?.Balance.ToString("N2") ₽</div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Navigation -->
+            <div class="mobile-section-label">Навигация</div>
+            <nav class="mobile-nav">
+                <a href="/Catalog" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>Каталог
+                </a>
+                <a href="/Catalog/Vpn" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-shield-check"></i>VPN подписки
+                </a>
+                <a href="/Catalog/GameCurrency" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-controller"></i>Игровая валюта
+                </a>
+                <a href="/Catalog/GiftCards" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-gift"></i>Подарочные карты
+                </a>
+            </nav>
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <!-- Account -->
+                <div class="mobile-section-label">Аккаунт</div>
+                <nav class="mobile-nav">
+                    <a href="/Account/Dashboard" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-speedometer2"></i>Личный кабинет
+                    </a>
+                    <a href="/Account/Orders" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-bag-check"></i>Мои заказы
+                    </a>
+                    <a href="/Account/Deposit" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-plus-circle"></i>Пополнить баланс
+                    </a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="/Admin/Dashboard" class="mobile-nav-item mobile-nav-admin" data-bs-dismiss="offcanvas">
+                            <i class="bi bi-gear"></i>Админ-панель
+                        </a>
+                    }
+                </nav>
+
+                <!-- Logout -->
+                <div class="mobile-nav mt-auto">
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="mobile-nav-item mobile-nav-logout w-100 text-start border-0">
+                            <i class="bi bi-box-arrow-right"></i>Выйти
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="mobile-section-label">Аккаунт</div>
+                <nav class="mobile-nav">
+                    <a href="/Account/Login" class="mobile-nav-item" data-bs-dismiss="offcanvas">
+                        <i class="bi bi-box-arrow-in-right"></i>Войти
+                    </a>
+                </nav>
+                <a href="/Account/Register" class="btn btn-primary w-100 mt-3 mx-3" style="width: calc(100% - 1.5rem) !important;">Регистрация</a>
+            }
+        </div>
+    </div>
 
     <main>
         @RenderBody()

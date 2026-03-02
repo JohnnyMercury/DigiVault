@@ -559,10 +559,6 @@
                         <i class="bi bi-shield-lock-fill"></i>
                         <span>VPN провайдеры</span>
                     </a>
-                    <a asp-controller="Products" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Products" ? "active" : "")">
-                        <i class="bi bi-box-seam-fill"></i>
-                        <span>Товары (старые)</span>
-                    </a>
                     <a asp-controller="Orders" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")">
                         <i class="bi bi-bag-check-fill"></i>
                         <span>Заказы</span>

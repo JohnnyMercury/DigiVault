@@ -3,7 +3,7 @@
     ViewData["Title"] = "Баннеры";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
         <h4 class="mb-0">Баннеры на главной</h4>
         <small class="text-muted">Управление слайдером на главной странице</small>
@@ -20,9 +20,9 @@
         {
             <div class="col-12">
                 <div class="data-card" style="@(banner.IsActive ? "" : "opacity: 0.5;")">
-                    <div class="d-flex align-items-center p-3 gap-3">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center p-3 gap-3">
                         <!-- Preview -->
-                        <div style="width: 240px; min-height: 100px; border-radius: 12px; background: @banner.Gradient; position: relative; overflow: hidden; flex-shrink: 0; display: flex; align-items: center;">
+                        <div style="width: 100%; max-width: 240px; min-height: 100px; border-radius: 12px; background: @banner.Gradient; position: relative; overflow: hidden; flex-shrink: 0; display: flex; align-items: center;">
                             <div style="padding: 0.75rem; z-index: 2; position: relative;">
                                 <div style="font-weight: 700; font-size: 0.85rem; line-height: 1.2;">@banner.Title</div>
                                 @if (!string.IsNullOrEmpty(banner.Subtitle))
@@ -37,20 +37,20 @@
                         </div>
 
                         <!-- Info -->
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1" style="font-weight: 600;">@banner.Title</h5>
+                        <div class="flex-grow-1 min-width-0">
+                            <h5 class="mb-1" style="font-weight: 600; font-size: 1rem;">@banner.Title</h5>
                             @if (!string.IsNullOrEmpty(banner.Subtitle))
                             {
-                                <div style="color: @banner.SubtitleColor; font-weight: 600; font-size: 0.9rem;">@banner.Subtitle</div>
+                                <div style="color: @banner.SubtitleColor; font-weight: 600; font-size: 0.85rem;">@banner.Subtitle</div>
                             }
                             @if (!string.IsNullOrEmpty(banner.Description))
                             {
-                                <small class="text-muted">@banner.Description</small>
+                                <small class="text-muted" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">@banner.Description</small>
                             }
-                            <div class="mt-1">
+                            <div class="mt-1 d-flex flex-wrap gap-1">
                                 @if (!string.IsNullOrEmpty(banner.ButtonText))
                                 {
-                                    <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe;">@banner.ButtonText → @banner.ButtonUrl</span>
+                                    <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe;">@banner.ButtonText</span>
                                 }
                                 <span class="badge bg-secondary">Порядок: @banner.SortOrder</span>
                                 @if (banner.IsActive)
@@ -66,27 +66,27 @@
 
                         <!-- Actions -->
                         <div class="d-flex gap-2 flex-shrink-0">
-                            <a asp-action="Edit" asp-route-id="@banner.Id" class="btn btn-outline-light">
+                            <a asp-action="Edit" asp-route-id="@banner.Id" class="btn btn-outline-light btn-sm">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <form asp-action="ToggleActive" asp-route-id="@banner.Id" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 @if (banner.IsActive)
                                 {
-                                    <button type="submit" class="btn btn-outline-warning" title="Скрыть">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm" title="Скрыть">
                                         <i class="bi bi-eye-slash"></i>
                                     </button>
                                 }
                                 else
                                 {
-                                    <button type="submit" class="btn btn-outline-success" title="Показать">
+                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Показать">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 }
                             </form>
                             <form asp-action="Destroy" asp-route-id="@banner.Id" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Удалить баннер навсегда?')">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Удалить баннер навсегда?')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>

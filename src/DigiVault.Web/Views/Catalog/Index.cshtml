@@ -1,9 +1,13 @@
 @model DigiVault.Web.Models.CatalogViewModel
 @using DigiVault.Core.Entities
-@inject DigiVault.Core.Interfaces.IGameService _gameService
 @{
     ViewData["Title"] = "Каталог";
-    var games = await _gameService.GetAllGamesAsync();
+    // Рандомный порядок для верхнего блока "Популярные"
+    var rng = new Random();
+    var popularItems = (Model.Items ?? Enumerable.Empty<DigiVault.Web.Models.CatalogItemViewModel>())
+        .OrderBy(_ => rng.Next())
+        .Take(6)
+        .ToList();
 }
 
 <style>
@@ -325,15 +329,6 @@
         z-index: 2;
     }
 
-    .badge-sale {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: white;
-    }
-
     .badge-count {
         background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(8px);
@@ -446,30 +441,30 @@
 
 @if (string.IsNullOrEmpty(Model.SearchQuery) && string.IsNullOrEmpty(Model.CategoryFilter))
 {
-    <!-- Game Tiles -->
+    <!-- Popular Tiles (random mix) -->
     <section class="games-section">
         <div class="container container-wide">
             <h2 class="section-title">
-                <i class="bi bi-controller"></i>
-                Популярные игры и сервисы
+                <i class="bi bi-star"></i>
+                Популярные товары
             </h2>
             <div class="game-tiles-grid">
-                @foreach (var game in games)
+                @foreach (var item in popularItems)
                 {
-                    var hasImage = !string.IsNullOrEmpty(game.ImageUrl);
+                    var hasImage = !string.IsNullOrEmpty(item.ImageUrl);
 
-                    <a href="/Catalog/Game/@game.Slug" class="game-tile">
-                        <div class="game-tile-image-wrapper" style="background: @game.Gradient;">
+                    <a href="@item.DetailUrl" class="game-tile">
+                        <div class="game-tile-image-wrapper" style="background: @item.Gradient;">
                             @if (hasImage)
                             {
-                                <img src="@game.ImageUrl" alt="@game.Name" class="game-tile-image" />
+                                <img src="@item.ImageUrl" alt="@item.Name" class="game-tile-image" />
                             }
                             else
                             {
-                                <span class="game-tile-icon">@game.Icon</span>
+                                <span class="game-tile-icon">@item.Icon</span>
                             }
                         </div>
-                        <span class="game-tile-name">@game.Name</span>
+                        <span class="game-tile-name">@item.Name</span>
                     </a>
                 }
             </div>
@@ -589,16 +584,12 @@
                                 <span class="product-square-icon">@item.Icon</span>
                             }
 
-                            <div class="product-square-badges">
-                                @if (item.MaxDiscount > 0)
-                                {
-                                    <span class="badge-sale">-@item.MaxDiscount%</span>
-                                }
-                                @if (item.ProductCount > 0)
-                                {
-                                    <span class="badge-count">@item.ProductCount шт</span>
-                                }
-                            </div>
+                            @if (item.ProductCount > 0)
+                            {
+                                <div class="product-square-badges">
+                                    <span class="badge-count">@item.ProductCount вариантов</span>
+                                </div>
+                            }
 
                             @if (item.MinPrice.HasValue)
                             {

@@ -32,49 +32,6 @@
         align-items: center;
     }
 
-    .hero-banner.banner-1 {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    }
-    .hero-banner.banner-1::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
-    }
-
-    .hero-banner.banner-2 {
-        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-    }
-    .hero-banner.banner-2::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
-        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
-    }
-
-    .hero-banner.banner-3 {
-        background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
-    }
-    .hero-banner.banner-3::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(135deg, rgba(240, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%);
-        clip-path: polygon(30% 0, 100% 0, 100% 100%, 0% 100%);
-    }
-
-
     .hero-banner-content {
         position: relative;
         z-index: 2;
@@ -89,13 +46,8 @@
     }
 
     .hero-banner-title span {
-        background: var(--accent-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        display: inline;
     }
-
-    .hero-banner-title .text-cyan { color: #4facfe !important; -webkit-text-fill-color: #4facfe; }
-    .hero-banner-title .text-pink { color: #f093fb !important; -webkit-text-fill-color: #f093fb; }
 
     .hero-banner-desc {
         color: rgba(255, 255, 255, 0.7);
@@ -446,88 +398,73 @@
 </style>
 
 <!-- Hero Banner Slider -->
+@{
+    var banners = Model.Banners?.ToList() ?? new List<DigiVault.Core.Entities.HeroBanner>();
+    var bannerCount = banners.Count;
+}
+@if (bannerCount > 0)
+{
 <section class="hero-slider">
     <div class="container container-wide">
         <div class="slider-container">
             <div class="slider-track" id="sliderTrack">
-                <!-- Banner 1: Main -->
-                <div class="hero-banner banner-1">
-                    <div class="hero-banner-content">
-                        <h1 class="hero-banner-title">
-                            Моментальное пополнение<br>
-                            <span>PSN, Xbox, Netflix</span>
-                        </h1>
-                        <p class="hero-banner-desc">
-                            Пополняйте аккаунты игр и сервисов мгновенно по лучшим ценам. Безопасно и надёжно.
-                        </p>
-                        <a href="/Catalog" class="btn btn-primary">
-                            <i class="bi bi-cart-fill me-2"></i>Перейти в каталог
-                        </a>
+                @foreach (var banner in banners)
+                {
+                    <div class="hero-banner" style="background: @banner.Gradient;">
+                        <div class="hero-banner-content">
+                            <h1 class="hero-banner-title">
+                                @banner.Title
+                                @if (!string.IsNullOrEmpty(banner.Subtitle))
+                                {
+                                    <br><span style="color: @banner.SubtitleColor; -webkit-text-fill-color: @banner.SubtitleColor;">@banner.Subtitle</span>
+                                }
+                            </h1>
+                            @if (!string.IsNullOrEmpty(banner.Description))
+                            {
+                                <p class="hero-banner-desc">@banner.Description</p>
+                            }
+                            @if (!string.IsNullOrEmpty(banner.ButtonText) && !string.IsNullOrEmpty(banner.ButtonUrl))
+                            {
+                                <a href="@banner.ButtonUrl" class="btn @banner.ButtonClass">
+                                    @banner.ButtonText
+                                </a>
+                            }
+                        </div>
+                        <div class="hero-banner-image">
+                            @if (!string.IsNullOrEmpty(banner.ImageUrl))
+                            {
+                                <img src="@banner.ImageUrl" alt="@banner.Title">
+                            }
+                        </div>
                     </div>
-                    <div class="hero-banner-image">
-                        <i class="bi bi-controller" style="color: #667eea;"></i>
-                    </div>
-                </div>
-
-                <!-- Banner 2: Game Currency -->
-                <div class="hero-banner banner-2">
-                    <div class="hero-banner-content">
-                        <h1 class="hero-banner-title">
-                            Игровая валюта<br>
-                            <span class="text-cyan">V-Bucks, Robux, UC</span>
-                        </h1>
-                        <p class="hero-banner-desc">
-                            Пополняйте валюту любимых игр: Fortnite, Roblox, PUBG Mobile и других!
-                        </p>
-                        <a href="/Catalog/GameCurrency" class="btn btn-info">
-                            <i class="bi bi-coin me-2"></i>Купить валюту
-                        </a>
-                    </div>
-                    <div class="hero-banner-image">
-                        <i class="bi bi-coin" style="color: #4facfe;"></i>
-                    </div>
-                </div>
-
-                <!-- Banner 3: Gift Cards -->
-                <div class="hero-banner banner-3">
-                    <div class="hero-banner-content">
-                        <h1 class="hero-banner-title">
-                            Подарочные карты<br>
-                            <span class="text-pink">Netflix, Spotify, iTunes</span>
-                        </h1>
-                        <p class="hero-banner-desc">
-                            Подарки для себя и близких. Мгновенная доставка кодов на email.
-                        </p>
-                        <a href="/Catalog/GiftCards" class="btn btn-danger">
-                            <i class="bi bi-gift-fill me-2"></i>Выбрать карту
-                        </a>
-                    </div>
-                    <div class="hero-banner-image">
-                        <i class="bi bi-gift-fill" style="color: #f093fb;"></i>
-                    </div>
-                </div>
-
+                }
             </div>
 
-            <!-- Slider Arrows -->
-            <div class="slider-arrows">
-                <div class="slider-arrow" onclick="prevSlide()">
-                    <i class="bi bi-chevron-left"></i>
+            @if (bannerCount > 1)
+            {
+                <div class="slider-arrows">
+                    <div class="slider-arrow" onclick="prevSlide()">
+                        <i class="bi bi-chevron-left"></i>
+                    </div>
+                    <div class="slider-arrow" onclick="nextSlide()">
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
                 </div>
-                <div class="slider-arrow" onclick="nextSlide()">
-                    <i class="bi bi-chevron-right"></i>
-                </div>
-            </div>
+            }
         </div>
 
-        <!-- Slider Dots -->
-        <div class="slider-dots">
-            <div class="slider-dot active" onclick="goToSlide(0)"></div>
-            <div class="slider-dot" onclick="goToSlide(1)"></div>
-            <div class="slider-dot" onclick="goToSlide(2)"></div>
-        </div>
+        @if (bannerCount > 1)
+        {
+            <div class="slider-dots">
+                @for (int i = 0; i < bannerCount; i++)
+                {
+                    <div class="slider-dot @(i == 0 ? "active" : "")" onclick="goToSlide(@i)"></div>
+                }
+            </div>
+        }
     </div>
 </section>
+}
 
 <!-- Category Tiles -->
 <section class="categories-grid">
@@ -720,7 +657,7 @@
 <script>
     // Slider functionality
     let currentSlide = 0;
-    const totalSlides = 3;
+    const totalSlides = @bannerCount;
     const sliderTrack = document.getElementById('sliderTrack');
     const dots = document.querySelectorAll('.slider-dot');
     let autoSlideInterval;

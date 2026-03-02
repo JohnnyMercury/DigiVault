@@ -86,9 +86,15 @@ public class HomeController : Controller
         var rng = new Random();
         items = items.OrderBy(_ => rng.Next()).ToList();
 
+        var banners = await _context.HeroBanners
+            .Where(b => b.IsActive)
+            .OrderBy(b => b.SortOrder)
+            .ToListAsync();
+
         var model = new HomeViewModel
         {
             FeaturedItems = items,
+            Banners = banners,
             TotalProducts = await _context.GameProducts.CountAsync(p => p.IsActive),
             TotalUsers = await _context.Users.CountAsync()
         };

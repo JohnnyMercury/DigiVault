@@ -30,6 +30,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // VPN Providers
     public DbSet<VpnProvider> VpnProviders => Set<VpnProvider>();
 
+    // Hero Banners
+    public DbSet<HeroBanner> HeroBanners => Set<HeroBanner>();
+
     // Email & Wallet
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
@@ -264,6 +267,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Icon).HasMaxLength(10);
             entity.Property(e => e.Gradient).HasMaxLength(200);
             entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.SortOrder);
+        });
+
+        // HeroBanner configuration
+        builder.Entity<HeroBanner>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Subtitle).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.ButtonText).HasMaxLength(100);
+            entity.Property(e => e.ButtonUrl).HasMaxLength(500);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Gradient).HasMaxLength(300);
+            entity.Property(e => e.SubtitleColor).HasMaxLength(50);
+            entity.Property(e => e.ButtonClass).HasMaxLength(50);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.SortOrder);
         });

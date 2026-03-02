@@ -464,6 +464,10 @@
             <div class="nav-section">
                 <div class="nav-section-title">Управление</div>
                 <nav>
+                    <a asp-controller="HeroBanners" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "HeroBanners" ? "active" : "")">
+                        <i class="bi bi-images"></i>
+                        <span>Баннеры</span>
+                    </a>
                     <a asp-controller="Games" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Games" ? "active" : "")">
                         <i class="bi bi-controller"></i>
                         <span>Игры и товары</span>

@@ -1,0 +1,293 @@
+@model DigiVault.Core.Entities.HeroBanner
+@{
+    ViewData["Title"] = "Новый баннер";
+}
+
+@section Styles {
+<style>
+    .upload-zone {
+        border: 2px dashed rgba(255,255,255,0.15);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: rgba(102, 126, 234, 0.5);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .gradient-preset {
+        width: 100%;
+        height: 40px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .gradient-preset:hover, .gradient-preset.selected {
+        border-color: #667eea;
+        transform: scale(1.05);
+    }
+    .color-dot {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .color-dot:hover, .color-dot.selected {
+        border-color: #fff;
+        transform: scale(1.15);
+    }
+    .banner-preview {
+        border-radius: 16px;
+        padding: 2rem;
+        min-height: 200px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+    }
+</style>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">Новый баннер</h4>
+        <small class="text-muted">Создание нового баннера для главной страницы</small>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-1"></i>Назад
+    </a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-4">
+        <!-- Left: Form -->
+        <div class="col-lg-8">
+            <div class="data-card p-4 mb-4">
+                <h5 class="mb-3">Текст баннера</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">Заголовок *</label>
+                    <input asp-for="Title" class="form-control" placeholder="Моментальное пополнение">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Подзаголовок (цветной)</label>
+                    <input asp-for="Subtitle" class="form-control" placeholder="PSN, Xbox, Netflix">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Описание</label>
+                    <textarea asp-for="Description" class="form-control" rows="2" placeholder="Пополняйте аккаунты игр и сервисов мгновенно..."></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Текст кнопки</label>
+                        <input asp-for="ButtonText" class="form-control" placeholder="Перейти в каталог">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ссылка кнопки</label>
+                        <input asp-for="ButtonUrl" class="form-control" placeholder="/Catalog">
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-card p-4 mb-4">
+                <h5 class="mb-3">Стиль</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">Градиент фона</label>
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);" data-gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);" data-gradient="linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);" data-gradient="linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 100%);" data-gradient="linear-gradient(135deg, #0a1628 0%, #1a3a5c 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #1a0505 0%, #4a1010 100%);" data-gradient="linear-gradient(135deg, #1a0505 0%, #4a1010 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                        <div class="col-4">
+                            <div class="gradient-preset" style="background: linear-gradient(135deg, #0a1a0a 0%, #1a3a1a 100%);" data-gradient="linear-gradient(135deg, #0a1a0a 0%, #1a3a1a 100%)" onclick="selectGradient(this)"></div>
+                        </div>
+                    </div>
+                    <input asp-for="Gradient" class="form-control" id="gradientInput" placeholder="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Цвет подзаголовка</label>
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="color-dot" style="background: #667eea;" data-color="#667eea" onclick="selectColor(this)"></div>
+                        <div class="color-dot" style="background: #4facfe;" data-color="#4facfe" onclick="selectColor(this)"></div>
+                        <div class="color-dot" style="background: #f093fb;" data-color="#f093fb" onclick="selectColor(this)"></div>
+                        <div class="color-dot" style="background: #22c55e;" data-color="#22c55e" onclick="selectColor(this)"></div>
+                        <div class="color-dot" style="background: #fbbf24;" data-color="#fbbf24" onclick="selectColor(this)"></div>
+                        <div class="color-dot" style="background: #ef4444;" data-color="#ef4444" onclick="selectColor(this)"></div>
+                    </div>
+                    <input asp-for="SubtitleColor" class="form-control" id="subtitleColorInput">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Класс кнопки</label>
+                        <select asp-for="ButtonClass" class="form-select">
+                            <option value="btn-primary">Primary (фиолетовый)</option>
+                            <option value="btn-info">Info (голубой)</option>
+                            <option value="btn-danger">Danger (красный)</option>
+                            <option value="btn-success">Success (зелёный)</option>
+                            <option value="btn-warning">Warning (жёлтый)</option>
+                            <option value="btn-light">Light (белый)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Порядок</label>
+                        <input asp-for="SortOrder" class="form-control" type="number">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Статус</label>
+                        <div class="form-check form-switch mt-2">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                            <label class="form-check-label">Активен</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Image & Preview -->
+        <div class="col-lg-4">
+            <div class="data-card p-4 mb-4">
+                <h5 class="mb-3">Картинка баннера</h5>
+
+                <div class="mb-3">
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageUpload').click()">
+                        <input type="file" name="imageFile" class="d-none" accept="image/*" id="imageUpload">
+                        <div class="upload-zone-content">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-primary mb-2"></i>
+                            <p class="mb-1">Нажмите или перетащите файл</p>
+                            <small class="text-muted">PNG, JPG, WEBP до 5MB</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="imagePreview" class="text-center mb-3" style="display: none;">
+                    <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 12px;">
+                    <p class="text-success small mt-2">
+                        <i class="bi bi-check-circle"></i> Картинка выбрана
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Или URL картинки</label>
+                    <input asp-for="ImageUrl" class="form-control" placeholder="https://...">
+                </div>
+            </div>
+
+            <div class="data-card p-4 mb-4">
+                <h5 class="mb-3">Превью</h5>
+                <div class="banner-preview" id="bannerPreview" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+                    <div style="z-index: 2; position: relative; max-width: 70%;">
+                        <div id="previewTitle" style="font-weight: 800; font-size: 1.1rem; line-height: 1.2;">Заголовок</div>
+                        <div id="previewSubtitle" style="font-weight: 800; font-size: 0.9rem; color: #667eea;">Подзаголовок</div>
+                        <div id="previewDesc" style="color: rgba(255,255,255,0.6); font-size: 0.7rem; margin-top: 0.25rem;"></div>
+                    </div>
+                    <img id="previewImage" src="" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); height: 80px; opacity: 0.8; object-fit: contain; display: none;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-check-circle me-1"></i>Создать баннер
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    const gradientInput = document.getElementById('gradientInput');
+    const subtitleColorInput = document.getElementById('subtitleColorInput');
+
+    function selectGradient(el) {
+        document.querySelectorAll('.gradient-preset').forEach(p => p.classList.remove('selected'));
+        el.classList.add('selected');
+        gradientInput.value = el.dataset.gradient;
+        updatePreview();
+    }
+
+    function selectColor(el) {
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        el.classList.add('selected');
+        subtitleColorInput.value = el.dataset.color;
+        updatePreview();
+    }
+
+    // Image upload
+    const uploadZone = document.getElementById('uploadZone');
+    const imageUpload = document.getElementById('imageUpload');
+    const imagePreview = document.getElementById('imagePreview');
+
+    imageUpload.addEventListener('change', e => handleFile(e.target.files[0]));
+
+    uploadZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            imageUpload.files = e.dataTransfer.files;
+            handleFile(file);
+        }
+    });
+
+    function handleFile(file) {
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                imagePreview.style.display = 'block';
+                imagePreview.querySelector('img').src = e.target.result;
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewImage').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Live preview
+    function updatePreview() {
+        const preview = document.getElementById('bannerPreview');
+        preview.style.background = gradientInput.value || 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+        document.getElementById('previewSubtitle').style.color = subtitleColorInput.value || '#667eea';
+
+        const title = document.querySelector('[name="Title"]').value;
+        const subtitle = document.querySelector('[name="Subtitle"]').value;
+        const desc = document.querySelector('[name="Description"]').value;
+
+        document.getElementById('previewTitle').textContent = title || 'Заголовок';
+        document.getElementById('previewSubtitle').textContent = subtitle || 'Подзаголовок';
+        document.getElementById('previewDesc').textContent = desc || '';
+    }
+
+    document.querySelector('[name="Title"]').addEventListener('input', updatePreview);
+    document.querySelector('[name="Subtitle"]').addEventListener('input', updatePreview);
+    document.querySelector('[name="Description"]').addEventListener('input', updatePreview);
+    gradientInput.addEventListener('input', updatePreview);
+    subtitleColorInput.addEventListener('input', updatePreview);
+</script>
+}

@@ -21,6 +21,7 @@ public class RegisterViewModel
 public class HomeViewModel
 {
     public IEnumerable<CatalogItemViewModel>? FeaturedItems { get; set; }
+    public IEnumerable<HeroBanner>? Banners { get; set; }
     public int TotalProducts { get; set; }
     public int TotalUsers { get; set; }
 }

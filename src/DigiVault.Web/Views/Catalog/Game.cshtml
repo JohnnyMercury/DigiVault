@@ -567,8 +567,26 @@
         .payment-sidebar {
             width: 100%;
             position: relative;
-            order: -1;
+            top: auto;
         }
+        .payment-card {
+            padding: 1rem;
+            border-radius: 14px;
+        }
+        .payment-total-value {
+            font-size: 1.4rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .game-page { padding: 0.5rem 0; gap: 1rem; }
+        .game-tabs { gap: 0.25rem; margin-bottom: 0.75rem; }
+        .game-tab { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        .section-title { font-size: 1rem; margin-bottom: 0.75rem; }
+        .uid-section { padding: 0.75rem 1rem; flex-wrap: wrap; }
+        .uid-input { font-size: 0.9rem; }
+        .uid-checkbox { font-size: 0.8rem; }
+        .product-section { margin-bottom: 1.5rem; }
     }
 
     .payment-card {
@@ -960,7 +978,7 @@
         .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @@media (max-width: 576px) {
-        .currency-grid { grid-template-columns: minmax(0, 1fr); }
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     /* Make sure cards don't overflow */

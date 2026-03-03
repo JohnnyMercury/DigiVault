@@ -294,14 +294,18 @@ public class GameService : IGameService
         var ml = games.First(g => g.Slug == "mobilelegends");
         var mlProducts = new List<GameProduct>
         {
-            new() { GameId = ml.Id, Name = "35 Diamonds", Amount = "32", Bonus = "+3", TotalDisplay = "35 алмазов", Price = 59, OldPrice = 90, Discount = 34, ProductType = GameProductType.Currency, SortOrder = 1 },
-            new() { GameId = ml.Id, Name = "165 Diamonds", Amount = "150", Bonus = "+15", TotalDisplay = "165 алмазов", Price = 280, OldPrice = 311, Discount = 10, ProductType = GameProductType.Currency, SortOrder = 2 },
-            new() { GameId = ml.Id, Name = "565 Diamonds", Amount = "500", Bonus = "+65", TotalDisplay = "565 алмазов", Price = 938, OldPrice = 1103, Discount = 15, ProductType = GameProductType.Currency, SortOrder = 3 },
-            new() { GameId = ml.Id, Name = "1155 Diamonds", Amount = "1000", Bonus = "+155", TotalDisplay = "1155 алмазов", Price = 1871, OldPrice = 2201, Discount = 15, ProductType = GameProductType.Currency, SortOrder = 4 },
-            new() { GameId = ml.Id, Name = "2975 Diamonds", Amount = "2500", Bonus = "+475", TotalDisplay = "2975 алмазов", Price = 4678, OldPrice = 5503, Discount = 15, ProductType = GameProductType.Currency, SortOrder = 5 },
+            new() { GameId = ml.Id, Name = "35 Diamonds", Amount = "32", Bonus = "+3", TotalDisplay = "35 алмазов", Price = 59, OldPrice = 90, Discount = 34, ImageUrl = "/minio/digivault-images/products/mobilelegends/35-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 1 },
+            new() { GameId = ml.Id, Name = "55 Diamonds", Amount = "50", Bonus = "+5", TotalDisplay = "55 алмазов", Price = 92, OldPrice = 102, Discount = 10, ImageUrl = "/minio/digivault-images/products/mobilelegends/55-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 2 },
+            new() { GameId = ml.Id, Name = "165 Diamonds", Amount = "150", Bonus = "+15", TotalDisplay = "165 алмазов", Price = 280, OldPrice = 311, Discount = 10, ImageUrl = "/minio/digivault-images/products/mobilelegends/165-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 3 },
+            new() { GameId = ml.Id, Name = "275 Diamonds", Amount = "250", Bonus = "+25", TotalDisplay = "275 алмазов", Price = 470, OldPrice = 723, Discount = 35, ImageUrl = "/minio/digivault-images/products/mobilelegends/275-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 4 },
+            new() { GameId = ml.Id, Name = "565 Diamonds", Amount = "500", Bonus = "+65", TotalDisplay = "565 алмазов", Price = 938, OldPrice = 1103, Discount = 15, ImageUrl = "/minio/digivault-images/products/mobilelegends/565-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 5 },
+            new() { GameId = ml.Id, Name = "1155 Diamonds", Amount = "1000", Bonus = "+155", TotalDisplay = "1155 алмазов", Price = 1871, OldPrice = 2201, Discount = 15, ImageUrl = "/minio/digivault-images/products/mobilelegends/1155-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 6 },
+            new() { GameId = ml.Id, Name = "1765 Diamonds", Amount = "1500", Bonus = "+265", TotalDisplay = "1765 алмазов", Price = 2828, OldPrice = 3327, Discount = 15, ImageUrl = "/minio/digivault-images/products/mobilelegends/1765-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 7 },
+            new() { GameId = ml.Id, Name = "2975 Diamonds", Amount = "2500", Bonus = "+475", TotalDisplay = "2975 алмазов", Price = 4678, OldPrice = 5503, Discount = 15, ImageUrl = "/minio/digivault-images/products/mobilelegends/2975-diamonds.webp", ProductType = GameProductType.Currency, SortOrder = 8 },
+            // Packs
+            new() { GameId = ml.Id, Name = "6000 Diamonds", Amount = "5000", Bonus = "+1000", TotalDisplay = "6000 алмазов", Price = 9404, OldPrice = 14467, Discount = 35, ImageUrl = "/minio/digivault-images/products/mobilelegends/6000-diamonds.webp", ProductType = GameProductType.Pack, SortOrder = 9 },
             // Passes
-            new() { GameId = ml.Id, Name = "Twilight Pass", Amount = "Twilight", TotalDisplay = "Twilight Pass", Price = 449, OldPrice = 599, Discount = 25, ProductType = GameProductType.Pass, SortOrder = 10 },
-            new() { GameId = ml.Id, Name = "Starlight Member", Amount = "Starlight", TotalDisplay = "Starlight Member", Price = 549, OldPrice = 749, Discount = 27, ProductType = GameProductType.Pass, SortOrder = 11 }
+            new() { GameId = ml.Id, Name = "Алмазный пропуск", Amount = "Starlight", TotalDisplay = "Алмазный пропуск", Price = 193, OldPrice = 296, Discount = 35, ProductType = GameProductType.Pass, SortOrder = 10 }
         };
 
         _context.GameProducts.AddRange(fortniteProducts);

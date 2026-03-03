@@ -39,6 +39,9 @@ namespace DigiVault.Infrastructure.Migrations
 
                 UPDATE ""GameProducts"" SET ""ImageUrl"" = '/minio/digivault-images/products/mobilelegends/6000-diamonds.webp'
                 WHERE ""Name"" = '6000 Diamonds' AND ""GameId"" IN (SELECT ""Id"" FROM ""Games"" WHERE ""Slug"" = 'mobilelegends');
+
+                UPDATE ""GameProducts"" SET ""ImageUrl"" = '/minio/digivault-images/products/mobilelegends/starlight-pass.png'
+                WHERE ""Name"" = 'Алмазный пропуск' AND ""GameId"" IN (SELECT ""Id"" FROM ""Games"" WHERE ""Slug"" = 'mobilelegends');
             ");
         }
 

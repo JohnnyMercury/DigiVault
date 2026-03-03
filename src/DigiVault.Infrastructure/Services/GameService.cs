@@ -305,7 +305,7 @@ public class GameService : IGameService
             // Packs
             new() { GameId = ml.Id, Name = "6000 Diamonds", Amount = "5000", Bonus = "+1000", TotalDisplay = "6000 алмазов", Price = 9404, OldPrice = 14467, Discount = 35, ImageUrl = "/minio/digivault-images/products/mobilelegends/6000-diamonds.webp", ProductType = GameProductType.Pack, SortOrder = 9 },
             // Passes
-            new() { GameId = ml.Id, Name = "Алмазный пропуск", Amount = "Starlight", TotalDisplay = "Алмазный пропуск", Price = 193, OldPrice = 296, Discount = 35, ProductType = GameProductType.Pass, SortOrder = 10 }
+            new() { GameId = ml.Id, Name = "Алмазный пропуск", Amount = "Starlight", TotalDisplay = "Алмазный пропуск", Price = 193, OldPrice = 296, Discount = 35, ImageUrl = "/minio/digivault-images/products/mobilelegends/starlight-pass.png", ProductType = GameProductType.Pass, SortOrder = 10 }
         };
 
         _context.GameProducts.AddRange(fortniteProducts);

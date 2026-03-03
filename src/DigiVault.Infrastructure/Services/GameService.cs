@@ -159,7 +159,7 @@ public class GameService : IGameService
                 Icon = "🎮",
                 Color = "#2d5a87",
                 Gradient = "linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)",
-                ImageUrl = "/images/games/fortnite.svg",
+                ImageUrl = "/minio/digivault-images/games/fortnite.svg",
                 SortOrder = 1
             },
             new Game
@@ -171,7 +171,7 @@ public class GameService : IGameService
                 Icon = "🎲",
                 Color = "#e74c3c",
                 Gradient = "linear-gradient(135deg, #c4281c 0%, #e74c3c 100%)",
-                ImageUrl = "/images/games/roblox.svg",
+                ImageUrl = "/minio/digivault-images/games/roblox.svg",
                 SortOrder = 2
             },
             new Game
@@ -183,7 +183,7 @@ public class GameService : IGameService
                 Icon = "🔫",
                 Color = "#e67e22",
                 Gradient = "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)",
-                ImageUrl = "/images/games/pubg.svg",
+                ImageUrl = "/minio/digivault-images/games/pubg.svg",
                 SortOrder = 3
             },
             new Game
@@ -195,7 +195,7 @@ public class GameService : IGameService
                 Icon = "⚔️",
                 Color = "#8b5cf6",
                 Gradient = "linear-gradient(135deg, #5a3e7a 0%, #8b5cf6 100%)",
-                ImageUrl = "/images/games/genshin.svg",
+                ImageUrl = "/minio/digivault-images/games/genshin.svg",
                 SortOrder = 4
             },
             new Game
@@ -208,7 +208,7 @@ public class GameService : IGameService
                 Icon = "🌟",
                 Color = "#6366f1",
                 Gradient = "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-                ImageUrl = "/images/games/honkai.svg",
+                ImageUrl = "/minio/digivault-images/games/honkai.svg",
                 SortOrder = 5
             },
             new Game
@@ -221,7 +221,7 @@ public class GameService : IGameService
                 Icon = "💎",
                 Color = "#3949ab",
                 Gradient = "linear-gradient(135deg, #1a237e 0%, #3949ab 100%)",
-                ImageUrl = "/images/games/mobilelegends.svg",
+                ImageUrl = "/minio/digivault-images/games/mobilelegends.svg",
                 SortOrder = 6
             }
         };

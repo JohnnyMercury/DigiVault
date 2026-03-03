@@ -79,6 +79,7 @@ builder.Services.AddScoped<DigiVault.Web.Services.IBackupService, DigiVault.Web.
 if (builder.Configuration.GetValue<bool>("Storage:UseMinIO", false))
 {
     builder.Services.AddScoped<IFileService, DigiVault.Web.Services.MinioStorageService>();
+    builder.Services.AddHostedService<DigiVault.Web.Services.MinioImageSeeder>();
 }
 
 var app = builder.Build();

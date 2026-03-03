@@ -174,13 +174,18 @@ public class MinioStorageService : IFileService
     {
         if (url.StartsWith("/minio/"))
         {
-            var parts = url.Split('/');
-            return parts.Length >= 4 ? parts[3] : null;
+            // /minio/{bucket}/{objectKey...} → return objectKey
+            var afterMinio = url[7..]; // Remove "/minio/"
+            var slashIndex = afterMinio.IndexOf('/');
+            return slashIndex >= 0 ? afterMinio[(slashIndex + 1)..] : null;
         }
         if (url.Contains("://"))
         {
             var uri = new Uri(url);
-            return uri.Segments.Length >= 3 ? uri.Segments[^1] : null;
+            // Skip first two segments (/ and bucket/)
+            return uri.Segments.Length >= 3
+                ? string.Join("", uri.Segments.Skip(2)).TrimStart('/')
+                : null;
         }
         return Path.GetFileName(url);
     }

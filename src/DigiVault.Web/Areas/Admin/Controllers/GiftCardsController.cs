@@ -93,7 +93,7 @@ public class GiftCardsController : AdminBaseController
 
             if (imageFile != null)
             {
-                if (!string.IsNullOrEmpty(existing.ImageUrl) && existing.ImageUrl.StartsWith("/images/uploads/"))
+                if (!string.IsNullOrEmpty(existing.ImageUrl))
                 {
                     _fileService.DeleteImage(existing.ImageUrl);
                 }
@@ -309,7 +309,7 @@ public class GiftCardsController : AdminBaseController
 
             if (imageFile != null)
             {
-                if (!string.IsNullOrEmpty(existing.ImageUrl) && existing.ImageUrl.StartsWith("/images/uploads/"))
+                if (!string.IsNullOrEmpty(existing.ImageUrl))
                 {
                     _fileService.DeleteImage(existing.ImageUrl);
                 }

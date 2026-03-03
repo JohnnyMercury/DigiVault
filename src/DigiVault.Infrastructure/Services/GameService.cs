@@ -245,12 +245,12 @@ public class GameService : IGameService
         var roblox = games.First(g => g.Slug == "roblox");
         var robloxProducts = new List<GameProduct>
         {
-            new() { GameId = roblox.Id, Name = "100 Robux", Amount = "100", TotalDisplay = "100 Робуксов", Price = 267, ProductType = GameProductType.Currency, SortOrder = 1 },
-            new() { GameId = roblox.Id, Name = "400 Robux", Amount = "400", TotalDisplay = "400 Робуксов", Price = 489, ProductType = GameProductType.Currency, SortOrder = 2 },
-            new() { GameId = roblox.Id, Name = "800 Robux", Amount = "800", TotalDisplay = "800 Робуксов", Price = 815, ProductType = GameProductType.Currency, SortOrder = 3 },
-            new() { GameId = roblox.Id, Name = "1700 Robux", Amount = "1700", TotalDisplay = "1700 Робуксов", Price = 1976, ProductType = GameProductType.Currency, SortOrder = 4 },
-            new() { GameId = roblox.Id, Name = "4500 Robux", Amount = "4500", TotalDisplay = "4500 Робуксов", Price = 4110, ProductType = GameProductType.Currency, SortOrder = 5 },
-            new() { GameId = roblox.Id, Name = "10000 Robux", Amount = "10000", TotalDisplay = "10000 Робуксов", Price = 8243, ProductType = GameProductType.Currency, SortOrder = 6 }
+            new() { GameId = roblox.Id, Name = "100 Robux", Amount = "100", TotalDisplay = "100 Робуксов", Price = 267, ImageUrl = "/minio/digivault-images/products/roblox/100-robux.webp", ProductType = GameProductType.Currency, SortOrder = 1 },
+            new() { GameId = roblox.Id, Name = "400 Robux", Amount = "400", TotalDisplay = "400 Робуксов", Price = 489, ImageUrl = "/minio/digivault-images/products/roblox/400-robux.webp", ProductType = GameProductType.Currency, SortOrder = 2 },
+            new() { GameId = roblox.Id, Name = "800 Robux", Amount = "800", TotalDisplay = "800 Робуксов", Price = 815, ImageUrl = "/minio/digivault-images/products/roblox/800-robux.webp", ProductType = GameProductType.Currency, SortOrder = 3 },
+            new() { GameId = roblox.Id, Name = "1700 Robux", Amount = "1700", TotalDisplay = "1700 Робуксов", Price = 1976, ImageUrl = "/minio/digivault-images/products/roblox/1700-robux.webp", ProductType = GameProductType.Currency, SortOrder = 4 },
+            new() { GameId = roblox.Id, Name = "4500 Robux", Amount = "4500", TotalDisplay = "4500 Робуксов", Price = 4110, ImageUrl = "/minio/digivault-images/products/roblox/4500-robux.webp", ProductType = GameProductType.Currency, SortOrder = 5 },
+            new() { GameId = roblox.Id, Name = "10000 Robux", Amount = "10000", TotalDisplay = "10000 Робуксов", Price = 8243, ImageUrl = "/minio/digivault-images/products/roblox/10000-robux.webp", ProductType = GameProductType.Currency, SortOrder = 6 }
         };
 
         // Seed PUBG products

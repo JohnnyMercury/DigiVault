@@ -23,7 +23,7 @@ public class CatalogController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IGameService _gameService;
     private readonly IOrderService _orderService;
-    private const int PageSize = 12;
+    private const int PageSize = 24;
 
     public CatalogController(ApplicationDbContext context, IGameService gameService, IOrderService orderService)
     {

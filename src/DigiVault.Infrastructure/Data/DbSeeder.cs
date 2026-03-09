@@ -58,6 +58,81 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed VPN providers
+        if (!await context.VpnProviders.AnyAsync())
+        {
+            context.VpnProviders.AddRange(
+                new VpnProvider
+                {
+                    Name = "NordVPN", Slug = "nordvpn",
+                    Description = "Один из самых надёжных VPN-сервисов с обширной сетью серверов",
+                    Tagline = "5500+ серверов в 60 странах",
+                    Features = "[\"Защита до 6 устройств\", \"Блокировка рекламы\", \"Двойное шифрование\", \"Kill Switch\"]",
+                    Icon = "🔒",
+                    Gradient = "linear-gradient(135deg, #4687ff, #2156a8)",
+                    SortOrder = 1, IsActive = true
+                },
+                new VpnProvider
+                {
+                    Name = "ExpressVPN", Slug = "expressvpn",
+                    Description = "Быстрый и стабильный VPN для любых задач",
+                    Tagline = "Молниеносная скорость",
+                    Features = "[\"94 страны\", \"5 устройств\", \"Lightway протокол\", \"Без логов\"]",
+                    Icon = "⚡",
+                    Gradient = "linear-gradient(135deg, #da3940, #8b1a1f)",
+                    SortOrder = 2, IsActive = true
+                },
+                new VpnProvider
+                {
+                    Name = "Surfshark", Slug = "surfshark",
+                    Description = "Доступный VPN без ограничений по устройствам",
+                    Tagline = "Безлимитные устройства",
+                    Features = "[\"Безлимит устройств\", \"CleanWeb\", \"MultiHop\", \"Камуфляж-режим\"]",
+                    Icon = "🦈",
+                    Gradient = "linear-gradient(135deg, #178f8d, #1d3557)",
+                    SortOrder = 3, IsActive = true
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // Seed VPN products (subscriptions)
+        var nordVpn = await context.VpnProviders.FirstOrDefaultAsync(v => v.Slug == "nordvpn");
+        if (nordVpn != null && !await context.GameProducts.AnyAsync(p => p.VpnProviderId == nordVpn.Id))
+        {
+            context.GameProducts.AddRange(
+                new GameProduct { VpnProviderId = nordVpn.Id, Name = "1 месяц", Amount = "1 мес", TotalDisplay = "NordVPN 1 месяц", Price = 799, ProductType = GameProductType.Subscription, SortOrder = 1, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = nordVpn.Id, Name = "6 месяцев", Amount = "6 мес", TotalDisplay = "NordVPN 6 месяцев", Price = 3499, OldPrice = 4794, Discount = 27, ProductType = GameProductType.Subscription, SortOrder = 2, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = nordVpn.Id, Name = "1 год", Amount = "12 мес", TotalDisplay = "NordVPN 1 год", Price = 4999, OldPrice = 9588, Discount = 48, ProductType = GameProductType.Subscription, SortOrder = 3, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = nordVpn.Id, Name = "2 года", Amount = "24 мес", TotalDisplay = "NordVPN 2 года", Price = 6999, OldPrice = 19176, Discount = 64, ProductType = GameProductType.Subscription, SortOrder = 4, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        var expressVpn = await context.VpnProviders.FirstOrDefaultAsync(v => v.Slug == "expressvpn");
+        if (expressVpn != null && !await context.GameProducts.AnyAsync(p => p.VpnProviderId == expressVpn.Id))
+        {
+            context.GameProducts.AddRange(
+                new GameProduct { VpnProviderId = expressVpn.Id, Name = "1 месяц", Amount = "1 мес", TotalDisplay = "ExpressVPN 1 месяц", Price = 899, ProductType = GameProductType.Subscription, SortOrder = 1, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = expressVpn.Id, Name = "6 месяцев", Amount = "6 мес", TotalDisplay = "ExpressVPN 6 месяцев", Price = 3999, OldPrice = 5394, Discount = 26, ProductType = GameProductType.Subscription, SortOrder = 2, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = expressVpn.Id, Name = "1 год", Amount = "12 мес", TotalDisplay = "ExpressVPN 1 год", Price = 5999, OldPrice = 10788, Discount = 44, ProductType = GameProductType.Subscription, SortOrder = 3, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = expressVpn.Id, Name = "2 года", Amount = "24 мес", TotalDisplay = "ExpressVPN 2 года", Price = 7999, OldPrice = 21576, Discount = 63, ProductType = GameProductType.Subscription, SortOrder = 4, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        var surfshark = await context.VpnProviders.FirstOrDefaultAsync(v => v.Slug == "surfshark");
+        if (surfshark != null && !await context.GameProducts.AnyAsync(p => p.VpnProviderId == surfshark.Id))
+        {
+            context.GameProducts.AddRange(
+                new GameProduct { VpnProviderId = surfshark.Id, Name = "1 месяц", Amount = "1 мес", TotalDisplay = "Surfshark 1 месяц", Price = 699, ProductType = GameProductType.Subscription, SortOrder = 1, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = surfshark.Id, Name = "6 месяцев", Amount = "6 мес", TotalDisplay = "Surfshark 6 месяцев", Price = 2999, OldPrice = 4194, Discount = 29, ProductType = GameProductType.Subscription, SortOrder = 2, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = surfshark.Id, Name = "1 год", Amount = "12 мес", TotalDisplay = "Surfshark 1 год", Price = 3999, OldPrice = 8388, Discount = 52, ProductType = GameProductType.Subscription, SortOrder = 3, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow },
+                new GameProduct { VpnProviderId = surfshark.Id, Name = "2 года", Amount = "24 мес", TotalDisplay = "Surfshark 2 года", Price = 4999, OldPrice = 16776, Discount = 70, ProductType = GameProductType.Subscription, SortOrder = 4, IsActive = true, StockQuantity = 99, CreatedAt = DateTime.UtcNow }
+            );
+            await context.SaveChangesAsync();
+        }
+
         // Seed PSN gift card products
         var psnCard = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "psn");
         if (psnCard != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == psnCard.Id))

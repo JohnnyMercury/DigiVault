@@ -16,7 +16,7 @@ services:
       - MinIO__SecretKey=Cyb0rg@MinIO2025_Secure!
       - MinIO__BucketName=digivault-images
       - MinIO__UseSSL=false
-      - MinIO__PublicUrl=https://dv.cyborg-games.com:9000
+      - MinIO__PublicUrl=https://key-zona.com:9000
       - MinIO__UseRelativeUrls=true
     volumes:
       - digivault-backups:/app/backups

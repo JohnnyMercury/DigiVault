@@ -20,9 +20,15 @@ public class EmailService : IEmailService
         {
             var smtpHost = _config["Email:SmtpHost"] ?? "smtp.gmail.com";
             var smtpPort = int.Parse(_config["Email:SmtpPort"] ?? "587");
-            var fromEmail = _config["Email:FromEmail"] ?? throw new InvalidOperationException("Email:FromEmail not configured");
-            var fromPassword = _config["Email:FromPassword"] ?? throw new InvalidOperationException("Email:FromPassword not configured");
+            var fromEmail = _config["Email:FromEmail"];
+            var fromPassword = _config["Email:FromPassword"];
             var fromName = _config["Email:FromName"] ?? "DigiVault";
+
+            if (string.IsNullOrWhiteSpace(fromEmail) || string.IsNullOrWhiteSpace(fromPassword))
+            {
+                _logger.LogWarning("Email credentials not configured. Skipping email to {To}: {Subject}", to, subject);
+                return;
+            }
 
             using var client = new SmtpClient(smtpHost, smtpPort)
             {

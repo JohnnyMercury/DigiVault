@@ -136,6 +136,12 @@
         transform: translateY(-2px);
         box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
     }
+    .deposit-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
 
     .deposit-back {
         display: block;
@@ -148,13 +154,99 @@
     }
     .deposit-back:hover { color: rgba(255, 255, 255, 0.8); }
 
-    .deposit-no-access {
-        text-align: center;
-        padding: 3rem 1.5rem;
+    /* Payment methods */
+    .deposit-pay-methods {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
     }
-    .deposit-no-access i { font-size: 3rem; color: rgba(255, 255, 255, 0.2); margin-bottom: 1rem; }
-    .deposit-no-access h4 { color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem; }
-    .deposit-no-access p { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
+
+    .deposit-pay-method {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .deposit-pay-method:hover:not(.disabled) {
+        border-color: rgba(102, 126, 234, 0.3);
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .deposit-pay-method.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.08);
+    }
+    .deposit-pay-method.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .deposit-pay-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .deposit-pay-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: white;
+    }
+
+    .deposit-pay-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+    }
+    .deposit-pay-desc {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.45);
+        margin-top: 1px;
+    }
+
+    .deposit-pay-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+    }
+    .deposit-pay-badge.soon {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.4);
+    }
+    .deposit-pay-badge.active {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+
+    .deposit-pay-radio {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    .deposit-pay-radio.active {
+        border-color: #667eea;
+        background: radial-gradient(circle, #667eea 40%, transparent 45%);
+    }
+
+    .deposit-pay-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
 </style>
 
 <div class="deposit-page">
@@ -178,40 +270,103 @@
                 <i class="bi bi-shield-check"></i>
                 <span>Админ-режим: начисление средств без оплаты</span>
             </div>
-
-            <form asp-action="Deposit" method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-                <div class="deposit-label">Сумма пополнения</div>
-                <div class="deposit-input-wrap">
-                    <span class="currency">₽</span>
-                    <input asp-for="Amount" placeholder="0" type="number" min="1" step="1" />
-                </div>
-                <span asp-validation-for="Amount" class="text-danger small d-block"></span>
-
-                <div class="quick-amounts">
-                    <button type="button" class="quick-btn" data-amount="100">100 ₽</button>
-                    <button type="button" class="quick-btn" data-amount="500">500 ₽</button>
-                    <button type="button" class="quick-btn" data-amount="1000">1 000 ₽</button>
-                    <button type="button" class="quick-btn" data-amount="5000">5 000 ₽</button>
-                    <button type="button" class="quick-btn" data-amount="10000">10 000 ₽</button>
-                </div>
-
-                <input type="hidden" name="PaymentMethod" value="admin" />
-
-                <button type="submit" class="deposit-submit">
-                    <i class="bi bi-check-circle"></i> Начислить
-                </button>
-            </form>
         }
-        else
-        {
-            <div class="deposit-no-access">
-                <i class="bi bi-lock"></i>
-                <h4>Пополнение скоро будет доступно</h4>
-                <p>Мы работаем над подключением платёжных систем. Следите за обновлениями!</p>
+
+        <form asp-action="Deposit" method="post" id="depositForm">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="deposit-label">Сумма пополнения</div>
+            <div class="deposit-input-wrap">
+                <span class="currency">₽</span>
+                <input asp-for="Amount" placeholder="0" type="number" min="1" step="1" required />
             </div>
-        }
+            <span asp-validation-for="Amount" class="text-danger small d-block"></span>
+
+            <div class="quick-amounts">
+                <button type="button" class="quick-btn" data-amount="100">100 ₽</button>
+                <button type="button" class="quick-btn" data-amount="500">500 ₽</button>
+                <button type="button" class="quick-btn" data-amount="1000">1 000 ₽</button>
+                <button type="button" class="quick-btn" data-amount="5000">5 000 ₽</button>
+                <button type="button" class="quick-btn" data-amount="10000">10 000 ₽</button>
+            </div>
+
+            <div class="deposit-label">Способ оплаты</div>
+            <div class="deposit-pay-methods">
+                @if (isAdmin)
+                {
+                    <div class="deposit-pay-method selected" data-method="admin" onclick="selectDepositMethod(this)">
+                        <div class="deposit-pay-left">
+                            <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <div class="deposit-pay-name">Админ-начисление</div>
+                                <div class="deposit-pay-desc">Мгновенное зачисление без оплаты</div>
+                            </div>
+                        </div>
+                        <div class="deposit-pay-right">
+                            <span class="deposit-pay-badge active">Доступно</span>
+                            <div class="deposit-pay-radio active"></div>
+                        </div>
+                    </div>
+                }
+
+                <div class="deposit-pay-method disabled" data-method="card" onclick="selectDepositMethod(this)">
+                    <div class="deposit-pay-left">
+                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <div>
+                            <div class="deposit-pay-name">Банковская карта</div>
+                            <div class="deposit-pay-desc">Visa, MasterCard, МИР</div>
+                        </div>
+                    </div>
+                    <div class="deposit-pay-right">
+                        <span class="deposit-pay-badge soon">Скоро</span>
+                        <div class="deposit-pay-radio"></div>
+                    </div>
+                </div>
+
+                <div class="deposit-pay-method disabled" data-method="sbp" onclick="selectDepositMethod(this)">
+                    <div class="deposit-pay-left">
+                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <div>
+                            <div class="deposit-pay-name">СБП</div>
+                            <div class="deposit-pay-desc">Система быстрых платежей</div>
+                        </div>
+                    </div>
+                    <div class="deposit-pay-right">
+                        <span class="deposit-pay-badge soon">Скоро</span>
+                        <div class="deposit-pay-radio"></div>
+                    </div>
+                </div>
+
+                <div class="deposit-pay-method disabled" data-method="qr" onclick="selectDepositMethod(this)">
+                    <div class="deposit-pay-left">
+                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="bi bi-qr-code"></i>
+                        </div>
+                        <div>
+                            <div class="deposit-pay-name">QR-код</div>
+                            <div class="deposit-pay-desc">Оплата по QR-коду</div>
+                        </div>
+                    </div>
+                    <div class="deposit-pay-right">
+                        <span class="deposit-pay-badge soon">Скоро</span>
+                        <div class="deposit-pay-radio"></div>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="PaymentMethod" id="paymentMethod" value="@(isAdmin ? "admin" : "")" />
+
+            <button type="submit" class="deposit-submit" id="depositBtn" @(isAdmin ? "" : "disabled")>
+                <i class="bi bi-check-circle"></i>
+                <span id="depositBtnText">@(isAdmin ? "Начислить" : "Пополнить")</span>
+            </button>
+        </form>
 
         <a href="/Account/Dashboard" class="deposit-back">
             <i class="bi bi-arrow-left me-1"></i> Вернуться в личный кабинет
@@ -227,5 +382,22 @@
                 document.getElementById('Amount').value = this.dataset.amount;
             });
         });
+
+        function selectDepositMethod(el) {
+            if (el.classList.contains('disabled')) return;
+
+            document.querySelectorAll('.deposit-pay-method').forEach(m => {
+                m.classList.remove('selected');
+                var radio = m.querySelector('.deposit-pay-radio');
+                if (radio) radio.classList.remove('active');
+            });
+
+            el.classList.add('selected');
+            var radio = el.querySelector('.deposit-pay-radio');
+            if (radio) radio.classList.add('active');
+
+            document.getElementById('paymentMethod').value = el.dataset.method;
+            document.getElementById('depositBtn').disabled = false;
+        }
     </script>
 }

@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main, master ]
 
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,6 +19,8 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          timeout: 60s
+          command_timeout: 20m
           script: |
             cd /var/www/digivault
             git checkout -- . && git pull origin main

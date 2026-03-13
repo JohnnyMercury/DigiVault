@@ -15,11 +15,31 @@ jobs:
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
+        id: deploy
+        continue-on-error: true
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           timeout: 60s
+          command_timeout: 20m
+          script: |
+            cd /var/www/digivault
+            git checkout -- . && git pull origin main
+            docker build --no-cache --network=host -t digivault:latest -f src/DigiVault.Web/Dockerfile .
+            docker compose -f docker-compose.prod.yml stop web
+            docker compose -f docker-compose.prod.yml up -d web
+            docker compose -f docker-compose.prod.yml ps
+            docker image prune -f
+
+      - name: Retry deploy on failure
+        if: steps.deploy.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          timeout: 120s
           command_timeout: 20m
           script: |
             cd /var/www/digivault

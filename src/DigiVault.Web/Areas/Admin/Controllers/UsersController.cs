@@ -96,4 +96,19 @@ public class UsersController : AdminBaseController
         TempData["SuccessMessage"] = $"Баланс изменён на {amount:N2} ₽";
         return RedirectToAction(nameof(Details), new { id });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(string id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+            return NotFound();
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Пользователь {user.Email} удалён";
+        return RedirectToAction(nameof(Index));
+    }
 }

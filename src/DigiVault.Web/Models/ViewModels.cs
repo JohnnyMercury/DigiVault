@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
 
@@ -6,6 +7,7 @@ namespace DigiVault.Web.Models;
 public class LoginViewModel
 {
     public string Email { get; set; } = string.Empty;
+    [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
     public bool RememberMe { get; set; }
 }
@@ -13,8 +15,11 @@ public class LoginViewModel
 public class RegisterViewModel
 {
     public string UserName { get; set; } = string.Empty;
+    [DataType(DataType.EmailAddress)]
     public string Email { get; set; } = string.Empty;
+    [DataType(DataType.Password)]
     public string Password { get; set; } = string.Empty;
+    [DataType(DataType.Password)]
     public string ConfirmPassword { get; set; } = string.Empty;
 }
 

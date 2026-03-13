@@ -226,6 +226,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock"></i></span>
                         <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <span class="input-group-text" style="cursor:pointer" onclick="togglePassword('Password', this)"><i class="bi bi-eye"></i></span>
                     </div>
                     <span asp-validation-for="Password" class="text-danger small"></span>
                     <div class="password-requirements">
@@ -243,6 +244,7 @@
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                         <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <span class="input-group-text" style="cursor:pointer" onclick="togglePassword('ConfirmPassword', this)"><i class="bi bi-eye"></i></span>
                     </div>
                     <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                 </div>
@@ -266,6 +268,18 @@
             alert('Необходимо принять условия использования');
         }
     });
+
+    function togglePassword(fieldId, toggle) {
+        var input = document.getElementById(fieldId);
+        var icon = toggle.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
 </script>
 
             <div class="auth-divider">

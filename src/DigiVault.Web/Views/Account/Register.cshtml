@@ -254,10 +254,19 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-auth">
+                <button type="submit" class="btn btn-auth" id="registerBtn">
                     <i class="bi bi-person-plus me-2"></i>Создать аккаунт
                 </button>
             </form>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!document.getElementById('agreeTerms').checked) {
+            e.preventDefault();
+            alert('Необходимо принять условия использования');
+        }
+    });
+</script>
 
             <div class="auth-divider">
                 <span>или</span>

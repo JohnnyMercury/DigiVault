@@ -50,15 +50,21 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            ViewBag.Error = "Неверный email или пароль";
+            return View(model);
+        }
+
         var result = await _signInManager.PasswordSignInAsync(
-            model.Email,
+            user.UserName!,
             model.Password,
             model.RememberMe,
             lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
-            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user != null)
             {
                 user.LastLoginAt = DateTime.UtcNow;

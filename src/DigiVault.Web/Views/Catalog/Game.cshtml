@@ -172,8 +172,17 @@
     var hasDbSubscriptions = dbSubscriptions.Any();
     var hasDbPromos = dbPromos.Any();
 
-    // Fallback to demo products if no database products
+    // Known demo game slugs that have hardcoded products as fallback
+    var knownDemoSlugs = new[] { "fortnite", "roblox", "pubg", "genshin", "mobilelegends", "honkai" };
+    var isKnownDemoGame = knownDemoSlugs.Contains(gameSlug.ToLower());
+    var isPubg = gameSlug.ToLower() == "pubg";
+
+    // Only use demo products for known games without DB products
+    var useDemoProducts = !hasDbProducts && isKnownDemoGame;
     var demoProducts = isFortnite ? fortniteProducts : (isRoblox ? robloxProducts : (isHonkai ? honkaiProducts : (isGenshin ? genshinProducts : (isMobileLegends ? mlProducts : pubgProducts))));
+
+    // If game is from DB but has no products and is not a known demo game - show empty state
+    var showEmptyState = dbGame != null && !hasDbProducts && !isKnownDemoGame;
 }
 
 <style>
@@ -1301,12 +1310,16 @@
                 {
                     <button class="game-tab active" onclick="scrollToSection('section-uc')">Robux</button>
                 }
+                else if (showEmptyState)
+                {
+                    <button class="game-tab active" onclick="scrollToSection('section-uc')">Купить @gameInfo.CurrencyShort @gameName</button>
+                }
                 else
                 {
                     <button class="game-tab active" onclick="scrollToSection('section-uc')">Купить @gameInfo.CurrencyShort @gameName</button>
-                    <button class="game-tab" onclick="scrollToSection('section-packs')">Выгодные паки</button>
-                    <button class="game-tab" onclick="scrollToSection('section-passes')">Пропуски</button>
-                    <button class="game-tab" onclick="scrollToSection('section-subscription')">Подписка Prime</button>
+                    @if (hasDbPacks || isPubg) { <button class="game-tab" onclick="scrollToSection('section-packs')">Выгодные паки</button> }
+                    @if (hasDbPasses) { <button class="game-tab" onclick="scrollToSection('section-passes')">Пропуски</button> }
+                    @if (hasDbSubscriptions) { <button class="game-tab" onclick="scrollToSection('section-subscription')">Подписка Prime</button> }
                 }
             </div>
 
@@ -1359,9 +1372,9 @@
                             </div>
                         }
                     }
-                    else
+                    else if (useDemoProducts)
                     {
-                        @* Fallback to hardcoded demo products *@
+                        @* Fallback to hardcoded demo products for known games only *@
                         @foreach (var item in demoProducts)
                         {
                             <div class="product-item" onclick="selectProduct(this, 0, '@item.Amount', '@item.TotalUC', @item.Price, @item.OldPrice)">
@@ -1385,6 +1398,14 @@
                                 </div>
                             </div>
                         }
+                    }
+                    else if (showEmptyState)
+                    {
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
+                            <h3 style="color: #fff; margin-bottom: 8px;">Товары скоро появятся</h3>
+                            <p style="color: rgba(255,255,255,0.5);">Мы работаем над добавлением товаров для этой игры. Следите за обновлениями!</p>
+                        </div>
                     }
                 </div>
             </div>

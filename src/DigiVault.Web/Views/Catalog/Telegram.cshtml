@@ -1,0 +1,1022 @@
+@{
+    ViewData["Title"] = "Telegram — Звёзды и Премиум";
+}
+
+<style>
+    /* Hero */
+    .tg-hero {
+        background: linear-gradient(135deg, rgba(42, 171, 238, 0.15) 0%, rgba(102, 126, 234, 0.1) 50%, rgba(118, 75, 162, 0.1) 100%);
+        border-bottom: 1px solid rgba(42, 171, 238, 0.15);
+        padding: 2.5rem 0 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tg-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 50%, rgba(42, 171, 238, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 50%, rgba(118, 75, 162, 0.06) 0%, transparent 50%);
+        animation: heroFloat 15s ease-in-out infinite;
+    }
+
+    @@keyframes heroFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(10px, -10px) rotate(1deg); }
+        66% { transform: translate(-5px, 5px) rotate(-1deg); }
+    }
+
+    .tg-hero-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .tg-hero-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 32px rgba(42, 171, 238, 0.3);
+    }
+
+    .tg-hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .tg-hero-title span {
+        background: linear-gradient(135deg, #2AABEE 0%, #667eea 50%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .tg-hero-subtitle {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.05rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-nav {
+        padding: 1rem 0;
+    }
+
+    .breadcrumb-nav a {
+        color: rgba(255, 255, 255, 0.5);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .breadcrumb-nav a:hover {
+        color: #2AABEE;
+    }
+
+    .breadcrumb-nav span {
+        color: rgba(255, 255, 255, 0.3);
+        margin: 0 0.5rem;
+    }
+
+    .breadcrumb-nav .current {
+        color: white;
+    }
+
+    /* Tabs */
+    .tg-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.4rem;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .tg-tab {
+        flex: 1;
+        background: transparent;
+        border: none;
+        border-radius: 10px;
+        padding: 0.7rem 1.5rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .tg-tab:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+    }
+
+    .tg-tab.active {
+        background: linear-gradient(135deg, rgba(42, 171, 238, 0.25) 0%, rgba(102, 126, 234, 0.25) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(42, 171, 238, 0.15);
+    }
+
+    .tg-tab-icon {
+        font-size: 1.15rem;
+    }
+
+    .tab-panel {
+        display: none;
+        animation: fadeIn 0.35s ease;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Form Section */
+    .tg-section {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tg-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.85);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tg-section-title i {
+        color: #2AABEE;
+    }
+
+    /* Input */
+    .tg-input-group {
+        position: relative;
+    }
+
+    .tg-input-prefix {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 1rem;
+        font-weight: 600;
+        pointer-events: none;
+    }
+
+    .tg-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.85rem 1rem 0.85rem 2.2rem;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .tg-input:focus {
+        outline: none;
+        border-color: #2AABEE;
+        background: rgba(42, 171, 238, 0.06);
+        box-shadow: 0 0 0 3px rgba(42, 171, 238, 0.1);
+    }
+
+    .tg-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Checkbox */
+    .tg-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        margin-top: 0.85rem;
+        user-select: none;
+    }
+
+    .tg-checkbox-label input {
+        display: none;
+    }
+
+    .tg-checkbox-box {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .tg-checkbox-box i {
+        font-size: 0.7rem;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .tg-checkbox-label input:checked + .tg-checkbox-box {
+        background: linear-gradient(135deg, #2AABEE 0%, #667eea 100%);
+        border-color: #2AABEE;
+    }
+
+    .tg-checkbox-label input:checked + .tg-checkbox-box i {
+        opacity: 1;
+    }
+
+    /* Star Packages Grid */
+    .stars-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.85rem;
+    }
+
+    @@media (max-width: 992px) {
+        .stars-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @@media (max-width: 768px) {
+        .stars-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @@media (max-width: 480px) {
+        .stars-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+    }
+
+    .star-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.25rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .star-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 152, 0, 0.04) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .star-card:hover {
+        border-color: rgba(255, 193, 7, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .star-card:hover::before {
+        opacity: 1;
+    }
+
+    .star-card.selected {
+        border-color: #ffc107;
+        background: rgba(255, 193, 7, 0.08);
+        box-shadow: 0 4px 20px rgba(255, 193, 7, 0.15);
+    }
+
+    .star-card.selected::before {
+        opacity: 1;
+    }
+
+    .star-card.selected::after {
+        content: '\f26e';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #ffc107;
+        color: #1e1e38;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .star-card-emoji {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .star-card-amount {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .star-card-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 0.6rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .star-card-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffc107;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Custom amount */
+    .custom-amount-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .custom-amount-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .custom-amount-input:focus {
+        outline: none;
+        border-color: #ffc107;
+        background: rgba(255, 193, 7, 0.06);
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+    }
+
+    .custom-amount-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    .custom-amount-price {
+        font-size: 1rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        white-space: nowrap;
+        min-width: 80px;
+        text-align: right;
+    }
+
+    .custom-amount-price.has-value {
+        color: #ffc107;
+    }
+
+    /* Premium Plans */
+    .premium-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .premium-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+    }
+
+    .premium-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .premium-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.06) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .premium-card:hover {
+        border-color: rgba(102, 126, 234, 0.35);
+        transform: translateY(-3px);
+    }
+
+    .premium-card:hover::before {
+        opacity: 1;
+    }
+
+    .premium-card.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.08);
+        box-shadow: 0 4px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .premium-card.selected::before {
+        opacity: 1;
+    }
+
+    .premium-card.selected::after {
+        content: '\f26e';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .premium-badge {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        z-index: 1;
+    }
+
+    .premium-badge.popular {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .premium-badge.best-value {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+    }
+
+    .premium-card-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .premium-card-duration {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .premium-card-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .premium-card-price {
+        font-size: 1.3rem;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+
+    .premium-card-price .currency {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .premium-card-monthly {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.35);
+        margin-top: 0.25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Payment Summary */
+    .tg-summary {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .tg-summary-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .tg-summary-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .tg-summary-total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .tg-summary-total .highlight-stars {
+        color: #ffc107;
+    }
+
+    .tg-summary-total .highlight-premium {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .tg-btn-pay {
+        background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 0.85rem 2.5rem;
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .tg-btn-pay:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(42, 171, 238, 0.35);
+    }
+
+    .tg-btn-pay:active {
+        transform: translateY(0);
+    }
+
+    .tg-btn-pay:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Features row */
+    .tg-features {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tg-feature {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 0.85rem;
+    }
+
+    .tg-feature i {
+        color: #22c55e;
+        font-size: 1rem;
+    }
+
+    /* Validation */
+    .tg-input.is-invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+    }
+
+    .invalid-hint {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+        display: none;
+    }
+
+    .invalid-hint.show {
+        display: block;
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .tg-hero { padding: 2rem 0 1.5rem; }
+        .tg-hero-icon { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 16px; }
+        .tg-hero-title { font-size: 1.6rem; }
+        .tg-hero-subtitle { font-size: 0.9rem; }
+        .tg-tabs { flex-direction: column; }
+        .tg-tab { padding: 0.6rem 1rem; font-size: 0.9rem; }
+        .tg-summary { flex-direction: column; text-align: center; }
+        .tg-btn-pay { width: 100%; justify-content: center; }
+        .tg-features { gap: 1rem; }
+    }
+
+    @@media (max-width: 480px) {
+        .star-card { padding: 1rem 0.6rem; }
+        .star-card-emoji { font-size: 1.5rem; }
+        .star-card-amount { font-size: 0.95rem; }
+        .star-card-price { font-size: 0.9rem; }
+    }
+</style>
+
+<!-- Breadcrumb -->
+<section class="breadcrumb-nav">
+    <div class="container">
+        <a href="/">Главная</a>
+        <span>/</span>
+        <a href="/Catalog">Каталог</a>
+        <span>/</span>
+        <span class="current">Telegram</span>
+    </div>
+</section>
+
+<!-- Hero -->
+<section class="tg-hero">
+    <div class="container tg-hero-content">
+        <div class="tg-hero-icon">
+            <i class="bi bi-send-fill"></i>
+        </div>
+        <h1 class="tg-hero-title"><span>Telegram</span></h1>
+        <p class="tg-hero-subtitle">Звёзды и Премиум подписки для Telegram по выгодным ценам</p>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="container container-wide" style="padding-top: 2rem; padding-bottom: 3rem;">
+
+    <!-- Tabs -->
+    <div class="tg-tabs">
+        <button class="tg-tab active" data-tab="stars">
+            <span class="tg-tab-icon">&#11088;</span> Звёзды Телеграма
+        </button>
+        <button class="tg-tab" data-tab="premium">
+            <span class="tg-tab-icon">&#128142;</span> Телеграм Премиум
+        </button>
+    </div>
+
+    <!-- ==================== TAB 1: STARS ==================== -->
+    <div class="tab-panel active" id="tab-stars">
+
+        <!-- Username -->
+        <div class="tg-section">
+            <div class="tg-section-title">
+                <i class="bi bi-person-fill"></i> Получатель
+            </div>
+            <div class="tg-input-group">
+                <span class="tg-input-prefix">@@</span>
+                <input type="text" class="tg-input" id="stars-username"
+                       placeholder="username" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="invalid-hint" id="stars-username-hint">Укажите юзернейм получателя</div>
+            <label class="tg-checkbox-label">
+                <input type="checkbox" id="stars-anonymous">
+                <span class="tg-checkbox-box"><i class="bi bi-check"></i></span>
+                Отправить анонимно
+            </label>
+        </div>
+
+        <!-- Star Packages -->
+        <div class="tg-section">
+            <div class="tg-section-title">
+                <i class="bi bi-star-fill" style="color: #ffc107;"></i> Выберите количество звёзд
+            </div>
+            <div class="stars-grid">
+                <div class="star-card" data-stars="50" data-price="75">
+                    <div class="star-card-emoji">&#11088;</div>
+                    <div class="star-card-amount">50</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">75 &#8381;</div>
+                </div>
+                <div class="star-card" data-stars="100" data-price="150">
+                    <div class="star-card-emoji">&#11088;</div>
+                    <div class="star-card-amount">100</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">150 &#8381;</div>
+                </div>
+                <div class="star-card" data-stars="250" data-price="370">
+                    <div class="star-card-emoji">&#11088;&#11088;</div>
+                    <div class="star-card-amount">250</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">370 &#8381;</div>
+                </div>
+                <div class="star-card" data-stars="500" data-price="730">
+                    <div class="star-card-emoji">&#11088;&#11088;</div>
+                    <div class="star-card-amount">500</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">730 &#8381;</div>
+                </div>
+                <div class="star-card" data-stars="1000" data-price="1450">
+                    <div class="star-card-emoji">&#11088;&#11088;&#11088;</div>
+                    <div class="star-card-amount">1 000</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">1 450 &#8381;</div>
+                </div>
+                <div class="star-card" data-stars="2500" data-price="3600">
+                    <div class="star-card-emoji">&#127775;&#11088;&#11088;</div>
+                    <div class="star-card-amount">2 500</div>
+                    <div class="star-card-label">звёзд</div>
+                    <div class="star-card-price">3 600 &#8381;</div>
+                </div>
+            </div>
+
+            <!-- Custom Amount -->
+            <div class="custom-amount-row">
+                <input type="number" class="custom-amount-input" id="stars-custom"
+                       placeholder="Своё количество звёзд" min="1" max="50000">
+                <span class="custom-amount-price" id="stars-custom-price">&mdash;</span>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="tg-summary" id="stars-summary">
+            <div class="tg-summary-info">
+                <span class="tg-summary-label">К оплате</span>
+                <span class="tg-summary-total">
+                    <span class="highlight-stars" id="stars-total-display">Выберите пакет</span>
+                </span>
+            </div>
+            <button class="tg-btn-pay" id="stars-pay-btn" disabled>
+                <i class="bi bi-send-fill"></i> Оплатить
+            </button>
+        </div>
+
+        <!-- Features -->
+        <div class="tg-features">
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Мгновенная доставка</div>
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Безопасная оплата</div>
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Поддержка 24/7</div>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 2: PREMIUM ==================== -->
+    <div class="tab-panel" id="tab-premium">
+
+        <!-- Username -->
+        <div class="tg-section">
+            <div class="tg-section-title">
+                <i class="bi bi-person-fill"></i> Получатель подписки
+            </div>
+            <div class="tg-input-group">
+                <span class="tg-input-prefix">@@</span>
+                <input type="text" class="tg-input" id="premium-username"
+                       placeholder="username" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="invalid-hint" id="premium-username-hint">Укажите юзернейм получателя</div>
+        </div>
+
+        <!-- Plan Cards -->
+        <div class="tg-section">
+            <div class="tg-section-title">
+                <i class="bi bi-gem" style="color: #667eea;"></i> Выберите подписку
+            </div>
+            <div class="premium-grid">
+                <div class="premium-card" data-months="3" data-price="599">
+                    <div class="premium-card-icon">&#128142;</div>
+                    <div class="premium-card-duration">3</div>
+                    <div class="premium-card-label">месяца</div>
+                    <div class="premium-card-price">599 <span class="currency">&#8381;</span></div>
+                    <div class="premium-card-monthly">~200 &#8381;/мес</div>
+                </div>
+                <div class="premium-card" data-months="6" data-price="999">
+                    <span class="premium-badge popular">Популярный</span>
+                    <div class="premium-card-icon">&#128142;&#128142;</div>
+                    <div class="premium-card-duration">6</div>
+                    <div class="premium-card-label">месяцев</div>
+                    <div class="premium-card-price">999 <span class="currency">&#8381;</span></div>
+                    <div class="premium-card-monthly">~167 &#8381;/мес</div>
+                </div>
+                <div class="premium-card" data-months="12" data-price="1790">
+                    <span class="premium-badge best-value">Выгодный</span>
+                    <div class="premium-card-icon">&#128142;&#128142;&#128142;</div>
+                    <div class="premium-card-duration">12</div>
+                    <div class="premium-card-label">месяцев</div>
+                    <div class="premium-card-price">1 790 <span class="currency">&#8381;</span></div>
+                    <div class="premium-card-monthly">~149 &#8381;/мес</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="tg-summary" id="premium-summary">
+            <div class="tg-summary-info">
+                <span class="tg-summary-label">К оплате</span>
+                <span class="tg-summary-total">
+                    <span class="highlight-premium" id="premium-total-display">Выберите подписку</span>
+                </span>
+            </div>
+            <button class="tg-btn-pay" id="premium-pay-btn" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="bi bi-gem"></i> Оплатить
+            </button>
+        </div>
+
+        <!-- Features -->
+        <div class="tg-features">
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Активация за 5 минут</div>
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Безопасная оплата</div>
+            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Гарантия возврата</div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+(function() {
+    // ===== Tab switching =====
+    const tabs = document.querySelectorAll('.tg-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tab;
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            panels.forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + target).classList.add('active');
+        });
+    });
+
+    // ===== Stars Tab =====
+    const starCards = document.querySelectorAll('.star-card');
+    const starsCustom = document.getElementById('stars-custom');
+    const starsCustomPrice = document.getElementById('stars-custom-price');
+    const starsTotalDisplay = document.getElementById('stars-total-display');
+    const starsPayBtn = document.getElementById('stars-pay-btn');
+    const starsUsername = document.getElementById('stars-username');
+    const starsUsernameHint = document.getElementById('stars-username-hint');
+
+    let selectedStars = 0;
+    let selectedStarsPrice = 0;
+
+    function updateStarsSummary() {
+        if (selectedStarsPrice > 0) {
+            starsTotalDisplay.textContent = selectedStars.toLocaleString('ru-RU') + ' \u2B50 \u2014 ' + selectedStarsPrice.toLocaleString('ru-RU') + ' \u20BD';
+            starsPayBtn.disabled = false;
+        } else {
+            starsTotalDisplay.textContent = '\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u0430\u043A\u0435\u0442';
+            starsPayBtn.disabled = true;
+        }
+    }
+
+    starCards.forEach(card => {
+        card.addEventListener('click', () => {
+            starCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedStars = parseInt(card.dataset.stars);
+            selectedStarsPrice = parseInt(card.dataset.price);
+            starsCustom.value = '';
+            starsCustomPrice.textContent = '\u2014';
+            starsCustomPrice.classList.remove('has-value');
+            updateStarsSummary();
+        });
+    });
+
+    starsCustom.addEventListener('input', () => {
+        const val = parseInt(starsCustom.value);
+        starCards.forEach(c => c.classList.remove('selected'));
+        if (val > 0) {
+            const price = Math.ceil(val * 1.5);
+            starsCustomPrice.textContent = price.toLocaleString('ru-RU') + ' \u20BD';
+            starsCustomPrice.classList.add('has-value');
+            selectedStars = val;
+            selectedStarsPrice = price;
+        } else {
+            starsCustomPrice.textContent = '\u2014';
+            starsCustomPrice.classList.remove('has-value');
+            selectedStars = 0;
+            selectedStarsPrice = 0;
+        }
+        updateStarsSummary();
+    });
+
+    starsPayBtn.addEventListener('click', () => {
+        const username = starsUsername.value.trim();
+        if (!username) {
+            starsUsername.classList.add('is-invalid');
+            starsUsernameHint.classList.add('show');
+            starsUsername.focus();
+            return;
+        }
+        starsUsername.classList.remove('is-invalid');
+        starsUsernameHint.classList.remove('show');
+
+        alert('\u0417\u0430\u043A\u0430\u0437 \u043F\u0440\u0438\u043D\u044F\u0442! \u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0432 Telegram \u0434\u043B\u044F \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F.');
+    });
+
+    starsUsername.addEventListener('input', () => {
+        if (starsUsername.value.trim()) {
+            starsUsername.classList.remove('is-invalid');
+            starsUsernameHint.classList.remove('show');
+        }
+    });
+
+    // ===== Premium Tab =====
+    const premiumCards = document.querySelectorAll('.premium-card');
+    const premiumTotalDisplay = document.getElementById('premium-total-display');
+    const premiumPayBtn = document.getElementById('premium-pay-btn');
+    const premiumUsername = document.getElementById('premium-username');
+    const premiumUsernameHint = document.getElementById('premium-username-hint');
+
+    let selectedMonths = 0;
+    let selectedPremiumPrice = 0;
+
+    premiumCards.forEach(card => {
+        card.addEventListener('click', () => {
+            premiumCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedMonths = parseInt(card.dataset.months);
+            selectedPremiumPrice = parseInt(card.dataset.price);
+
+            const label = selectedMonths === 3 ? '3 \u043C\u0435\u0441\u044F\u0446\u0430' :
+                          selectedMonths === 6 ? '6 \u043C\u0435\u0441\u044F\u0446\u0435\u0432' : '12 \u043C\u0435\u0441\u044F\u0446\u0435\u0432';
+            premiumTotalDisplay.textContent = 'Premium ' + label + ' \u2014 ' + selectedPremiumPrice.toLocaleString('ru-RU') + ' \u20BD';
+            premiumPayBtn.disabled = false;
+        });
+    });
+
+    premiumPayBtn.addEventListener('click', () => {
+        const username = premiumUsername.value.trim();
+        if (!username) {
+            premiumUsername.classList.add('is-invalid');
+            premiumUsernameHint.classList.add('show');
+            premiumUsername.focus();
+            return;
+        }
+        premiumUsername.classList.remove('is-invalid');
+        premiumUsernameHint.classList.remove('show');
+
+        alert('\u0417\u0430\u043A\u0430\u0437 \u043F\u0440\u0438\u043D\u044F\u0442! \u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0432 Telegram \u0434\u043B\u044F \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F.');
+    });
+
+    premiumUsername.addEventListener('input', () => {
+        if (premiumUsername.value.trim()) {
+            premiumUsername.classList.remove('is-invalid');
+            premiumUsernameHint.classList.remove('show');
+        }
+    });
+
+    // Hash-based tab switching (#premium)
+    if (window.location.hash === '#premium') {
+        document.querySelector('.tg-tab[data-tab="premium"]').click();
+    }
+})();
+</script>
+}

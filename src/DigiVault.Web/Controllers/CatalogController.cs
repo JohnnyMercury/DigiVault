@@ -323,4 +323,9 @@ public class CatalogController : Controller
         await SetUserBalanceAsync();
         return View("VpnProvider");
     }
+
+    public IActionResult Telegram()
+    {
+        return View("Telegram");
+    }
 }

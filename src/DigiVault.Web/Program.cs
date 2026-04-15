@@ -128,7 +128,7 @@ app.MapControllerRoute(
 
 app.MapControllerRoute(
     name: "catalog-telegram",
-    pattern: "Catalog/Telegram/{slug?}",
+    pattern: "Catalog/Telegram",
     defaults: new { controller = "Catalog", action = "Telegram" });
 
 app.MapControllerRoute(

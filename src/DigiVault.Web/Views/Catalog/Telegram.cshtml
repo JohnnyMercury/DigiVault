@@ -1,10 +1,11 @@
 @using DigiVault.Core.Entities
 @{
-    var cards = ViewBag.TelegramCards as List<GiftCard> ?? new List<GiftCard>();
-    var activeCard = ViewBag.ActiveCard as GiftCard;
-    var products = ViewBag.Products as List<GameProduct> ?? new List<GameProduct>();
-    var activeSlug = ViewBag.ActiveSlug as string ?? "";
-    ViewData["Title"] = activeCard != null ? $"{activeCard.Name} — Telegram" : "Telegram — Звёзды и Премиум";
+    var premiumCard = ViewBag.PremiumCard as GiftCard;
+    var premiumProducts = ViewBag.PremiumProducts as List<GameProduct> ?? new List<GameProduct>();
+    var starRate = (decimal)(ViewBag.StarRate ?? 1.5m);
+    var minStars = (int)(ViewBag.MinStars ?? 50);
+    var maxStars = (int)(ViewBag.MaxStars ?? 25000);
+    ViewData["Title"] = "Telegram — Звёзды и Премиум";
 }
 
 <style>
@@ -12,98 +13,6 @@
         display: flex;
         gap: 1.5rem;
         padding: 1rem 0;
-    }
-
-    .game-sidebar {
-        width: 280px;
-        flex-shrink: 0;
-    }
-
-    @@media (max-width: 1200px) {
-        .game-sidebar { display: none; }
-    }
-
-    .sidebar-search {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 0.6rem 0.9rem;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .sidebar-search input {
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 0.85rem;
-        width: 100%;
-    }
-
-    .sidebar-search input:focus { outline: none; }
-    .sidebar-search input::placeholder { color: rgba(255, 255, 255, 0.4); }
-    .sidebar-search i { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
-
-    .sidebar-game {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.6rem 0.75rem;
-        border-radius: 12px;
-        text-decoration: none;
-        color: white;
-        transition: all 0.3s ease;
-        margin-bottom: 0.25rem;
-        background: transparent;
-    }
-
-    .sidebar-game:hover, .sidebar-game.active {
-        background: rgba(255, 255, 255, 0.05);
-        color: white;
-    }
-
-    .sidebar-game.active {
-        background: rgba(42, 171, 238, 0.15);
-    }
-
-    .sidebar-game-icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        background: rgba(255, 255, 255, 0.05);
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    .sidebar-game-icon img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .sidebar-game-info {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-    }
-
-    .sidebar-game-name {
-        font-weight: 500;
-        font-size: 0.9rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .sidebar-game-subtitle {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
     }
 
     /* Main Content */
@@ -167,36 +76,61 @@
         cursor: pointer;
     }
 
-    /* Tabs */
-    .game-tabs {
+    /* Stars input section */
+    .stars-input-wrapper {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        flex-grow: 1;
     }
 
-    .game-tab {
-        padding: 0.6rem 1.25rem;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        color: rgba(255, 255, 255, 0.7);
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-    }
-
-    .game-tab:hover {
-        background: rgba(255, 255, 255, 0.08);
+    .stars-input-wrapper input[type="number"] {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
         color: white;
+        font-size: 1.05rem;
+        padding: 0.5rem 0;
+        font-weight: 500;
+        -moz-appearance: textfield;
     }
 
-    .game-tab.active {
-        background: linear-gradient(135deg, rgba(42, 171, 238, 0.3) 0%, rgba(102, 126, 234, 0.3) 100%);
-        color: #ffffff;
-        box-shadow: 0 4px 15px rgba(42, 171, 238, 0.2);
+    .stars-input-wrapper input[type="number"]::-webkit-outer-spin-button,
+    .stars-input-wrapper input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .stars-input-wrapper input[type="number"]:focus { outline: none; }
+    .stars-input-wrapper input[type="number"]::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 400; }
+
+    .stars-icon {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .stars-price-display {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .stars-error {
+        display: none;
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.8rem;
+        color: #ef4444;
+        line-height: 1.4;
+    }
+
+    .stars-error.visible {
+        display: block;
     }
 
     /* Section Title */
@@ -211,13 +145,10 @@
     /* Product grid */
     .currency-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.75rem;
     }
 
-    @@media (max-width: 1200px) {
-        .currency-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
     @@media (max-width: 900px) {
         .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
@@ -369,8 +300,6 @@
 
     @@media (max-width: 768px) {
         .game-page { padding: 0.5rem 0; gap: 1rem; }
-        .game-tabs { gap: 0.25rem; margin-bottom: 0.75rem; }
-        .game-tab { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
         .section-title { font-size: 1rem; margin-bottom: 0.75rem; }
         .product-section { margin-bottom: 1.5rem; }
     }
@@ -615,147 +544,87 @@
 
 <div class="container container-wide">
     <div class="game-page">
-        <!-- Sidebar -->
-        <aside class="game-sidebar">
-            <div class="sidebar-search">
-                <i class="bi bi-search"></i>
-                <input type="text" placeholder="Поиск" id="cardSearch" onkeyup="filterCards(this.value)">
-            </div>
-
-            <div id="cardsList">
-            @foreach (var c in cards)
-            {
-                var isActive = c.Slug == activeSlug;
-                var hasImg = !string.IsNullOrEmpty(c.ImageUrl);
-
-                <a href="/Catalog/Telegram/@c.Slug" class="sidebar-game @(isActive ? "active" : "")">
-                    <div class="sidebar-game-icon" style="background: @c.Gradient;">
-                        @if (hasImg)
-                        {
-                            <img src="@c.ImageUrl" alt="@c.Name" />
-                        }
-                        else
-                        {
-                            <span>@c.Icon</span>
-                        }
-                    </div>
-                    <div class="sidebar-game-info">
-                        <span class="sidebar-game-name">@c.Name</span>
-                        @if (!string.IsNullOrEmpty(c.Description))
-                        {
-                            <span class="sidebar-game-subtitle">@c.Description</span>
-                        }
-                    </div>
-                </a>
-            }
-            </div>
-        </aside>
-
         <!-- Main Content -->
         <main class="game-main">
-            @if (activeCard != null)
+            <!-- Username input -->
+            <div class="uid-section">
+                <span class="uid-prefix">@@</span>
+                <input type="text" class="uid-input" id="tgUsername" placeholder="Введите юзернейм Telegram" autocomplete="off" spellcheck="false">
+                <label class="uid-checkbox">
+                    <input type="checkbox" id="tgAnonymous">
+                    Анонимно
+                </label>
+            </div>
+
+            <!-- Stars input -->
+            <div class="uid-section" style="border-color: rgba(42, 171, 238, 0.15);">
+                <div class="stars-input-wrapper">
+                    <input type="number" id="starsInput" placeholder="Количество звёзд (от @minStars до @maxStars.ToString("N0"))" min="@minStars" max="@maxStars" oninput="onStarsInput(this)">
+                    <span class="stars-icon">⭐</span>
+                </div>
+                <span class="stars-price-display" id="starsPrice"></span>
+            </div>
+            <div class="stars-error" id="starsError"></div>
+
+            <!-- Telegram Premium Section -->
+            @if (premiumProducts.Any())
             {
-                <!-- Username input -->
-                <div class="uid-section">
-                    <span class="uid-prefix">@@</span>
-                    <input type="text" class="uid-input" id="tgUsername" placeholder="Введите юзернейм Telegram" autocomplete="off" spellcheck="false">
-                    <label class="uid-checkbox">
-                        <input type="checkbox" id="tgAnonymous">
-                        Анонимно
-                    </label>
-                </div>
-
-                <!-- Tabs -->
-                <div class="game-tabs">
-                    @foreach (var c in cards)
-                    {
-                        <a href="/Catalog/Telegram/@c.Slug" class="game-tab @(c.Slug == activeSlug ? "active" : "")">@c.Name</a>
-                    }
-                </div>
-
-                <!-- Products Section -->
-                <div class="product-section">
-                    <h2 class="section-title">@activeCard.Name</h2>
+                <div class="product-section" style="margin-top: 0.5rem;">
+                    <h2 class="section-title">Telegram Premium</h2>
                     <div class="currency-grid">
-                        @if (products.Any())
+                        @foreach (var product in premiumProducts)
                         {
-                            @foreach (var product in products)
-                            {
-                                var hasImage = !string.IsNullOrEmpty(product.ImageUrl);
-                                var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
-                                var oldPrice = product.OldPrice ?? product.Price;
+                            var hasImage = !string.IsNullOrEmpty(product.ImageUrl);
+                            var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
+                            var oldPrice = product.OldPrice ?? product.Price;
+                            var gradient = premiumCard != null ? premiumCard.Gradient : "linear-gradient(135deg, #6C5CE7, #a855f7)";
 
-                                <div class="product-item" onclick="selectProduct(this, @product.Id, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
-                                    <div class="currency-card">
-                                        <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
-                                        <span class="currency-card-amount">@product.Amount</span>
-                                        <div class="currency-card-image" style="background: @activeCard.Gradient;">
-                                            @if (hasImage)
-                                            {
-                                                <img src="@product.ImageUrl" alt="@product.Name" />
-                                            }
-                                            else if (!string.IsNullOrEmpty(activeCard.ImageUrl))
-                                            {
-                                                <img src="@activeCard.ImageUrl" alt="@activeCard.Name" />
-                                            }
-                                            else
-                                            {
-                                                <span class="currency-card-placeholder">@activeCard.Icon</span>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="product-caption">
-                                        <div class="product-caption-price">
-                                            @product.Price.ToString("N0") ₽
-                                            @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
-                                            {
-                                                <span class="product-caption-discount">-@product.Discount%</span>
-                                                <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
-                                            }
-                                        </div>
-                                        <div class="product-caption-name">@displayName</div>
+                            <div class="product-item" onclick="selectPremium(this, @product.Id, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
+                                <div class="currency-card">
+                                    <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                    <span class="currency-card-amount">@product.Amount</span>
+                                    <div class="currency-card-image" style="background: @gradient;">
+                                        @if (hasImage)
+                                        {
+                                            <img src="@product.ImageUrl" alt="@product.Name" />
+                                        }
+                                        else if (premiumCard != null && !string.IsNullOrEmpty(premiumCard.ImageUrl))
+                                        {
+                                            <img src="@premiumCard.ImageUrl" alt="@premiumCard.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span class="currency-card-placeholder">💎</span>
+                                        }
                                     </div>
                                 </div>
-                            }
-                        }
-                        else
-                        {
-                            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: rgba(255,255,255,0.5);">
-                                <i class="bi bi-box-seam" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
-                                Товары скоро появятся
+                                <div class="product-caption">
+                                    <div class="product-caption-price">
+                                        @product.Price.ToString("N0") ₽
+                                        @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                        {
+                                            <span class="product-caption-discount">-@product.Discount%</span>
+                                            <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
+                                        }
+                                    </div>
+                                    <div class="product-caption-name">@displayName</div>
+                                </div>
                             </div>
                         }
                     </div>
                 </div>
             }
-            else
-            {
-                <div style="text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,0.5);">
-                    <i class="bi bi-send-fill" style="font-size: 3rem; display: block; margin-bottom: 1rem; color: #2AABEE;"></i>
-                    <h3 style="color: white; margin-bottom: 0.5rem;">Telegram</h3>
-                    <p>Выберите категорию слева</p>
-                </div>
-            }
         </main>
 
         <!-- Payment Sidebar -->
-        @if (activeCard != null)
-        {
         <aside class="payment-sidebar">
             <div class="payment-card">
                 <div class="payment-product">
-                    <div class="payment-product-icon" style="background: @activeCard.Gradient;">
-                        @if (!string.IsNullOrEmpty(activeCard.ImageUrl))
-                        {
-                            <img src="@activeCard.ImageUrl" alt="@activeCard.Name" />
-                        }
-                        else
-                        {
-                            <span>@activeCard.Icon</span>
-                        }
+                    <div class="payment-product-icon" id="paymentIcon" style="background: linear-gradient(135deg, #2AABEE, #229ED9);">
+                        <span>⭐</span>
                     </div>
                     <div class="payment-product-info">
-                        <div class="payment-product-name">@activeCard.Name</div>
+                        <div class="payment-product-name" id="paymentName">Telegram</div>
                         <div class="payment-product-amount" id="selectedAmount">Выберите товар</div>
                     </div>
                 </div>
@@ -804,12 +673,9 @@
                 </div>
             </div>
         </aside>
-        }
     </div>
 </div>
 
-@if (activeCard != null)
-{
 @Html.AntiForgeryToken()
 
 <!-- Purchase Modal -->
@@ -821,10 +687,10 @@
         </div>
         <div class="purchase-modal-body">
             <div class="purchase-modal-left">
-                <div class="purchase-modal-image" id="modalImage" style="background: @activeCard.Gradient;">
-                    <span class="modal-placeholder">@activeCard.Icon</span>
+                <div class="purchase-modal-image" id="modalImage" style="background: linear-gradient(135deg, #2AABEE, #229ED9);">
+                    <span class="modal-placeholder">⭐</span>
                 </div>
-                <div class="purchase-modal-product-name" id="modalProductName">@activeCard.Name</div>
+                <div class="purchase-modal-product-name" id="modalProductName">Telegram</div>
                 <div class="purchase-modal-product-desc" id="modalProductDesc">Выберите товар</div>
                 <div class="purchase-modal-price-row">
                     Цена: <span style="color: #2AABEE;" id="modalPrice">0 ₽</span>
@@ -902,23 +768,99 @@
         </div>
     </div>
 </div>
-}
 
 @section Scripts {
 <script>
+    const starRate = @(starRate);
+    const minStars = @(minStars);
+    const maxStars = @(maxStars);
+
     let selectedPrice = 0;
     let selectedOldPrice = 0;
     let selectedAmount = '';
     let selectedImageUrl = '';
     let selectedProductId = 0;
+    let selectionMode = ''; // 'stars' or 'premium'
 
-    function selectProduct(item, productId, amount, displayName, price, oldPrice) {
+    // --- Stars input ---
+    function onStarsInput(input) {
+        const val = parseInt(input.value) || 0;
+        const errorEl = document.getElementById('starsError');
+        const priceEl = document.getElementById('starsPrice');
+
+        // Clear premium selection
+        document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
+
+        if (val <= 0) {
+            errorEl.classList.remove('visible');
+            priceEl.textContent = '';
+            resetSidebar();
+            selectionMode = '';
+            return;
+        }
+
+        if (val < minStars || val > maxStars) {
+            errorEl.textContent = 'Вы ввели неверную сумму. Минимальная сумма \u2014 ' + minStars + ' зв\u0451зд, максимальная \u2014 ' + maxStars.toLocaleString('ru-RU') + ' зв\u0451зд';
+            errorEl.classList.add('visible');
+            priceEl.textContent = '';
+            resetSidebar();
+            selectionMode = '';
+            return;
+        }
+
+        errorEl.classList.remove('visible');
+
+        const price = Math.ceil(val * starRate);
+        priceEl.textContent = '= ' + price.toLocaleString('ru-RU') + ' \u20BD';
+
+        selectionMode = 'stars';
+        selectedProductId = 0;
+        selectedPrice = price;
+        selectedOldPrice = price;
+        selectedAmount = val.toLocaleString('ru-RU') + ' \u2B50 зв\u0451зд';
+
+        // Update sidebar
+        document.getElementById('paymentIcon').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
+        document.getElementById('paymentIcon').innerHTML = '<span>\u2B50</span>';
+        document.getElementById('paymentName').textContent = 'Telegram Stars';
+        document.getElementById('selectedAmount').textContent = val.toLocaleString('ru-RU') + ' зв\u0451зд';
+        document.getElementById('originalPrice').textContent = price.toLocaleString('ru-RU') + ' \u20BD';
+        document.getElementById('discount').textContent = '-0 \u20BD';
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' \u20BD';
+        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
+    }
+
+    function resetSidebar() {
+        selectedPrice = 0;
+        selectedOldPrice = 0;
+        selectedAmount = '';
+        selectedProductId = 0;
+        document.getElementById('paymentIcon').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
+        document.getElementById('paymentIcon').innerHTML = '<span>\u2B50</span>';
+        document.getElementById('paymentName').textContent = 'Telegram';
+        document.getElementById('selectedAmount').textContent = '\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u043E\u0432\u0430\u0440';
+        document.getElementById('originalPrice').textContent = '0 \u20BD';
+        document.getElementById('discount').textContent = '-0 \u20BD';
+        document.getElementById('totalPrice').textContent = '0 \u20BD';
+        document.getElementById('buttonPrice').textContent = '0';
+    }
+
+    // --- Premium selection ---
+    function selectPremium(item, productId, amount, displayName, price, oldPrice) {
+        // Clear stars input
+        const starsInput = document.getElementById('starsInput');
+        starsInput.value = '';
+        document.getElementById('starsPrice').textContent = '';
+        document.getElementById('starsError').classList.remove('visible');
+
+        // Select card
         document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
         item.classList.add('selected');
 
         const cardImg = item.querySelector('.currency-card-image img');
         selectedImageUrl = cardImg ? cardImg.src : '';
 
+        selectionMode = 'premium';
         selectedProductId = productId;
         selectedPrice = price;
         selectedOldPrice = oldPrice;
@@ -927,41 +869,63 @@
         const discount = oldPrice - price;
         const discountPercent = oldPrice > 0 ? Math.round((discount / oldPrice) * 100) : 0;
 
+        // Update sidebar
+        document.getElementById('paymentIcon').style.background = '@(premiumCard?.Gradient ?? "linear-gradient(135deg, #6C5CE7, #a855f7)")';
+        if (selectedImageUrl) {
+            document.getElementById('paymentIcon').innerHTML = '<img src="' + selectedImageUrl + '" alt="Premium" />';
+        } else {
+            document.getElementById('paymentIcon').innerHTML = '<span>\uD83D\uDC8E</span>';
+        }
+        document.getElementById('paymentName').textContent = 'Telegram Premium';
         document.getElementById('selectedAmount').textContent = displayName;
-        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' \u20BD';
 
         if (discount > 0) {
-            document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
+            document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' \u20BD <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
         } else {
-            document.getElementById('discount').textContent = '-0 ₽';
+            document.getElementById('discount').textContent = '-0 \u20BD';
         }
 
-        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' \u20BD';
         document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
     }
 
+    // --- Purchase Modal ---
     function openPurchaseModal() {
         if (selectedPrice <= 0) {
-            alert('Пожалуйста, выберите товар');
+            alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u043E\u0432\u0430\u0440');
             return;
         }
+
         // Pre-fill username from page input
         const tgUser = document.getElementById('tgUsername');
         if (tgUser && tgUser.value.trim()) {
             document.getElementById('modalInput').value = '@@' + tgUser.value.trim().replace(/^@@/, '');
         }
+
+        if (selectionMode === 'stars') {
+            document.getElementById('modalProductName').textContent = 'Telegram Stars';
+            document.getElementById('modalImage').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
+            document.getElementById('modalImage').innerHTML = '<span class="modal-placeholder">\u2B50</span>';
+        } else {
+            document.getElementById('modalProductName').textContent = 'Telegram Premium';
+            document.getElementById('modalImage').style.background = '@(premiumCard?.Gradient ?? "linear-gradient(135deg, #6C5CE7, #a855f7)")';
+            if (selectedImageUrl) {
+                document.getElementById('modalImage').innerHTML = '<img src="' + selectedImageUrl + '" alt="Premium" />';
+            } else {
+                document.getElementById('modalImage').innerHTML = '<span class="modal-placeholder">\uD83D\uDC8E</span>';
+            }
+        }
+
         document.getElementById('modalProductDesc').textContent = selectedAmount;
-        document.getElementById('modalPrice').textContent = selectedPrice.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('modalPrice').textContent = selectedPrice.toLocaleString('ru-RU') + ' \u20BD';
         if (selectedOldPrice > selectedPrice) {
-            document.getElementById('modalOldPrice').textContent = selectedOldPrice.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('modalOldPrice').textContent = selectedOldPrice.toLocaleString('ru-RU') + ' \u20BD';
             document.getElementById('modalOldPrice').style.display = '';
         } else {
             document.getElementById('modalOldPrice').style.display = 'none';
         }
-        const modalImg = document.getElementById('modalImage');
-        if (selectedImageUrl) {
-            modalImg.innerHTML = '<img src="' + selectedImageUrl + '" alt="Product" />';
-        }
+
         document.getElementById('purchaseOverlay').classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -988,9 +952,20 @@
         const val = input.value.trim();
         const agree = document.getElementById('modalAgree');
 
-        if (!val) { alert('Пожалуйста, введите юзернейм Telegram'); input.focus(); return; }
-        if (!agree.checked) { alert('Пожалуйста, примите условия пользовательского соглашения'); return; }
-        if (!selectedProductId) { alert('Пожалуйста, выберите товар'); return; }
+        if (!val) { alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u044E\u0437\u0435\u0440\u043D\u0435\u0439\u043C Telegram'); input.focus(); return; }
+        if (!agree.checked) { alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u0438\u043C\u0438\u0442\u0435 \u0443\u0441\u043B\u043E\u0432\u0438\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u043E\u0433\u043E \u0441\u043E\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u044F'); return; }
+
+        if (selectionMode === 'stars') {
+            // Stars purchase — productId is 0, we pass star quantity
+            const starsVal = parseInt(document.getElementById('starsInput').value) || 0;
+            if (starsVal < minStars || starsVal > maxStars) {
+                alert('\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0437\u0432\u0451\u0437\u0434');
+                return;
+            }
+        } else if (!selectedProductId) {
+            alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u043E\u0432\u0430\u0440');
+            return;
+        }
 
         @if (!User.Identity?.IsAuthenticated ?? true)
         {
@@ -1002,80 +977,66 @@
 
         const btn = document.querySelector('.modal-pay-button');
         btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка...';
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430...';
 
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        let body;
+        if (selectionMode === 'stars') {
+            const starsVal = parseInt(document.getElementById('starsInput').value);
+            body = JSON.stringify({ starQuantity: starsVal, deliveryInfo: val, paymentMethod: 'balance' });
+        } else {
+            body = JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' });
+        }
+
         fetch('/Catalog/Purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-            body: JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' })
+            body: body
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
             } else {
-                alert(data.errorMessage || 'Ошибка при покупке');
+                alert(data.errorMessage || '\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043A\u0443\u043F\u043A\u0435');
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+                btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
             }
         })
         .catch(() => {
-            alert('Ошибка соединения');
+            alert('\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u044F');
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
         });
     }
 
     function showPurchaseSuccess(orderNumber, productKey, newBalance) {
         const modal = document.querySelector('.purchase-modal-body');
-        const balanceHtml = newBalance !== null ? `<div style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 0.75rem;">Остаток на балансе: <span style="color: #22c55e; font-weight: 600;">${Math.floor(newBalance).toLocaleString('ru-RU')} ₽</span></div>` : '';
+        const balanceHtml = newBalance !== null ? `<div style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 0.75rem;">\u041E\u0441\u0442\u0430\u0442\u043E\u043A \u043D\u0430 \u0431\u0430\u043B\u0430\u043D\u0441\u0435: <span style="color: #22c55e; font-weight: 600;">${Math.floor(newBalance).toLocaleString('ru-RU')} \u20BD</span></div>` : '';
         modal.innerHTML = `
             <div style="text-align: center; padding: 2.5rem 2rem; width: 100%; max-width: 480px; margin: 0 auto;">
                 <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #2AABEE, #229ED9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
                     <i class="bi bi-check-lg" style="font-size: 2.5rem; color: white;"></i>
                 </div>
-                <h3 style="color: white; margin-bottom: 0.4rem; font-size: 1.5rem;">Заказ оформлен!</h3>
-                <p style="color: rgba(255,255,255,0.5); margin-bottom: 1.75rem; font-size: 0.9rem;">Доставка в Telegram в течение 30 минут</p>
+                <h3 style="color: white; margin-bottom: 0.4rem; font-size: 1.5rem;">\u0417\u0430\u043A\u0430\u0437 \u043E\u0444\u043E\u0440\u043C\u043B\u0435\u043D!</h3>
+                <p style="color: rgba(255,255,255,0.5); margin-bottom: 1.75rem; font-size: 0.9rem;">\u0414\u043E\u0441\u0442\u0430\u0432\u043A\u0430 \u0432 Telegram \u0432 \u0442\u0435\u0447\u0435\u043D\u0438\u0435 30 \u043C\u0438\u043D\u0443\u0442</p>
                 <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
-                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Номер заказа</span>
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">\u041D\u043E\u043C\u0435\u0440 \u0437\u0430\u043A\u0430\u0437\u0430</span>
                         <code style="color: #2AABEE; font-size: 0.9rem;">${orderNumber}</code>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Статус</span>
-                        <span style="color: #22c55e; font-weight: 600; font-size: 0.85rem;"><i class="bi bi-check-circle me-1"></i>Оплачен</span>
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">\u0421\u0442\u0430\u0442\u0443\u0441</span>
+                        <span style="color: #22c55e; font-weight: 600; font-size: 0.85rem;"><i class="bi bi-check-circle me-1"></i>\u041E\u043F\u043B\u0430\u0447\u0435\u043D</span>
                     </div>
                 </div>
                 ${balanceHtml}
                 <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.75rem;">
-                    <a href="/Account/Orders" style="background: linear-gradient(135deg, #2AABEE, #229ED9); color: white; padding: 0.75rem 2rem; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Мои заказы</a>
-                    <button onclick="closePurchaseModal();location.reload();" style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 2rem; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Продолжить</button>
+                    <a href="/Account/Orders" style="background: linear-gradient(135deg, #2AABEE, #229ED9); color: white; padding: 0.75rem 2rem; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">\u041C\u043E\u0438 \u0437\u0430\u043A\u0430\u0437\u044B</a>
+                    <button onclick="closePurchaseModal();location.reload();" style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 2rem; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C</button>
                 </div>
             </div>`;
-    }
-
-    // Select first product by default
-    document.addEventListener('DOMContentLoaded', function() {
-        const firstItem = document.querySelector('.product-item');
-        if (firstItem) {
-            firstItem.click();
-        }
-    });
-
-    // Filter cards in sidebar
-    function filterCards(query) {
-        const cards = document.querySelectorAll('.sidebar-game');
-        const lowerQuery = query.toLowerCase();
-        cards.forEach(card => {
-            const name = card.querySelector('.sidebar-game-name')?.textContent.toLowerCase() || '';
-            const subtitle = card.querySelector('.sidebar-game-subtitle')?.textContent.toLowerCase() || '';
-            if (name.includes(lowerQuery) || subtitle.includes(lowerQuery)) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
     }
 </script>
 }

@@ -324,37 +324,25 @@ public class CatalogController : Controller
         return View("VpnProvider");
     }
 
-    public async Task<IActionResult> Telegram(string? slug = null)
+    public async Task<IActionResult> Telegram()
     {
-        var telegramCards = await _context.GiftCards
+        // Load Premium plans from DB
+        var premiumCard = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
-            .Where(g => g.IsActive && g.Category == GiftCardCategory.Telegram)
-            .OrderBy(g => g.SortOrder)
-            .ToListAsync();
+            .FirstOrDefaultAsync(g => g.Slug == "telegram-premium" && g.IsActive);
 
-        GiftCard? activeCard = null;
-        var products = new List<GameProduct>();
+        var premiumProducts = premiumCard?.Products
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Price)
+            .ToList() ?? new List<GameProduct>();
 
-        if (!string.IsNullOrEmpty(slug))
-        {
-            activeCard = telegramCards.FirstOrDefault(c => c.Slug == slug.ToLower());
-        }
-
-        // Default to first card if no slug or slug not found
-        if (activeCard == null && telegramCards.Any())
-        {
-            activeCard = telegramCards.First();
-        }
-
-        if (activeCard != null)
-        {
-            products = activeCard.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList();
-        }
-
-        ViewBag.TelegramCards = telegramCards;
-        ViewBag.ActiveCard = activeCard;
-        ViewBag.ActiveSlug = activeCard?.Slug ?? "";
-        ViewBag.Products = products;
+        // Star pricing config (can be managed via admin later)
+        ViewBag.PremiumCard = premiumCard;
+        ViewBag.PremiumProducts = premiumProducts;
+        ViewBag.StarRate = 1.5m;
+        ViewBag.MinStars = 50;
+        ViewBag.MaxStars = 25000;
         await SetUserBalanceAsync();
         return View("Telegram");
     }

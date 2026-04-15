@@ -133,6 +133,71 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed Telegram cards
+        if (!await context.GiftCards.AnyAsync(g => g.Category == GiftCardCategory.Telegram))
+        {
+            context.GiftCards.AddRange(
+                new GiftCard
+                {
+                    Name = "Звёзды Телеграма",
+                    Slug = "telegram-stars",
+                    Description = "Купить звёзды для Telegram",
+                    Icon = "⭐",
+                    Gradient = "linear-gradient(135deg, #2AABEE, #229ED9)",
+                    Category = GiftCardCategory.Telegram,
+                    SortOrder = 1,
+                    IsActive = true
+                },
+                new GiftCard
+                {
+                    Name = "Телеграм Премиум",
+                    Slug = "telegram-premium",
+                    Description = "Подписка Premium для Telegram",
+                    Icon = "💎",
+                    Gradient = "linear-gradient(135deg, #6C5CE7, #a855f7)",
+                    Category = GiftCardCategory.Telegram,
+                    SortOrder = 2,
+                    IsActive = true
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
+        // Seed Telegram Stars products
+        var tgStars = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-stars");
+        if (tgStars != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == tgStars.Id))
+        {
+            var starProducts = new[]
+            {
+                new GameProduct { GiftCardId = tgStars.Id, Name = "50 звёзд", Amount = "50 ⭐", TotalDisplay = "50 звёзд Telegram", Price = 75, ProductType = GameProductType.GiftCard, SortOrder = 1, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "100 звёзд", Amount = "100 ⭐", TotalDisplay = "100 звёзд Telegram", Price = 150, ProductType = GameProductType.GiftCard, SortOrder = 2, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "250 звёзд", Amount = "250 ⭐", TotalDisplay = "250 звёзд Telegram", Price = 370, OldPrice = 375, Discount = 1, ProductType = GameProductType.GiftCard, SortOrder = 3, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "500 звёзд", Amount = "500 ⭐", TotalDisplay = "500 звёзд Telegram", Price = 730, OldPrice = 750, Discount = 3, ProductType = GameProductType.GiftCard, SortOrder = 4, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "1000 звёзд", Amount = "1000 ⭐", TotalDisplay = "1000 звёзд Telegram", Price = 1450, OldPrice = 1500, Discount = 3, ProductType = GameProductType.GiftCard, SortOrder = 5, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "2500 звёзд", Amount = "2500 ⭐", TotalDisplay = "2500 звёзд Telegram", Price = 3600, OldPrice = 3750, Discount = 4, ProductType = GameProductType.GiftCard, SortOrder = 6, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "5000 звёзд", Amount = "5000 ⭐", TotalDisplay = "5000 звёзд Telegram", Price = 7000, OldPrice = 7500, Discount = 7, ProductType = GameProductType.GiftCard, SortOrder = 7, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgStars.Id, Name = "10000 звёзд", Amount = "10000 ⭐", TotalDisplay = "10000 звёзд Telegram", Price = 13500, OldPrice = 15000, Discount = 10, ProductType = GameProductType.GiftCard, SortOrder = 8, IsActive = true, StockQuantity = 999 },
+            };
+            foreach (var p in starProducts) p.CreatedAt = DateTime.UtcNow;
+            context.GameProducts.AddRange(starProducts);
+            await context.SaveChangesAsync();
+        }
+
+        // Seed Telegram Premium products
+        var tgPremium = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-premium");
+        if (tgPremium != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == tgPremium.Id))
+        {
+            var premiumProducts = new[]
+            {
+                new GameProduct { GiftCardId = tgPremium.Id, Name = "Premium 3 месяца", Amount = "3 мес", TotalDisplay = "Telegram Premium 3 месяца", Price = 599, OldPrice = 699, Discount = 14, ProductType = GameProductType.GiftCard, SortOrder = 1, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgPremium.Id, Name = "Premium 6 месяцев", Amount = "6 мес", TotalDisplay = "Telegram Premium 6 месяцев", Price = 999, OldPrice = 1199, Discount = 17, ProductType = GameProductType.GiftCard, SortOrder = 2, IsActive = true, StockQuantity = 999 },
+                new GameProduct { GiftCardId = tgPremium.Id, Name = "Premium 12 месяцев", Amount = "12 мес", TotalDisplay = "Telegram Premium 12 месяцев", Price = 1790, OldPrice = 2399, Discount = 25, ProductType = GameProductType.GiftCard, SortOrder = 3, IsActive = true, StockQuantity = 999 },
+            };
+            foreach (var p in premiumProducts) p.CreatedAt = DateTime.UtcNow;
+            context.GameProducts.AddRange(premiumProducts);
+            await context.SaveChangesAsync();
+        }
+
         // Seed PSN gift card products
         var psnCard = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "psn");
         if (psnCard != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == psnCard.Id))

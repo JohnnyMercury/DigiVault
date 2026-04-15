@@ -1,1022 +1,1081 @@
+@using DigiVault.Core.Entities
 @{
-    ViewData["Title"] = "Telegram — Звёзды и Премиум";
+    var cards = ViewBag.TelegramCards as List<GiftCard> ?? new List<GiftCard>();
+    var activeCard = ViewBag.ActiveCard as GiftCard;
+    var products = ViewBag.Products as List<GameProduct> ?? new List<GameProduct>();
+    var activeSlug = ViewBag.ActiveSlug as string ?? "";
+    ViewData["Title"] = activeCard != null ? $"{activeCard.Name} — Telegram" : "Telegram — Звёзды и Премиум";
 }
 
 <style>
-    /* Hero */
-    .tg-hero {
-        background: linear-gradient(135deg, rgba(42, 171, 238, 0.15) 0%, rgba(102, 126, 234, 0.1) 50%, rgba(118, 75, 162, 0.1) 100%);
-        border-bottom: 1px solid rgba(42, 171, 238, 0.15);
-        padding: 2.5rem 0 2rem;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .tg-hero::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at 30% 50%, rgba(42, 171, 238, 0.08) 0%, transparent 50%),
-                    radial-gradient(circle at 70% 50%, rgba(118, 75, 162, 0.06) 0%, transparent 50%);
-        animation: heroFloat 15s ease-in-out infinite;
-    }
-
-    @@keyframes heroFloat {
-        0%, 100% { transform: translate(0, 0) rotate(0deg); }
-        33% { transform: translate(10px, -10px) rotate(1deg); }
-        66% { transform: translate(-5px, 5px) rotate(-1deg); }
-    }
-
-    .tg-hero-content {
-        position: relative;
-        z-index: 1;
-    }
-
-    .tg-hero-icon {
-        width: 72px;
-        height: 72px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        color: white;
-        margin-bottom: 1rem;
-        box-shadow: 0 8px 32px rgba(42, 171, 238, 0.3);
-    }
-
-    .tg-hero-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin-bottom: 0.5rem;
-    }
-
-    .tg-hero-title span {
-        background: linear-gradient(135deg, #2AABEE 0%, #667eea 50%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .tg-hero-subtitle {
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 1.05rem;
-        max-width: 500px;
-        margin: 0 auto;
-    }
-
-    /* Breadcrumb */
-    .breadcrumb-nav {
+    .game-page {
+        display: flex;
+        gap: 1.5rem;
         padding: 1rem 0;
     }
 
-    .breadcrumb-nav a {
-        color: rgba(255, 255, 255, 0.5);
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    .breadcrumb-nav a:hover {
-        color: #2AABEE;
-    }
-
-    .breadcrumb-nav span {
-        color: rgba(255, 255, 255, 0.3);
-        margin: 0 0.5rem;
-    }
-
-    .breadcrumb-nav .current {
-        color: white;
-    }
-
-    /* Tabs */
-    .tg-tabs {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 0.4rem;
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .tg-tab {
-        flex: 1;
-        background: transparent;
-        border: none;
-        border-radius: 10px;
-        padding: 0.7rem 1.5rem;
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .tg-tab:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: #ffffff;
-    }
-
-    .tg-tab.active {
-        background: linear-gradient(135deg, rgba(42, 171, 238, 0.25) 0%, rgba(102, 126, 234, 0.25) 100%);
-        color: #ffffff;
-        box-shadow: 0 4px 15px rgba(42, 171, 238, 0.15);
-    }
-
-    .tg-tab-icon {
-        font-size: 1.15rem;
-    }
-
-    .tab-panel {
-        display: none;
-        animation: fadeIn 0.35s ease;
-    }
-
-    .tab-panel.active {
-        display: block;
-    }
-
-    @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Form Section */
-    .tg-section {
-        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .tg-section-title {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: rgba(255, 255, 255, 0.85);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .tg-section-title i {
-        color: #2AABEE;
-    }
-
-    /* Input */
-    .tg-input-group {
-        position: relative;
-    }
-
-    .tg-input-prefix {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 1rem;
-        font-weight: 600;
-        pointer-events: none;
-    }
-
-    .tg-input {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 0.85rem 1rem 0.85rem 2.2rem;
-        color: white;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .tg-input:focus {
-        outline: none;
-        border-color: #2AABEE;
-        background: rgba(42, 171, 238, 0.06);
-        box-shadow: 0 0 0 3px rgba(42, 171, 238, 0.1);
-    }
-
-    .tg-input::placeholder {
-        color: rgba(255, 255, 255, 0.25);
-    }
-
-    /* Checkbox */
-    .tg-checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        cursor: pointer;
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.9rem;
-        margin-top: 0.85rem;
-        user-select: none;
-    }
-
-    .tg-checkbox-label input {
-        display: none;
-    }
-
-    .tg-checkbox-box {
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.15);
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
+    .game-sidebar {
+        width: 280px;
         flex-shrink: 0;
     }
 
-    .tg-checkbox-box i {
-        font-size: 0.7rem;
-        color: white;
-        opacity: 0;
-        transition: opacity 0.2s ease;
+    @@media (max-width: 1200px) {
+        .game-sidebar { display: none; }
     }
 
-    .tg-checkbox-label input:checked + .tg-checkbox-box {
-        background: linear-gradient(135deg, #2AABEE 0%, #667eea 100%);
-        border-color: #2AABEE;
-    }
-
-    .tg-checkbox-label input:checked + .tg-checkbox-box i {
-        opacity: 1;
-    }
-
-    /* Star Packages Grid */
-    .stars-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.85rem;
-    }
-
-    @@media (max-width: 992px) {
-        .stars-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    @@media (max-width: 768px) {
-        .stars-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @@media (max-width: 480px) {
-        .stars-grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
-    }
-
-    .star-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 14px;
-        padding: 1.25rem 1rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .star-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 14px;
-        background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 152, 0, 0.04) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .star-card:hover {
-        border-color: rgba(255, 193, 7, 0.3);
-        transform: translateY(-2px);
-    }
-
-    .star-card:hover::before {
-        opacity: 1;
-    }
-
-    .star-card.selected {
-        border-color: #ffc107;
-        background: rgba(255, 193, 7, 0.08);
-        box-shadow: 0 4px 20px rgba(255, 193, 7, 0.15);
-    }
-
-    .star-card.selected::before {
-        opacity: 1;
-    }
-
-    .star-card.selected::after {
-        content: '\f26e';
-        font-family: 'bootstrap-icons';
-        position: absolute;
-        top: 0.5rem;
-        right: 0.5rem;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: #ffc107;
-        color: #1e1e38;
+    .sidebar-search {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.6rem 0.9rem;
+        margin-bottom: 1rem;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        font-weight: 700;
+        gap: 0.5rem;
     }
 
-    .star-card-emoji {
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .star-card-amount {
-        font-size: 1.1rem;
-        font-weight: 700;
+    .sidebar-search input {
+        background: transparent;
+        border: none;
         color: white;
-        margin-bottom: 0.25rem;
-        position: relative;
-        z-index: 1;
+        font-size: 0.85rem;
+        width: 100%;
     }
 
-    .star-card-label {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.4);
-        margin-bottom: 0.6rem;
-        position: relative;
-        z-index: 1;
-    }
+    .sidebar-search input:focus { outline: none; }
+    .sidebar-search input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .sidebar-search i { color: rgba(255, 255, 255, 0.4); font-size: 0.9rem; }
 
-    .star-card-price {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #ffc107;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Custom amount */
-    .custom-amount-row {
+    .sidebar-game {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-top: 1rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        margin-bottom: 0.25rem;
+        background: transparent;
     }
 
-    .custom-amount-input {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
+    .sidebar-game:hover, .sidebar-game.active {
+        background: rgba(255, 255, 255, 0.05);
         color: white;
-        font-size: 1rem;
+    }
+
+    .sidebar-game.active {
+        background: rgba(42, 171, 238, 0.15);
+    }
+
+    .sidebar-game-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .sidebar-game-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .sidebar-game-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .sidebar-game-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sidebar-game-subtitle {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Main Content */
+    .game-main {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    /* Username input */
+    .uid-section {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
         transition: all 0.3s ease;
     }
 
-    .custom-amount-input:focus {
-        outline: none;
-        border-color: #ffc107;
-        background: rgba(255, 193, 7, 0.06);
-        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+    .uid-section:focus-within {
+        border-color: rgba(42, 171, 238, 0.5);
+        box-shadow: 0 0 20px rgba(42, 171, 238, 0.15);
     }
 
-    .custom-amount-input::placeholder {
-        color: rgba(255, 255, 255, 0.25);
+    .uid-input {
+        flex-grow: 1;
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.05rem;
+        padding: 0.5rem 0;
+        font-weight: 500;
     }
 
-    .custom-amount-price {
-        font-size: 1rem;
+    .uid-input:focus { outline: none; }
+    .uid-input::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 400; }
+
+    .uid-prefix {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 1.1rem;
         font-weight: 600;
-        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .uid-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.9rem;
+        cursor: pointer;
         white-space: nowrap;
-        min-width: 80px;
-        text-align: right;
+        font-weight: 500;
     }
 
-    .custom-amount-price.has-value {
-        color: #ffc107;
+    .uid-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: #2AABEE;
+        cursor: pointer;
     }
 
-    /* Premium Plans */
-    .premium-grid {
+    /* Tabs */
+    .game-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .game-tab {
+        padding: 0.6rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: rgba(255, 255, 255, 0.7);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .game-tab:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+    }
+
+    .game-tab.active {
+        background: linear-gradient(135deg, rgba(42, 171, 238, 0.3) 0%, rgba(102, 126, 234, 0.3) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(42, 171, 238, 0.2);
+    }
+
+    /* Section Title */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #ffffff;
+        letter-spacing: 0.01em;
+    }
+
+    /* Product grid */
+    .currency-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    @@media (max-width: 1200px) {
+        .currency-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 900px) {
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @@media (max-width: 576px) {
+        .currency-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .product-item {
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .currency-card {
+        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        aspect-ratio: 1;
+        min-width: 0;
+    }
+
+    .currency-card:hover {
+        border-color: rgba(42, 171, 238, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .product-item.selected .currency-card {
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .currency-card-selected-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #22c55e;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 0.2rem;
+        z-index: 10;
+    }
+
+    .product-item.selected .currency-card-selected-badge {
+        display: flex;
+    }
+
+    .currency-card-amount {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: #2AABEE;
+        color: white;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        z-index: 10;
+    }
+
+    .currency-card-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .currency-card-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .currency-card-placeholder {
+        font-size: 3.5rem;
+        opacity: 0.9;
+    }
+
+    .product-caption {
+        padding: 0.5rem 0.25rem;
+        text-align: left;
+    }
+
+    .product-caption-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.1rem;
+    }
+
+    .product-caption-name {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+
+    .product-caption-old-price {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: line-through;
+    }
+
+    .product-caption-discount {
+        font-size: 0.65rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.1rem 0.3rem;
+        border-radius: 3px;
+        font-weight: 600;
+    }
+
+    /* Payment Sidebar */
+    .payment-sidebar {
+        width: 300px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+        align-self: flex-start;
+    }
+
+    @@media (max-width: 992px) {
+        .game-page { flex-direction: column; }
+        .payment-sidebar {
+            width: 100%;
+            position: relative;
+            top: auto;
+        }
+        .payment-card {
+            padding: 1rem;
+            border-radius: 14px;
+        }
+        .payment-total-value {
+            font-size: 1.4rem;
+        }
     }
 
     @@media (max-width: 768px) {
-        .premium-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+        .game-page { padding: 0.5rem 0; gap: 1rem; }
+        .game-tabs { gap: 0.25rem; margin-bottom: 0.75rem; }
+        .game-tab { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+        .section-title { font-size: 1rem; margin-bottom: 0.75rem; }
+        .product-section { margin-bottom: 1.5rem; }
     }
 
-    .premium-card {
-        background: rgba(255, 255, 255, 0.03);
+    .payment-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
+        border-radius: 20px;
         padding: 1.5rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        position: relative;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .payment-product {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .payment-product-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
         overflow: hidden;
     }
 
-    .premium-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 16px;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.06) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+    .payment-product-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
-    .premium-card:hover {
-        border-color: rgba(102, 126, 234, 0.35);
-        transform: translateY(-3px);
-    }
+    .payment-product-info { flex-grow: 1; }
+    .payment-product-name { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-product-amount { font-size: 1.1rem; font-weight: 700; }
 
-    .premium-card:hover::before {
-        opacity: 1;
-    }
+    .payment-summary { margin-bottom: 1.25rem; }
 
-    .premium-card.selected {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.08);
-        box-shadow: 0 4px 24px rgba(102, 126, 234, 0.2);
-    }
-
-    .premium-card.selected::before {
-        opacity: 1;
-    }
-
-    .premium-card.selected::after {
-        content: '\f26e';
-        font-family: 'bootstrap-icons';
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+    .payment-summary-row {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        font-weight: 700;
-    }
-
-    .premium-badge {
-        position: absolute;
-        top: 0.75rem;
-        left: 0.75rem;
-        padding: 0.2rem 0.6rem;
-        border-radius: 8px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        z-index: 1;
-    }
-
-    .premium-badge.popular {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-
-    .premium-badge.best-value {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        color: white;
-    }
-
-    .premium-card-icon {
-        font-size: 2.2rem;
-        margin-bottom: 0.75rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .premium-card-duration {
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 0.2rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .premium-card-label {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.4);
-        margin-bottom: 1rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    .premium-card-price {
-        font-size: 1.3rem;
-        font-weight: 700;
-        position: relative;
-        z-index: 1;
-    }
-
-    .premium-card-price .currency {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.5);
-    }
-
-    .premium-card-monthly {
-        font-size: 0.78rem;
-        color: rgba(255, 255, 255, 0.35);
-        margin-top: 0.25rem;
-        position: relative;
-        z-index: 1;
-    }
-
-    /* Payment Summary */
-    .tg-summary {
-        background: linear-gradient(145deg, #1e1e38 0%, #161630 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 1.25rem 1.5rem;
-        display: flex;
-        align-items: center;
         justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 0.5rem;
     }
 
-    .tg-summary-info {
+    .payment-summary-label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-summary-value { font-size: 0.85rem; font-weight: 600; }
+    .payment-summary-value.discount { color: #ef4444; }
+
+    .payment-summary-total {
         display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .tg-summary-label {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.45);
-    }
+    .payment-total-label { font-size: 1rem; font-weight: 600; }
+    .payment-total-value { font-size: 1.75rem; font-weight: 800; }
 
-    .tg-summary-total {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white;
-    }
-
-    .tg-summary-total .highlight-stars {
-        color: #ffc107;
-    }
-
-    .tg-summary-total .highlight-premium {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .tg-btn-pay {
+    .payment-button {
+        width: 100%;
+        padding: 1rem;
         background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
         border: none;
-        border-radius: 12px;
-        padding: 0.85rem 2.5rem;
+        border-radius: 14px;
         color: white;
-        font-size: 1rem;
+        font-size: 1.1rem;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        white-space: nowrap;
+        margin-bottom: 0.75rem;
     }
 
-    .tg-btn-pay:hover {
+    .payment-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 24px rgba(42, 171, 238, 0.35);
+        box-shadow: 0 8px 25px rgba(42, 171, 238, 0.4);
     }
 
-    .tg-btn-pay:active {
-        transform: translateY(0);
-    }
+    .payment-delivery { margin-top: 1rem; }
 
-    .tg-btn-pay:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    /* Features row */
-    .tg-features {
+    .payment-delivery-row {
         display: flex;
-        gap: 2rem;
-        justify-content: center;
-        margin-top: 1.5rem;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
     }
 
-    .tg-feature {
+    .payment-delivery-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+    .payment-delivery-value { font-size: 0.8rem; font-weight: 600; }
+    .payment-delivery-value.highlight { color: #2AABEE; }
+
+    /* Trust Badge */
+    .trust-badge {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.75rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: rgba(255, 255, 255, 0.45);
-        font-size: 0.85rem;
+        justify-content: center;
+        gap: 0;
     }
 
-    .tg-feature i {
-        color: #22c55e;
-        font-size: 1rem;
+    .trust-badge-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex: 1;
+        justify-content: center;
     }
 
-    /* Validation */
-    .tg-input.is-invalid {
-        border-color: #ef4444;
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
-    }
+    .trust-badge-icon { font-size: 1.6rem; }
 
-    .invalid-hint {
-        color: #ef4444;
+    .trust-badge-text {
         font-size: 0.8rem;
-        margin-top: 0.4rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.3;
+    }
+
+    .trust-badge-divider {
+        width: 1px;
+        height: 2.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 0 0.75rem;
+    }
+
+    /* Purchase Modal */
+    .purchase-overlay {
         display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .purchase-overlay.active { display: flex; }
+
+    .purchase-modal {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 860px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     }
 
-    .invalid-hint.show {
-        display: block;
+    .purchase-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .purchase-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: white; }
+    .purchase-modal-close {
+        background: none; border: none; color: rgba(255, 255, 255, 0.5); font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1;
     }
 
-    /* Responsive */
-    @@media (max-width: 768px) {
-        .tg-hero { padding: 2rem 0 1.5rem; }
-        .tg-hero-icon { width: 56px; height: 56px; font-size: 1.5rem; border-radius: 16px; }
-        .tg-hero-title { font-size: 1.6rem; }
-        .tg-hero-subtitle { font-size: 0.9rem; }
-        .tg-tabs { flex-direction: column; }
-        .tg-tab { padding: 0.6rem 1rem; font-size: 0.9rem; }
-        .tg-summary { flex-direction: column; text-align: center; }
-        .tg-btn-pay { width: 100%; justify-content: center; }
-        .tg-features { gap: 1rem; }
+    .purchase-modal-body { display: flex; gap: 2rem; padding: 1.75rem; }
+    @@media (max-width: 600px) {
+        .purchase-modal-body { flex-direction: column; }
+        .purchase-modal-left { width: 100% !important; }
     }
 
-    @@media (max-width: 480px) {
-        .star-card { padding: 1rem 0.6rem; }
-        .star-card-emoji { font-size: 1.5rem; }
-        .star-card-amount { font-size: 0.95rem; }
-        .star-card-price { font-size: 0.9rem; }
+    .purchase-modal-left { width: 220px; flex-shrink: 0; text-align: center; }
+    .purchase-modal-image {
+        width: 100%; aspect-ratio: 1; border-radius: 14px; overflow: hidden;
+        background: rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;
     }
+    .purchase-modal-image img { width: 100%; height: 100%; object-fit: cover; }
+    .purchase-modal-image .modal-placeholder { font-size: 3rem; }
+    .purchase-modal-product-name { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.25rem; }
+    .purchase-modal-product-desc { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem; }
+    .purchase-modal-price-row { font-size: 0.9rem; color: white; font-weight: 600; }
+    .purchase-modal-price-row .old-price { text-decoration: line-through; color: rgba(255, 255, 255, 0.4); font-size: 0.8rem; margin-left: 0.25rem; }
+
+    .purchase-modal-right { flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+
+    .modal-label { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.4rem; }
+    .modal-input {
+        width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px; padding: 0.7rem 1rem; color: white; font-size: 0.9rem;
+    }
+    .modal-input:focus { outline: none; border-color: rgba(42, 171, 238, 0.5); }
+    .modal-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+    .modal-hint { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 0.3rem; }
+    .modal-info-banner {
+        background: rgba(42, 171, 238, 0.08); border: 1px solid rgba(42, 171, 238, 0.15);
+        border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); line-height: 1.4;
+    }
+    .modal-info-banner a { color: #2AABEE; }
+
+    .modal-payment-methods { display: flex; flex-direction: column; gap: 0.5rem; }
+    .modal-pay-method { display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.75rem 1rem; cursor: pointer; transition: all 0.2s ease; }
+    .modal-pay-method:hover:not(.disabled) { border-color: rgba(42, 171, 238, 0.4); }
+    .modal-pay-method.selected { border-color: #2AABEE; background: rgba(42, 171, 238, 0.08); }
+    .modal-pay-method.disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-pay-method-left { display: flex; align-items: center; gap: 0.75rem; }
+    .modal-pay-method-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; flex-shrink: 0; }
+    .modal-pay-method-title { font-size: 0.9rem; font-weight: 600; color: rgba(255, 255, 255, 0.95); }
+    .modal-pay-method-desc { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin-top: 0.1rem; }
+    .modal-pay-method-right { display: flex; align-items: center; gap: 0.5rem; }
+    .modal-pay-badge-instant { font-size: 0.7rem; color: #22c55e; font-weight: 600; }
+    .modal-pay-badge-soon { font-size: 0.65rem; background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); padding: 0.2rem 0.5rem; border-radius: 6px; }
+    .modal-pay-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2); position: relative; flex-shrink: 0; }
+    .modal-pay-radio.active { border-color: #2AABEE; }
+    .modal-pay-radio.active::after { content: ''; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: #2AABEE; }
+    .modal-promo-section { margin-top: 0; }
+    .modal-promo-row { display: flex; gap: 0.5rem; }
+    .modal-promo-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 0.7rem 1.2rem; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+    .modal-promo-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+    .modal-agreement {
+        display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.5); cursor: pointer; line-height: 1.4;
+    }
+    .modal-agreement input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; accent-color: #2AABEE; cursor: pointer; }
+    .modal-agreement span { flex: 1; }
+    .modal-agreement a { color: #2AABEE; text-decoration: none; }
+    .modal-agreement a:hover { text-decoration: underline; }
+
+    .modal-pay-button {
+        width: 100%; padding: 0.9rem; background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+        border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700;
+        cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .modal-pay-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(42, 171, 238, 0.4); }
 </style>
 
-<!-- Breadcrumb -->
-<section class="breadcrumb-nav">
-    <div class="container">
-        <a href="/">Главная</a>
-        <span>/</span>
-        <a href="/Catalog">Каталог</a>
-        <span>/</span>
-        <span class="current">Telegram</span>
+<div class="container container-wide">
+    <div class="game-page">
+        <!-- Sidebar -->
+        <aside class="game-sidebar">
+            <div class="sidebar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Поиск" id="cardSearch" onkeyup="filterCards(this.value)">
+            </div>
+
+            <div id="cardsList">
+            @foreach (var c in cards)
+            {
+                var isActive = c.Slug == activeSlug;
+                var hasImg = !string.IsNullOrEmpty(c.ImageUrl);
+
+                <a href="/Catalog/Telegram/@c.Slug" class="sidebar-game @(isActive ? "active" : "")">
+                    <div class="sidebar-game-icon" style="background: @c.Gradient;">
+                        @if (hasImg)
+                        {
+                            <img src="@c.ImageUrl" alt="@c.Name" />
+                        }
+                        else
+                        {
+                            <span>@c.Icon</span>
+                        }
+                    </div>
+                    <div class="sidebar-game-info">
+                        <span class="sidebar-game-name">@c.Name</span>
+                        @if (!string.IsNullOrEmpty(c.Description))
+                        {
+                            <span class="sidebar-game-subtitle">@c.Description</span>
+                        }
+                    </div>
+                </a>
+            }
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="game-main">
+            @if (activeCard != null)
+            {
+                <!-- Username input -->
+                <div class="uid-section">
+                    <span class="uid-prefix">@@</span>
+                    <input type="text" class="uid-input" id="tgUsername" placeholder="Введите юзернейм Telegram" autocomplete="off" spellcheck="false">
+                    <label class="uid-checkbox">
+                        <input type="checkbox" id="tgAnonymous">
+                        Анонимно
+                    </label>
+                </div>
+
+                <!-- Tabs -->
+                <div class="game-tabs">
+                    @foreach (var c in cards)
+                    {
+                        <a href="/Catalog/Telegram/@c.Slug" class="game-tab @(c.Slug == activeSlug ? "active" : "")">@c.Name</a>
+                    }
+                </div>
+
+                <!-- Products Section -->
+                <div class="product-section">
+                    <h2 class="section-title">@activeCard.Name</h2>
+                    <div class="currency-grid">
+                        @if (products.Any())
+                        {
+                            @foreach (var product in products)
+                            {
+                                var hasImage = !string.IsNullOrEmpty(product.ImageUrl);
+                                var displayName = !string.IsNullOrEmpty(product.TotalDisplay) ? product.TotalDisplay : product.Name;
+                                var oldPrice = product.OldPrice ?? product.Price;
+
+                                <div class="product-item" onclick="selectProduct(this, @product.Id, '@product.Amount', '@displayName', @((int)product.Price), @((int)oldPrice))">
+                                    <div class="currency-card">
+                                        <span class="currency-card-selected-badge">Выбрано <i class="bi bi-check"></i></span>
+                                        <span class="currency-card-amount">@product.Amount</span>
+                                        <div class="currency-card-image" style="background: @activeCard.Gradient;">
+                                            @if (hasImage)
+                                            {
+                                                <img src="@product.ImageUrl" alt="@product.Name" />
+                                            }
+                                            else if (!string.IsNullOrEmpty(activeCard.ImageUrl))
+                                            {
+                                                <img src="@activeCard.ImageUrl" alt="@activeCard.Name" />
+                                            }
+                                            else
+                                            {
+                                                <span class="currency-card-placeholder">@activeCard.Icon</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="product-caption">
+                                        <div class="product-caption-price">
+                                            @product.Price.ToString("N0") ₽
+                                            @if (product.OldPrice.HasValue && product.OldPrice > product.Price)
+                                            {
+                                                <span class="product-caption-discount">-@product.Discount%</span>
+                                                <span class="product-caption-old-price">@product.OldPrice.Value.ToString("N0") ₽</span>
+                                            }
+                                        </div>
+                                        <div class="product-caption-name">@displayName</div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: rgba(255,255,255,0.5);">
+                                <i class="bi bi-box-seam" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                                Товары скоро появятся
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div style="text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,0.5);">
+                    <i class="bi bi-send-fill" style="font-size: 3rem; display: block; margin-bottom: 1rem; color: #2AABEE;"></i>
+                    <h3 style="color: white; margin-bottom: 0.5rem;">Telegram</h3>
+                    <p>Выберите категорию слева</p>
+                </div>
+            }
+        </main>
+
+        <!-- Payment Sidebar -->
+        @if (activeCard != null)
+        {
+        <aside class="payment-sidebar">
+            <div class="payment-card">
+                <div class="payment-product">
+                    <div class="payment-product-icon" style="background: @activeCard.Gradient;">
+                        @if (!string.IsNullOrEmpty(activeCard.ImageUrl))
+                        {
+                            <img src="@activeCard.ImageUrl" alt="@activeCard.Name" />
+                        }
+                        else
+                        {
+                            <span>@activeCard.Icon</span>
+                        }
+                    </div>
+                    <div class="payment-product-info">
+                        <div class="payment-product-name">@activeCard.Name</div>
+                        <div class="payment-product-amount" id="selectedAmount">Выберите товар</div>
+                    </div>
+                </div>
+
+                <div class="payment-summary">
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Цена</span>
+                        <span class="payment-summary-value" id="originalPrice">0 ₽</span>
+                    </div>
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Выгода</span>
+                        <span class="payment-summary-value discount" id="discount">-0 ₽</span>
+                    </div>
+                    <div class="payment-summary-total">
+                        <span class="payment-total-label">Итого</span>
+                        <span class="payment-total-value" id="totalPrice">0 ₽</span>
+                    </div>
+                </div>
+
+                <button class="payment-button" onclick="openPurchaseModal()">
+                    Купить <span id="buttonPrice">0</span> ₽
+                </button>
+
+                <div class="payment-delivery">
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Доставка</span>
+                        <span class="payment-delivery-value highlight">В Telegram</span>
+                    </div>
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Срок доставки</span>
+                        <span class="payment-delivery-value">До 30 минут</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Badge -->
+            <div class="trust-badge">
+                <div class="trust-badge-item">
+                    <i class="bi bi-shield-check trust-badge-icon" style="color: #2AABEE;"></i>
+                    <span class="trust-badge-text">Безопасная<br>покупка</span>
+                </div>
+                <div class="trust-badge-divider"></div>
+                <div class="trust-badge-item">
+                    <i class="bi bi-bag-check trust-badge-icon" style="color: #f093fb;"></i>
+                    <span class="trust-badge-text">100K+<br>продаж</span>
+                </div>
+            </div>
+        </aside>
+        }
     </div>
-</section>
-
-<!-- Hero -->
-<section class="tg-hero">
-    <div class="container tg-hero-content">
-        <div class="tg-hero-icon">
-            <i class="bi bi-send-fill"></i>
-        </div>
-        <h1 class="tg-hero-title"><span>Telegram</span></h1>
-        <p class="tg-hero-subtitle">Звёзды и Премиум подписки для Telegram по выгодным ценам</p>
-    </div>
-</section>
-
-<!-- Main Content -->
-<div class="container container-wide" style="padding-top: 2rem; padding-bottom: 3rem;">
-
-    <!-- Tabs -->
-    <div class="tg-tabs">
-        <button class="tg-tab active" data-tab="stars">
-            <span class="tg-tab-icon">&#11088;</span> Звёзды Телеграма
-        </button>
-        <button class="tg-tab" data-tab="premium">
-            <span class="tg-tab-icon">&#128142;</span> Телеграм Премиум
-        </button>
-    </div>
-
-    <!-- ==================== TAB 1: STARS ==================== -->
-    <div class="tab-panel active" id="tab-stars">
-
-        <!-- Username -->
-        <div class="tg-section">
-            <div class="tg-section-title">
-                <i class="bi bi-person-fill"></i> Получатель
-            </div>
-            <div class="tg-input-group">
-                <span class="tg-input-prefix">@@</span>
-                <input type="text" class="tg-input" id="stars-username"
-                       placeholder="username" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="invalid-hint" id="stars-username-hint">Укажите юзернейм получателя</div>
-            <label class="tg-checkbox-label">
-                <input type="checkbox" id="stars-anonymous">
-                <span class="tg-checkbox-box"><i class="bi bi-check"></i></span>
-                Отправить анонимно
-            </label>
-        </div>
-
-        <!-- Star Packages -->
-        <div class="tg-section">
-            <div class="tg-section-title">
-                <i class="bi bi-star-fill" style="color: #ffc107;"></i> Выберите количество звёзд
-            </div>
-            <div class="stars-grid">
-                <div class="star-card" data-stars="50" data-price="75">
-                    <div class="star-card-emoji">&#11088;</div>
-                    <div class="star-card-amount">50</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">75 &#8381;</div>
-                </div>
-                <div class="star-card" data-stars="100" data-price="150">
-                    <div class="star-card-emoji">&#11088;</div>
-                    <div class="star-card-amount">100</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">150 &#8381;</div>
-                </div>
-                <div class="star-card" data-stars="250" data-price="370">
-                    <div class="star-card-emoji">&#11088;&#11088;</div>
-                    <div class="star-card-amount">250</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">370 &#8381;</div>
-                </div>
-                <div class="star-card" data-stars="500" data-price="730">
-                    <div class="star-card-emoji">&#11088;&#11088;</div>
-                    <div class="star-card-amount">500</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">730 &#8381;</div>
-                </div>
-                <div class="star-card" data-stars="1000" data-price="1450">
-                    <div class="star-card-emoji">&#11088;&#11088;&#11088;</div>
-                    <div class="star-card-amount">1 000</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">1 450 &#8381;</div>
-                </div>
-                <div class="star-card" data-stars="2500" data-price="3600">
-                    <div class="star-card-emoji">&#127775;&#11088;&#11088;</div>
-                    <div class="star-card-amount">2 500</div>
-                    <div class="star-card-label">звёзд</div>
-                    <div class="star-card-price">3 600 &#8381;</div>
-                </div>
-            </div>
-
-            <!-- Custom Amount -->
-            <div class="custom-amount-row">
-                <input type="number" class="custom-amount-input" id="stars-custom"
-                       placeholder="Своё количество звёзд" min="1" max="50000">
-                <span class="custom-amount-price" id="stars-custom-price">&mdash;</span>
-            </div>
-        </div>
-
-        <!-- Payment Summary -->
-        <div class="tg-summary" id="stars-summary">
-            <div class="tg-summary-info">
-                <span class="tg-summary-label">К оплате</span>
-                <span class="tg-summary-total">
-                    <span class="highlight-stars" id="stars-total-display">Выберите пакет</span>
-                </span>
-            </div>
-            <button class="tg-btn-pay" id="stars-pay-btn" disabled>
-                <i class="bi bi-send-fill"></i> Оплатить
-            </button>
-        </div>
-
-        <!-- Features -->
-        <div class="tg-features">
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Мгновенная доставка</div>
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Безопасная оплата</div>
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Поддержка 24/7</div>
-        </div>
-    </div>
-
-    <!-- ==================== TAB 2: PREMIUM ==================== -->
-    <div class="tab-panel" id="tab-premium">
-
-        <!-- Username -->
-        <div class="tg-section">
-            <div class="tg-section-title">
-                <i class="bi bi-person-fill"></i> Получатель подписки
-            </div>
-            <div class="tg-input-group">
-                <span class="tg-input-prefix">@@</span>
-                <input type="text" class="tg-input" id="premium-username"
-                       placeholder="username" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="invalid-hint" id="premium-username-hint">Укажите юзернейм получателя</div>
-        </div>
-
-        <!-- Plan Cards -->
-        <div class="tg-section">
-            <div class="tg-section-title">
-                <i class="bi bi-gem" style="color: #667eea;"></i> Выберите подписку
-            </div>
-            <div class="premium-grid">
-                <div class="premium-card" data-months="3" data-price="599">
-                    <div class="premium-card-icon">&#128142;</div>
-                    <div class="premium-card-duration">3</div>
-                    <div class="premium-card-label">месяца</div>
-                    <div class="premium-card-price">599 <span class="currency">&#8381;</span></div>
-                    <div class="premium-card-monthly">~200 &#8381;/мес</div>
-                </div>
-                <div class="premium-card" data-months="6" data-price="999">
-                    <span class="premium-badge popular">Популярный</span>
-                    <div class="premium-card-icon">&#128142;&#128142;</div>
-                    <div class="premium-card-duration">6</div>
-                    <div class="premium-card-label">месяцев</div>
-                    <div class="premium-card-price">999 <span class="currency">&#8381;</span></div>
-                    <div class="premium-card-monthly">~167 &#8381;/мес</div>
-                </div>
-                <div class="premium-card" data-months="12" data-price="1790">
-                    <span class="premium-badge best-value">Выгодный</span>
-                    <div class="premium-card-icon">&#128142;&#128142;&#128142;</div>
-                    <div class="premium-card-duration">12</div>
-                    <div class="premium-card-label">месяцев</div>
-                    <div class="premium-card-price">1 790 <span class="currency">&#8381;</span></div>
-                    <div class="premium-card-monthly">~149 &#8381;/мес</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Summary -->
-        <div class="tg-summary" id="premium-summary">
-            <div class="tg-summary-info">
-                <span class="tg-summary-label">К оплате</span>
-                <span class="tg-summary-total">
-                    <span class="highlight-premium" id="premium-total-display">Выберите подписку</span>
-                </span>
-            </div>
-            <button class="tg-btn-pay" id="premium-pay-btn" disabled style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <i class="bi bi-gem"></i> Оплатить
-            </button>
-        </div>
-
-        <!-- Features -->
-        <div class="tg-features">
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Активация за 5 минут</div>
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Безопасная оплата</div>
-            <div class="tg-feature"><i class="bi bi-check-circle-fill"></i> Гарантия возврата</div>
-        </div>
-    </div>
-
 </div>
+
+@if (activeCard != null)
+{
+@Html.AntiForgeryToken()
+
+<!-- Purchase Modal -->
+<div class="purchase-overlay" id="purchaseOverlay" onclick="if(event.target===this)closePurchaseModal()">
+    <div class="purchase-modal">
+        <div class="purchase-modal-header">
+            <h3>Купить товар</h3>
+            <button class="purchase-modal-close" onclick="closePurchaseModal()">&times;</button>
+        </div>
+        <div class="purchase-modal-body">
+            <div class="purchase-modal-left">
+                <div class="purchase-modal-image" id="modalImage" style="background: @activeCard.Gradient;">
+                    <span class="modal-placeholder">@activeCard.Icon</span>
+                </div>
+                <div class="purchase-modal-product-name" id="modalProductName">@activeCard.Name</div>
+                <div class="purchase-modal-product-desc" id="modalProductDesc">Выберите товар</div>
+                <div class="purchase-modal-price-row">
+                    Цена: <span style="color: #2AABEE;" id="modalPrice">0 ₽</span>
+                    <span class="old-price" id="modalOldPrice" style="display:none;">0 ₽</span>
+                </div>
+            </div>
+            <div class="purchase-modal-right">
+                <div>
+                    <div class="modal-label">Юзернейм Telegram:</div>
+                    <input type="text" class="modal-input" id="modalInput" placeholder="@@username" />
+                    <div class="modal-hint">Звёзды / Премиум будут доставлены на этот аккаунт</div>
+                </div>
+
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div class="modal-info-banner">
+                        <i class="bi bi-info-circle" style="color: #2AABEE; margin-right: 0.3rem;"></i>
+                        Рекомендуем <a href="/Account/Register">зарегистрироваться</a> для сохранения истории покупок и использования баланса
+                    </div>
+                }
+
+                <div>
+                    <div class="modal-label">Способ оплаты:</div>
+                    <div class="modal-payment-methods">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="modal-pay-method selected" data-method="balance" onclick="selectModalPayment(this)">
+                                <div class="modal-pay-method-left">
+                                    <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);"><i class="bi bi-wallet2"></i></span>
+                                    <div>
+                                        <div class="modal-pay-method-title">Баланс аккаунта</div>
+                                        <div class="modal-pay-method-desc">Доступно: <span id="userBalanceDisplay">@(ViewBag.UserBalance?.ToString("N2") ?? "0.00")</span> ₽</div>
+                                    </div>
+                                </div>
+                                <div class="modal-pay-method-right">
+                                    <span class="modal-pay-badge-instant">Мгновенно</span>
+                                    <span class="modal-pay-radio active"></span>
+                                </div>
+                            </div>
+                        }
+                        <div class="modal-pay-method disabled" data-method="card">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);"><i class="bi bi-credit-card"></i></span>
+                                <div><div class="modal-pay-method-title">Банковская карта</div><div class="modal-pay-method-desc">Visa, MasterCard, МИР</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
+                        </div>
+                        <div class="modal-pay-method disabled" data-method="sbp">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"><i class="bi bi-lightning-charge"></i></span>
+                                <div><div class="modal-pay-method-title">СБП</div><div class="modal-pay-method-desc">Система быстрых платежей</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-promo-section">
+                    <div class="modal-label">Промокод (необязательно)</div>
+                    <div class="modal-promo-row">
+                        <input type="text" class="modal-input" id="promoInput" placeholder="Введите промокод" style="flex: 1;" />
+                        <button class="modal-promo-btn" onclick="alert('Промокоды скоро будут доступны!')">Применить</button>
+                    </div>
+                </div>
+
+                <label class="modal-agreement">
+                    <input type="checkbox" id="modalAgree" checked />
+                    <span>Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a></span>
+                </label>
+
+                <button class="modal-pay-button" onclick="processPurchase()">
+                    <i class="bi bi-cart-check"></i> Оплатить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}
 
 @section Scripts {
 <script>
-(function() {
-    // ===== Tab switching =====
-    const tabs = document.querySelectorAll('.tg-tab');
-    const panels = document.querySelectorAll('.tab-panel');
+    let selectedPrice = 0;
+    let selectedOldPrice = 0;
+    let selectedAmount = '';
+    let selectedImageUrl = '';
+    let selectedProductId = 0;
 
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const target = tab.dataset.tab;
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            panels.forEach(p => p.classList.remove('active'));
-            document.getElementById('tab-' + target).classList.add('active');
-        });
-    });
+    function selectProduct(item, productId, amount, displayName, price, oldPrice) {
+        document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
+        item.classList.add('selected');
 
-    // ===== Stars Tab =====
-    const starCards = document.querySelectorAll('.star-card');
-    const starsCustom = document.getElementById('stars-custom');
-    const starsCustomPrice = document.getElementById('stars-custom-price');
-    const starsTotalDisplay = document.getElementById('stars-total-display');
-    const starsPayBtn = document.getElementById('stars-pay-btn');
-    const starsUsername = document.getElementById('stars-username');
-    const starsUsernameHint = document.getElementById('stars-username-hint');
+        const cardImg = item.querySelector('.currency-card-image img');
+        selectedImageUrl = cardImg ? cardImg.src : '';
 
-    let selectedStars = 0;
-    let selectedStarsPrice = 0;
+        selectedProductId = productId;
+        selectedPrice = price;
+        selectedOldPrice = oldPrice;
+        selectedAmount = displayName;
 
-    function updateStarsSummary() {
-        if (selectedStarsPrice > 0) {
-            starsTotalDisplay.textContent = selectedStars.toLocaleString('ru-RU') + ' \u2B50 \u2014 ' + selectedStarsPrice.toLocaleString('ru-RU') + ' \u20BD';
-            starsPayBtn.disabled = false;
+        const discount = oldPrice - price;
+        const discountPercent = oldPrice > 0 ? Math.round((discount / oldPrice) * 100) : 0;
+
+        document.getElementById('selectedAmount').textContent = displayName;
+        document.getElementById('originalPrice').textContent = oldPrice.toLocaleString('ru-RU') + ' ₽';
+
+        if (discount > 0) {
+            document.getElementById('discount').innerHTML = '-' + discount.toLocaleString('ru-RU') + ' ₽ <span style="background: #22c55e; color: white; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.7rem;">-' + discountPercent + '%</span>';
         } else {
-            starsTotalDisplay.textContent = '\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043F\u0430\u043A\u0435\u0442';
-            starsPayBtn.disabled = true;
+            document.getElementById('discount').textContent = '-0 ₽';
         }
+
+        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' ₽';
+        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
     }
 
-    starCards.forEach(card => {
-        card.addEventListener('click', () => {
-            starCards.forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedStars = parseInt(card.dataset.stars);
-            selectedStarsPrice = parseInt(card.dataset.price);
-            starsCustom.value = '';
-            starsCustomPrice.textContent = '\u2014';
-            starsCustomPrice.classList.remove('has-value');
-            updateStarsSummary();
-        });
-    });
-
-    starsCustom.addEventListener('input', () => {
-        const val = parseInt(starsCustom.value);
-        starCards.forEach(c => c.classList.remove('selected'));
-        if (val > 0) {
-            const price = Math.ceil(val * 1.5);
-            starsCustomPrice.textContent = price.toLocaleString('ru-RU') + ' \u20BD';
-            starsCustomPrice.classList.add('has-value');
-            selectedStars = val;
-            selectedStarsPrice = price;
+    function openPurchaseModal() {
+        if (selectedPrice <= 0) {
+            alert('Пожалуйста, выберите товар');
+            return;
+        }
+        // Pre-fill username from page input
+        const tgUser = document.getElementById('tgUsername');
+        if (tgUser && tgUser.value.trim()) {
+            document.getElementById('modalInput').value = '@@' + tgUser.value.trim().replace(/^@@/, '');
+        }
+        document.getElementById('modalProductDesc').textContent = selectedAmount;
+        document.getElementById('modalPrice').textContent = selectedPrice.toLocaleString('ru-RU') + ' ₽';
+        if (selectedOldPrice > selectedPrice) {
+            document.getElementById('modalOldPrice').textContent = selectedOldPrice.toLocaleString('ru-RU') + ' ₽';
+            document.getElementById('modalOldPrice').style.display = '';
         } else {
-            starsCustomPrice.textContent = '\u2014';
-            starsCustomPrice.classList.remove('has-value');
-            selectedStars = 0;
-            selectedStarsPrice = 0;
+            document.getElementById('modalOldPrice').style.display = 'none';
         }
-        updateStarsSummary();
-    });
-
-    starsPayBtn.addEventListener('click', () => {
-        const username = starsUsername.value.trim();
-        if (!username) {
-            starsUsername.classList.add('is-invalid');
-            starsUsernameHint.classList.add('show');
-            starsUsername.focus();
-            return;
+        const modalImg = document.getElementById('modalImage');
+        if (selectedImageUrl) {
+            modalImg.innerHTML = '<img src="' + selectedImageUrl + '" alt="Product" />';
         }
-        starsUsername.classList.remove('is-invalid');
-        starsUsernameHint.classList.remove('show');
-
-        alert('\u0417\u0430\u043A\u0430\u0437 \u043F\u0440\u0438\u043D\u044F\u0442! \u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0432 Telegram \u0434\u043B\u044F \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F.');
-    });
-
-    starsUsername.addEventListener('input', () => {
-        if (starsUsername.value.trim()) {
-            starsUsername.classList.remove('is-invalid');
-            starsUsernameHint.classList.remove('show');
-        }
-    });
-
-    // ===== Premium Tab =====
-    const premiumCards = document.querySelectorAll('.premium-card');
-    const premiumTotalDisplay = document.getElementById('premium-total-display');
-    const premiumPayBtn = document.getElementById('premium-pay-btn');
-    const premiumUsername = document.getElementById('premium-username');
-    const premiumUsernameHint = document.getElementById('premium-username-hint');
-
-    let selectedMonths = 0;
-    let selectedPremiumPrice = 0;
-
-    premiumCards.forEach(card => {
-        card.addEventListener('click', () => {
-            premiumCards.forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            selectedMonths = parseInt(card.dataset.months);
-            selectedPremiumPrice = parseInt(card.dataset.price);
-
-            const label = selectedMonths === 3 ? '3 \u043C\u0435\u0441\u044F\u0446\u0430' :
-                          selectedMonths === 6 ? '6 \u043C\u0435\u0441\u044F\u0446\u0435\u0432' : '12 \u043C\u0435\u0441\u044F\u0446\u0435\u0432';
-            premiumTotalDisplay.textContent = 'Premium ' + label + ' \u2014 ' + selectedPremiumPrice.toLocaleString('ru-RU') + ' \u20BD';
-            premiumPayBtn.disabled = false;
-        });
-    });
-
-    premiumPayBtn.addEventListener('click', () => {
-        const username = premiumUsername.value.trim();
-        if (!username) {
-            premiumUsername.classList.add('is-invalid');
-            premiumUsernameHint.classList.add('show');
-            premiumUsername.focus();
-            return;
-        }
-        premiumUsername.classList.remove('is-invalid');
-        premiumUsernameHint.classList.remove('show');
-
-        alert('\u0417\u0430\u043A\u0430\u0437 \u043F\u0440\u0438\u043D\u044F\u0442! \u0421\u0432\u044F\u0436\u0438\u0442\u0435\u0441\u044C \u0441 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u043E\u0439 \u0432 Telegram \u0434\u043B\u044F \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u044F.');
-    });
-
-    premiumUsername.addEventListener('input', () => {
-        if (premiumUsername.value.trim()) {
-            premiumUsername.classList.remove('is-invalid');
-            premiumUsernameHint.classList.remove('show');
-        }
-    });
-
-    // Hash-based tab switching (#premium)
-    if (window.location.hash === '#premium') {
-        document.querySelector('.tg-tab[data-tab="premium"]').click();
+        document.getElementById('purchaseOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-})();
+
+    function closePurchaseModal() {
+        document.getElementById('purchaseOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function selectModalPayment(el) {
+        if (el.classList.contains('disabled')) return;
+        document.querySelectorAll('.modal-pay-method').forEach(c => {
+            c.classList.remove('selected');
+            const radio = c.querySelector('.modal-pay-radio');
+            if (radio) radio.classList.remove('active');
+        });
+        el.classList.add('selected');
+        const radio = el.querySelector('.modal-pay-radio');
+        if (radio) radio.classList.add('active');
+    }
+
+    function processPurchase() {
+        const input = document.getElementById('modalInput');
+        const val = input.value.trim();
+        const agree = document.getElementById('modalAgree');
+
+        if (!val) { alert('Пожалуйста, введите юзернейм Telegram'); input.focus(); return; }
+        if (!agree.checked) { alert('Пожалуйста, примите условия пользовательского соглашения'); return; }
+        if (!selectedProductId) { alert('Пожалуйста, выберите товар'); return; }
+
+        @if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            <text>
+            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
+            return;
+            </text>
+        }
+
+        const btn = document.querySelector('.modal-pay-button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка...';
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        fetch('/Catalog/Purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+            } else {
+                alert(data.errorMessage || 'Ошибка при покупке');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+            }
+        })
+        .catch(() => {
+            alert('Ошибка соединения');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+        });
+    }
+
+    function showPurchaseSuccess(orderNumber, productKey, newBalance) {
+        const modal = document.querySelector('.purchase-modal-body');
+        const balanceHtml = newBalance !== null ? `<div style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 0.75rem;">Остаток на балансе: <span style="color: #22c55e; font-weight: 600;">${Math.floor(newBalance).toLocaleString('ru-RU')} ₽</span></div>` : '';
+        modal.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem 2rem; width: 100%; max-width: 480px; margin: 0 auto;">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #2AABEE, #229ED9); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;">
+                    <i class="bi bi-check-lg" style="font-size: 2.5rem; color: white;"></i>
+                </div>
+                <h3 style="color: white; margin-bottom: 0.4rem; font-size: 1.5rem;">Заказ оформлен!</h3>
+                <p style="color: rgba(255,255,255,0.5); margin-bottom: 1.75rem; font-size: 0.9rem;">Доставка в Telegram в течение 30 минут</p>
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Номер заказа</span>
+                        <code style="color: #2AABEE; font-size: 0.9rem;">${orderNumber}</code>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Статус</span>
+                        <span style="color: #22c55e; font-weight: 600; font-size: 0.85rem;"><i class="bi bi-check-circle me-1"></i>Оплачен</span>
+                    </div>
+                </div>
+                ${balanceHtml}
+                <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.75rem;">
+                    <a href="/Account/Orders" style="background: linear-gradient(135deg, #2AABEE, #229ED9); color: white; padding: 0.75rem 2rem; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Мои заказы</a>
+                    <button onclick="closePurchaseModal();location.reload();" style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 2rem; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Продолжить</button>
+                </div>
+            </div>`;
+    }
+
+    // Select first product by default
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstItem = document.querySelector('.product-item');
+        if (firstItem) {
+            firstItem.click();
+        }
+    });
+
+    // Filter cards in sidebar
+    function filterCards(query) {
+        const cards = document.querySelectorAll('.sidebar-game');
+        const lowerQuery = query.toLowerCase();
+        cards.forEach(card => {
+            const name = card.querySelector('.sidebar-game-name')?.textContent.toLowerCase() || '';
+            const subtitle = card.querySelector('.sidebar-game-subtitle')?.textContent.toLowerCase() || '';
+            if (name.includes(lowerQuery) || subtitle.includes(lowerQuery)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
 </script>
 }

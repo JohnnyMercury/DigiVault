@@ -324,8 +324,38 @@ public class CatalogController : Controller
         return View("VpnProvider");
     }
 
-    public IActionResult Telegram()
+    public async Task<IActionResult> Telegram(string? slug = null)
     {
+        var telegramCards = await _context.GiftCards
+            .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
+            .Where(g => g.IsActive && g.Category == GiftCardCategory.Telegram)
+            .OrderBy(g => g.SortOrder)
+            .ToListAsync();
+
+        GiftCard? activeCard = null;
+        var products = new List<GameProduct>();
+
+        if (!string.IsNullOrEmpty(slug))
+        {
+            activeCard = telegramCards.FirstOrDefault(c => c.Slug == slug.ToLower());
+        }
+
+        // Default to first card if no slug or slug not found
+        if (activeCard == null && telegramCards.Any())
+        {
+            activeCard = telegramCards.First();
+        }
+
+        if (activeCard != null)
+        {
+            products = activeCard.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList();
+        }
+
+        ViewBag.TelegramCards = telegramCards;
+        ViewBag.ActiveCard = activeCard;
+        ViewBag.ActiveSlug = activeCard?.Slug ?? "";
+        ViewBag.Products = products;
+        await SetUserBalanceAsync();
         return View("Telegram");
     }
 }

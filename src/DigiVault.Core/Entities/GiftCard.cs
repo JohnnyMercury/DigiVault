@@ -21,5 +21,6 @@ public class GiftCard
 public enum GiftCardCategory
 {
     Gaming = 1,
-    Streaming = 2
+    Streaming = 2,
+    Telegram = 3
 }

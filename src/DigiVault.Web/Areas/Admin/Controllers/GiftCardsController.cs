@@ -17,10 +17,24 @@ public class GiftCardsController : AdminBaseController
         _fileService = fileService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? category = null)
     {
-        var giftCards = await _context.GiftCards
+        var query = _context.GiftCards
             .Include(g => g.Products)
+            .AsQueryable();
+
+        if (category == "telegram")
+        {
+            query = query.Where(g => g.Category == GiftCardCategory.Telegram);
+            ViewBag.CategoryFilter = "telegram";
+            ViewBag.CategoryTitle = "Telegram";
+        }
+        else if (!string.IsNullOrEmpty(category))
+        {
+            ViewBag.CategoryFilter = category;
+        }
+
+        var giftCards = await query
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();

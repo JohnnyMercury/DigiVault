@@ -560,7 +560,7 @@
                         <i class="bi bi-shield-lock-fill"></i>
                         <span>VPN провайдеры</span>
                     </a>
-                    <a asp-controller="GiftCards" asp-action="Index" asp-route-category="telegram" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "GiftCards" && ViewContext.HttpContext.Request.Query["category"].ToString() == "telegram" ? "active" : "")">
+                    <a asp-controller="Telegram" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Telegram" ? "active" : "")">
                         <i class="bi bi-send-fill"></i>
                         <span>Telegram</span>
                     </a>

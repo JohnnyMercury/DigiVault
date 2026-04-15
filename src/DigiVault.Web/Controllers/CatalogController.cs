@@ -337,12 +337,17 @@ public class CatalogController : Controller
             .ThenBy(p => p.Price)
             .ToList() ?? new List<GameProduct>();
 
-        // Star pricing config (can be managed via admin later)
+        // Star pricing config from DB
+        var starRateSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:star_rate");
+        var minStarsSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:min_stars");
+        var maxStarsSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:max_stars");
+
         ViewBag.PremiumCard = premiumCard;
         ViewBag.PremiumProducts = premiumProducts;
-        ViewBag.StarRate = 1.5m;
-        ViewBag.MinStars = 50;
-        ViewBag.MaxStars = 25000;
+        ViewBag.StarRate = decimal.TryParse(starRateSetting?.Value, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var sr) ? sr : 1.5m;
+        ViewBag.MinStars = int.TryParse(minStarsSetting?.Value, out var mins) ? mins : 50;
+        ViewBag.MaxStars = int.TryParse(maxStarsSetting?.Value, out var maxs) ? maxs : 25000;
         await SetUserBalanceAsync();
         return View("Telegram");
     }

@@ -1,0 +1,141 @@
+@model DigiVault.Core.Entities.GameProduct
+@using DigiVault.Core.Entities
+@{
+    var card = ViewBag.GiftCard as GiftCard;
+    ViewData["Title"] = $"Редактирование - {Model.Name}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <a asp-action="Index" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h4 class="mb-0">Редактировать тариф</h4>
+            <small class="text-muted">@Model.Name</small>
+        </div>
+    </div>
+</div>
+
+<form asp-action="EditProduct" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id">
+    <input type="hidden" asp-for="GiftCardId">
+    <input type="hidden" asp-for="ProductType">
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Основная информация</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Название <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Период</label>
+                        <input asp-for="Amount" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Порядок</label>
+                        <input asp-for="SortOrder" type="number" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Цена и скидка</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Цена <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input asp-for="Price" type="number" step="0.01" class="form-control" required>
+                            <span class="input-group-text" style="background: rgba(255,255,255,0.05); border-color: var(--card-border); color: rgba(255,255,255,0.5);">&#8381;</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Старая цена</label>
+                        <div class="input-group">
+                            <input asp-for="OldPrice" type="number" step="0.01" class="form-control">
+                            <span class="input-group-text" style="background: rgba(255,255,255,0.05); border-color: var(--card-border); color: rgba(255,255,255,0.5);">&#8381;</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Скидка %</label>
+                        <div class="input-group">
+                            <input asp-for="Discount" type="number" class="form-control">
+                            <span class="input-group-text" style="background: rgba(255,255,255,0.05); border-color: var(--card-border); color: rgba(255,255,255,0.5);">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Картинка</h5>
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <div class="text-center mb-3">
+                        <img src="@Model.ImageUrl" alt="@Model.Name" style="max-width: 100%; max-height: 150px; border-radius: 12px;">
+                    </div>
+                }
+                <div class="mb-3">
+                    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageUpload').click()">
+                        <input type="file" name="imageFile" class="d-none" accept="image/*" id="imageUpload">
+                        <div class="upload-zone-content">
+                            <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-1"></i>
+                            <small class="text-muted">Заменить картинку</small>
+                        </div>
+                    </div>
+                </div>
+                <div id="imagePreview" class="text-center mb-3" style="display: none;">
+                    <img src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 12px;">
+                </div>
+                <input asp-for="ImageUrl" class="form-control" placeholder="Или URL картинки">
+            </div>
+
+            <div class="data-card mb-4">
+                <h5 class="mb-3">Настройки</h5>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Остаток</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control">
+                    </div>
+                </div>
+                <div class="form-check form-switch mt-3">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                    <label asp-for="IsActive" class="form-check-label">Активен</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-check-circle me-1"></i>Сохранить
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Styles {
+<style>
+    .upload-zone { border: 2px dashed rgba(102, 126, 234, 0.4); border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(102, 126, 234, 0.05); }
+    .upload-zone:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+    .upload-zone-content { display: flex; flex-direction: column; align-items: center; }
+</style>
+}
+
+@section Scripts {
+<script>
+    document.getElementById('imageUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('imagePreview').style.display = 'block';
+                document.getElementById('imagePreview').querySelector('img').src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+}

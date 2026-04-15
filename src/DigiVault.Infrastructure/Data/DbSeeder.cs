@@ -232,5 +232,16 @@ public static class DbSeeder
             context.GameProducts.AddRange(psnProducts);
             await context.SaveChangesAsync();
         }
+
+        // Seed default app settings (Telegram star config)
+        if (!await context.AppSettings.AnyAsync(s => s.Key == "telegram:star_rate"))
+        {
+            context.AppSettings.AddRange(
+                new AppSetting { Key = "telegram:star_rate", Value = "1.5", Description = "Цена за 1 звезду Telegram (₽)" },
+                new AppSetting { Key = "telegram:min_stars", Value = "50", Description = "Минимальное количество звёзд" },
+                new AppSetting { Key = "telegram:max_stars", Value = "25000", Description = "Максимальное количество звёзд" }
+            );
+            await context.SaveChangesAsync();
+        }
     }
 }

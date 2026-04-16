@@ -660,13 +660,16 @@
 </style>
 
 <div class="container container-wide">
-    <!-- Hero Title -->
-    <div class="tg-hero">
-        <div class="tg-hero-badges">
-            <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
-            <span class="tg-hero-badge green"><i class="bi bi-speedometer2"></i>Высокая скорость</span>
+    <div class="d-flex gap-4">
+        <!-- Left spacer for hero (same width as sidebar) -->
+        <div class="game-sidebar-spacer"></div>
+        <div class="tg-hero">
+            <div class="tg-hero-badges">
+                <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
+                <span class="tg-hero-badge green"><i class="bi bi-speedometer2"></i>Высокая скорость</span>
+            </div>
+            <h1 class="tg-hero-title">Пополни звёзды в Telegram</h1>
         </div>
-        <h1 class="tg-hero-title">Пополни звёзды в Telegram</h1>
     </div>
 
     <div class="game-page">
@@ -805,66 +808,69 @@
     </div>
 
     <!-- FAQ Section -->
-    <div class="faq-section">
-        <h2 class="faq-title">Ответы на вопросы</h2>
+    <div class="d-flex gap-4">
+        <div class="game-sidebar-spacer"></div>
+        <div class="faq-section flex-grow-1" style="min-width: 0;">
+            <h2 class="faq-title">Ответы на вопросы</h2>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>Как приходят звезды на аккаунт?</span>
-                <i class="bi bi-plus-lg"></i>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Как происходит доставка звёзд?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">После оплаты звёзды зачисляются напрямую на ваш Telegram-аккаунт через официальный механизм. Мы используем публичный юзернейм для отправки — процесс полностью автоматизирован и безопасен.</div>
+                </div>
             </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Звезды приходят через сам Telegram. У нас только прямое пополнение через ваш юзернейм. Абсолютно безопасно и быстро.</div>
-            </div>
-        </div>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>Как мне найти свой юзернейм?</span>
-                <i class="bi bi-plus-lg"></i>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Где найти свой юзернейм Telegram?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Откройте Telegram → Настройки (три полоски слева сверху). Ваш юзернейм отображается под именем профиля в формате @@username. На телефоне нажмите и удерживайте поле — юзернейм скопируется автоматически.</div>
+                </div>
             </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Нажмите на три полоски слева сверху, далее перейдите в настройки. Затем жмем на поле «Имя пользователя» — на ПК можно выделить и скопировать юзернейм, а на телефоне просто зажмите это поле, и юзернейм автоматически скопируется.</div>
-            </div>
-        </div>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>У меня нет юзернейма, как мне его создать?</span>
-                <i class="bi bi-plus-lg"></i>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Как создать юзернейм, если его нет?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Перейдите в Настройки Telegram → нажмите на поле «Имя пользователя» → придумайте уникальное имя и сохраните. После этого вы сможете получать звёзды и подарки по юзернейму.</div>
+                </div>
             </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Нажмите на 3 полоски слева сверху, далее перейдите в настройки. Далее жмем на поле «Имя пользователя» или «Выбрать имя пользователя». Создаем любой понравившийся вам юзернейм и сохраняем.</div>
-            </div>
-        </div>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>Безопасно ли покупать звезды через вас?</span>
-                <i class="bi bi-plus-lg"></i>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Это безопасно?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Абсолютно. Пополнение звёзд происходит через официальные инструменты Telegram. Мы не запрашиваем пароль, код подтверждения или доступ к аккаунту — только публичный юзернейм.</div>
+                </div>
             </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Да! Мы используем официальный метод пополнения звезд Telegram. Звезды отправляются по вашему публичному юзернейму.</div>
-            </div>
-        </div>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>Мне придет ровное количество звезд?</span>
-                <i class="bi bi-plus-lg"></i>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Получу ли я ровно столько звёзд, сколько заказал?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Да, зачисление происходит без скрытых комиссий. Заказали 500 звёзд — получите ровно 500. Количество всегда совпадает с тем, что указано при оформлении.</div>
+                </div>
             </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Все верно! Звезды зачисляются в точном количестве без каких-либо комиссий. Если вы заказали 100 звезд, то получите ровно 100 звезд.</div>
-            </div>
-        </div>
 
-        <div class="faq-item">
-            <div class="faq-question" onclick="toggleFaq(this)">
-                <span>Лимиты на покупку звезд</span>
-                <i class="bi bi-plus-lg"></i>
-            </div>
-            <div class="faq-answer">
-                <div class="faq-answer-inner">Минимальное количество звезд к покупке — @minStars звезд. Максимальная сумма — @maxStars.ToString("N0") звезд за 1 платеж.</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    <span>Какие лимиты на покупку?</span>
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">Минимальный заказ — @minStars звёзд, максимальный — @maxStars.ToString("N0") звёзд за один платёж. Количество покупок не ограничено — можно оформить несколько заказов подряд.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -927,7 +933,7 @@
                         }
                         <div class="modal-pay-method disabled" data-method="card">
                             <div class="modal-pay-method-left">
-                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);"><i class="bi bi-credit-card"></i></span>
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-credit-card"></i></span>
                                 <div><div class="modal-pay-method-title">Банковская карта</div><div class="modal-pay-method-desc">Visa, MasterCard, МИР</div></div>
                             </div>
                             <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
@@ -936,6 +942,20 @@
                             <div class="modal-pay-method-left">
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"><i class="bi bi-lightning-charge"></i></span>
                                 <div><div class="modal-pay-method-title">СБП</div><div class="modal-pay-method-desc">Система быстрых платежей</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
+                        </div>
+                        <div class="modal-pay-method disabled" data-method="p2p">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #ec4899, #e11d48);"><i class="bi bi-people"></i></span>
+                                <div><div class="modal-pay-method-title">P2P перевод</div><div class="modal-pay-method-desc">Перевод на карту</div></div>
+                            </div>
+                            <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
+                        </div>
+                        <div class="modal-pay-method disabled" data-method="qr">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="bi bi-qr-code"></i></span>
+                                <div><div class="modal-pay-method-title">QR-код</div><div class="modal-pay-method-desc">Оплата по QR-коду</div></div>
                             </div>
                             <div class="modal-pay-method-right"><span class="modal-pay-badge-soon">Скоро</span></div>
                         </div>

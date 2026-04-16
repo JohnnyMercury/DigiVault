@@ -601,8 +601,8 @@
             options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{padding:8,usePointStyle:true,pointStyle:'circle',font:{size:11}}}}}
         });
 
-        // Top products (only real site products)
-        const prodNames=['Telegram Stars','Telegram Premium','Fortnite V-Bucks','Roblox Robux','PUBG Mobile UC','Genshin Genesis','PlayStation Store','Xbox','NordVPN','Surfshark'];
+        // Top products
+        const prodNames=['Telegram Stars','Telegram Premium','Fortnite V-Bucks','Roblox Robux','Steam Пополнение','iTunes / App Store','PUBG UC','VPN Подписка','Xbox Game Pass','PlayStation Plus'];
         const prodRev=prodNames.map(()=>ri(15,200)*1000).sort((a,b)=>b-a);
         charts.products=new Chart(document.getElementById('chartProducts'),{
             type:'bar',
@@ -667,7 +667,7 @@
     let fNames=@Html.Raw(userNamesJson);
     if(!Array.isArray(fNames)||fNames.length===0) fNames=['Покупатель','Гость','Пользователь'];
     const lCities=['Москва','СПб','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Ростов','Уфа','Красноярск','Краснодар','Минск','Алматы','Астана'];
-    const lProducts=['Telegram Stars','Telegram Premium','V-Bucks','Robux','PUBG UC','Genesis Crystals','Honkai Shards','Mobile Legends','PSN Карта','Xbox','NordVPN','Surfshark','ExpressVPN','Nintendo eShop','Netflix','Spotify','YouTube Premium'];
+    const lProducts=['Telegram Stars','Telegram Premium','V-Bucks','Robux','Steam Карта','iTunes','PUBG UC','VPN Surfshark','Xbox Pass','PS Plus','Brawl Stars Гемы','Genshin Genesis'];
     const avColors=['#667eea','#764ba2','#22c55e','#fbbf24','#4facfe','#f093fb','#ef4444','#2AABEE','#7e57c2','#66bb6a'];
     const lActions=[
         {t:'v',w:45,tx:g=>`Смотрит <span class="g">${g}</span>`,tag:'Смотрит'},
@@ -732,7 +732,7 @@
         document.getElementById('tmShown').textContent=shown;
     }
 
-    const tmPages=['/','/ catalog','/Catalog/Telegram','/Catalog/Game/fortnite','/Catalog/Game/roblox','/Catalog/Game/pubg','/Catalog/Game/genshin','/Catalog/Game/honkai','/Catalog/Game/mobilelegends','/Catalog/GiftCard/psn','/Catalog/GiftCard/xbox','/Catalog/GiftCard/nintendo','/Catalog/GiftCard/netflix','/Catalog/GiftCard/spotify','/Catalog/GiftCard/apple','/Catalog/GiftCard/youtube','/Catalog/VpnProvider/nordvpn','/Catalog/VpnProvider/expressvpn','/Catalog/VpnProvider/surfshark','/Account','/Account/Balance','/Catalog?category=games','/Catalog?category=giftcards','/Catalog?category=vpn'];
+    const tmPages=['/','/ catalog','/Catalog/Telegram','/Catalog/Game/fortnite','/Catalog/Game/roblox','/Catalog/Game/pubg','/Catalog/GiftCard/steam','/Catalog/GiftCard/itunes','/Catalog/VpnProvider/surfshark','/Catalog/GiftCard/xbox','/Account','/Account/Balance','/Catalog?category=games','/Catalog?category=giftcards','/Catalog?category=vpn'];
     const tmSources=[
         {name:'Яндекс',icon:'bi bi-search',color:'#fc0'},
         {name:'Google',icon:'bi bi-google',color:'#4285f4'},

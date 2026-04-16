@@ -20,8 +20,17 @@
         flex-shrink: 0;
     }
 
+    .payment-sidebar-spacer {
+        width: 300px;
+        flex-shrink: 0;
+    }
+
     @@media (max-width: 1200px) {
         .game-sidebar-spacer { display: none; }
+    }
+
+    @@media (max-width: 992px) {
+        .payment-sidebar-spacer { display: none; }
     }
 
     /* Main Content */
@@ -808,7 +817,7 @@
     </div>
 
     <!-- FAQ Section -->
-    <div class="d-flex gap-4">
+    <div class="d-flex" style="gap: 1.5rem;">
         <div class="game-sidebar-spacer"></div>
         <div class="faq-section flex-grow-1" style="min-width: 0;">
             <h2 class="faq-title">Ответы на вопросы</h2>
@@ -873,6 +882,7 @@
                 </div>
             </div>
         </div>
+        <div class="payment-sidebar-spacer"></div>
     </div>
 </div>
 

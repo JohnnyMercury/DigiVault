@@ -95,7 +95,7 @@ public class CatalogController : Controller
         {
             var giftCards = await _context.GiftCards
                 .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-                .Where(g => g.IsActive)
+                .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
                 .ToListAsync();
 
             items.AddRange(giftCards.Select(g => new CatalogItemViewModel
@@ -259,6 +259,10 @@ public class CatalogController : Controller
         if (string.IsNullOrEmpty(slug))
             return NotFound();
 
+        // Redirect telegram slugs to dedicated Telegram page
+        if (slug.ToLower().StartsWith("telegram"))
+            return RedirectToAction("Telegram");
+
         var card = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
             .FirstOrDefaultAsync(g => g.Slug == slug.ToLower() && g.IsActive);
@@ -267,7 +271,7 @@ public class CatalogController : Controller
             return NotFound();
 
         var allCards = await _context.GiftCards
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();
@@ -281,7 +285,7 @@ public class CatalogController : Controller
     public async Task<IActionResult> GiftCards()
     {
         var giftCards = await _context.GiftCards
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();

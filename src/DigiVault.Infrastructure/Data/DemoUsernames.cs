@@ -15,13 +15,39 @@ public static class DemoUsernames
 {
     public static readonly string[] All = new[]
     {
-        // Real scraped handles from otzovik reviews of plati.market / similar
+        // Real scraped handles from otzovik reviews of plati.market / similar (batch 1)
         "Ziper19", "Mir5000", "Temka727", "Maikl929", "PavelGP", "AndreyZag",
         "BanzaiCh", "Score4fan", "Saumarel", "Schnee", "Sprini", "bubyshka",
         "orb1tR", "grey2035", "den391", "Azri666", "Ryazal", "LDreg",
         "Dorobolo", "TowelInSpace", "RaceGame", "DragaZloi", "dzmitrgimra",
         "gamespaytv", "retro125", "redchristmas", "Anon1388", "Superbober",
-        "sidnik56", "FreeDie", "Achikurekus", "Maikl929",
+        "sidnik56", "FreeDie", "Achikurekus",
+
+        // Real scraped handles (batch 2 — more otzovik pages)
+        "Моисей128", "Loderunner1", "Ymiira", "mugmellman", "Xsero", "ArtEM-41",
+        "yanderded", "FrozenDozen", "zixxGtR", "Ruslan121837", "Tirez", "pearlmist",
+        "dk5574", "sharashka", "denozord", "HedgehogTop555", "Julfy206", "Voyzi",
+        "particuuular", "Kuska47", "qwizzary", "Starmaster55", "Elmin1105",
+        "Forto4nik", "Denekmax", "foreveryoung2727", "WooTaaN", "Krabissimo",
+        "mansrua", "Kikinobubes", "v1kont", "olololol222333", "Cnackls",
+        "dimasla", "Iavan", "Repos",
+
+        // Real scraped handles (batch 3)
+        "Beltros", "Kolobunka", "Tor999", "mfthesun", "Liza-25", "Mazda11",
+        "gStone", "Synthez", "DanZee", "Artanis", "Levin08", "anotonantonoff",
+        "Raksion", "kaelthaaas", "Dmitriy-E", "BREADDADY", "Kai Krapivnik",
+        "Codificer", "kirilloffpk", "DMP2109", "Roman-PP", "Kapustka Masha",
+        "gantelin", "NK86", "santanaahh", "SharpenedEdge", "medvedev325",
+        "Phil Phil", "AntonIBob", "robson112233", "KiberWor", "AlexImplex",
+        "Aspirin3419",
+
+        // Real scraped handles (batch 4 — plati.ru)
+        "Ева Браун", "xxrayss", "tydyber", "ГородВгороде", "Человек48", "jaraxxus",
+        "UderCasus", "Aciago", "bablik94", "Toni21", "Kotalbest", "Dengeostv",
+        "IntoTheSun", "Whatever2004", "DomashnyaYa", "Eugenia321", "roman231219800",
+        "Sqvisi", "Aleksandr566", "dooldool", "Apple8888", "Layfield", "Ellis15",
+        "Morkos", "orusselo", "ArlekinDen", "Inquisitor40000", "vkokosike",
+        "Connor1", "14cthutq", "Daine", "Rosss82", "fenjo27", "n1cht", "Btodiaga",
 
         // Plain first names — how real users name themselves on tbank reviews
         "Даниил", "Никита", "Артём", "Кирилл", "Сергей", "Иван", "Богдан",

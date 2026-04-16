@@ -61,6 +61,42 @@
     </div>
 </div>
 
+<!-- Stars Card Image -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-image me-2" style="color: #2AABEE;"></i>Карточка «Звёзды Телеграма» в каталоге</h5>
+    </div>
+    <div class="p-4">
+        <form asp-action="UpdateStarsImage" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="row align-items-center g-3">
+                <div class="col-auto">
+                    @if (!string.IsNullOrEmpty(starsCard?.ImageUrl))
+                    {
+                        <img src="@starsCard.ImageUrl" alt="Stars" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 1px solid var(--card-border);">
+                    }
+                    else
+                    {
+                        <div style="width: 120px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, #2AABEE, #229ED9); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-star-fill" style="font-size: 2.5rem; color: #FFD700;"></i>
+                        </div>
+                    }
+                </div>
+                <div class="col">
+                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Изображение карточки</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*">
+                    <small class="text-muted">Рекомендуемый размер: 400×400 px. Отображается в каталоге.</small>
+                    <div class="mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload me-1"></i>Загрузить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Star Settings -->
 <div class="data-card mb-4">
     <div class="data-card-header">

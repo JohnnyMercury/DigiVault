@@ -447,6 +447,111 @@
         margin: 0 0.75rem;
     }
 
+    /* Hero title */
+    .tg-hero {
+        padding: 1.5rem 0 0.5rem;
+    }
+
+    .tg-hero-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .tg-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .tg-hero-badge.blue {
+        background: rgba(42, 171, 238, 0.15);
+        color: #2AABEE;
+    }
+
+    .tg-hero-badge.green {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+
+    .tg-hero-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 0.25rem;
+        line-height: 1.2;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+        padding: 2.5rem 0 1rem;
+    }
+
+    .faq-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.25rem;
+    }
+
+    .faq-item {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        transition: border-color 0.3s ease;
+    }
+
+    .faq-item:hover {
+        border-color: rgba(42, 171, 238, 0.2);
+    }
+
+    .faq-question {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+
+    .faq-question i {
+        color: rgba(42, 171, 238, 0.7);
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .faq-item.open .faq-question i {
+        transform: rotate(45deg);
+    }
+
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .faq-item.open .faq-answer {
+        max-height: 300px;
+    }
+
+    .faq-answer-inner {
+        padding: 0 1.25rem 1rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.55);
+        line-height: 1.6;
+    }
+
     /* Purchase Modal */
     .purchase-overlay {
         display: none;
@@ -555,6 +660,15 @@
 </style>
 
 <div class="container container-wide">
+    <!-- Hero Title -->
+    <div class="tg-hero">
+        <div class="tg-hero-badges">
+            <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
+            <span class="tg-hero-badge green"><i class="bi bi-speedometer2"></i>Высокая скорость</span>
+        </div>
+        <h1 class="tg-hero-title">Пополни звёзды в Telegram</h1>
+    </div>
+
     <div class="game-page">
         <!-- Left spacer (same width as sidebar on other pages) -->
         <div class="game-sidebar-spacer"></div>
@@ -689,6 +803,71 @@
             </div>
         </aside>
     </div>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+        <h2 class="faq-title">Ответы на вопросы</h2>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Как приходят звезды на аккаунт?</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Звезды приходят через сам Telegram. У нас только прямое пополнение через ваш юзернейм. Абсолютно безопасно и быстро.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Как мне найти свой юзернейм?</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Нажмите на три полоски слева сверху, далее перейдите в настройки. Затем жмем на поле «Имя пользователя» — на ПК можно выделить и скопировать юзернейм, а на телефоне просто зажмите это поле, и юзернейм автоматически скопируется.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>У меня нет юзернейма, как мне его создать?</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Нажмите на 3 полоски слева сверху, далее перейдите в настройки. Далее жмем на поле «Имя пользователя» или «Выбрать имя пользователя». Создаем любой понравившийся вам юзернейм и сохраняем.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Безопасно ли покупать звезды через вас?</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Да! Мы используем официальный метод пополнения звезд Telegram. Звезды отправляются по вашему публичному юзернейму.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Мне придет ровное количество звезд?</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Все верно! Звезды зачисляются в точном количестве без каких-либо комиссий. Если вы заказали 100 звезд, то получите ровно 100 звезд.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFaq(this)">
+                <span>Лимиты на покупку звезд</span>
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div class="faq-answer">
+                <div class="faq-answer-inner">Минимальное количество звезд к покупке — @minStars звезд. Максимальная сумма — @maxStars.ToString("N0") звезд за 1 платеж.</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @Html.AntiForgeryToken()
@@ -786,6 +965,16 @@
 
 @section Scripts {
 <script>
+    // FAQ toggle
+    function toggleFaq(el) {
+        const item = el.parentElement;
+        const wasOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        // Toggle clicked
+        if (!wasOpen) item.classList.add('open');
+    }
+
     const starRate = @(starRate);
     const minStars = @(minStars);
     const maxStars = @(maxStars);

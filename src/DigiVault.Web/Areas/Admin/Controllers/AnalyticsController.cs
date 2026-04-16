@@ -15,20 +15,21 @@ public class AnalyticsController : AdminBaseController
 
     public async Task<IActionResult> Index()
     {
-        var userNames = new List<string>();
+        var realUsers = new List<string>();
         try
         {
-            userNames = await _context.Users
+            realUsers = await _context.Users
                 .Where(u => u.UserName != null && u.UserName.Trim() != "" && u.UserName.Length <= 40
                     && (u.EmailConfirmed || _context.Orders.Any(o => o.UserId == u.Id)))
                 .Select(u => u.UserName!)
                 .Distinct()
-                .OrderBy(n => n)
                 .ToListAsync();
         }
         catch { }
 
-        ViewBag.UserNames = userNames;
+        // Mix real DB users with demo nicknames (we only have a couple of real users, so
+        // the live-feed would feel empty otherwise). Demo names are in DemoUsernames.
+        ViewBag.UserNames = DemoUsernames.Merge(realUsers).ToList();
         return View();
     }
 }

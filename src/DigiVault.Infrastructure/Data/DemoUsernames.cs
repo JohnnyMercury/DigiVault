@@ -1,42 +1,49 @@
 namespace DigiVault.Infrastructure.Data;
 
 /// <summary>
-/// Pool of internet-style usernames for demo purposes (live feed, fake reviews, etc.).
-/// Mix of Russian diminutives, transliterations, and typical gaming handles — similar style
-/// to what you'd see on plati.market / funpay / steam community.
-/// Keep realistic: no caps-lock-shouting, no slurs, no edgy "xXx_killer_xXx" extremes.
+/// Pool of realistic usernames for demo purposes (live feed, fake reviews, etc.).
+/// Based on actual nicks scraped from otzovik.com / tbank.ru review pages
+/// for plati.market and funpay — i.e. how real Russian users of similar digital
+/// marketplaces actually name themselves.
+///
+/// Mix: (1) real scraped handles, (2) plain first names (like on tbank reviews),
+/// (3) name + digit / underscore / city patterns. Deliberately avoids cringy gaming
+/// handles ("ShadowWolf", "NightFox") and stereotypical Russian slang diminutives
+/// ("Димон", "Санёк", "Лёха").
 /// </summary>
 public static class DemoUsernames
 {
     public static readonly string[] All = new[]
     {
-        // Russian diminutives / bytovye
-        "Димон", "Санёк", "Лёха", "Ксюха", "Натаха", "Кирюха", "Вован", "Славик", "Денчик",
-        "Максик", "Андрюха", "Толян", "Серёга", "Витёк", "Гена", "Рома", "Юля", "Катюха",
-        "Настёна", "Артёмка", "Пашок", "Стасян", "Ромчик", "Лёня", "Лиза", "Мишаня",
+        // Real scraped handles from otzovik reviews of plati.market / similar
+        "Ziper19", "Mir5000", "Temka727", "Maikl929", "PavelGP", "AndreyZag",
+        "BanzaiCh", "Score4fan", "Saumarel", "Schnee", "Sprini", "bubyshka",
+        "orb1tR", "grey2035", "den391", "Azri666", "Ryazal", "LDreg",
+        "Dorobolo", "TowelInSpace", "RaceGame", "DragaZloi", "dzmitrgimra",
+        "gamespaytv", "retro125", "redchristmas", "Anon1388", "Superbober",
+        "sidnik56", "FreeDie", "Achikurekus", "Maikl929",
 
-        // Transliterated first name + number / suffix
-        "Dmitriy228", "Andrey_92", "Max_Pro", "Artem_77", "Sergey88", "Vladimir97", "Oleg_Pro",
-        "Kirill_K", "Ivan_777", "Pavel_M", "Roman_99", "Anton_Kh", "Vadik_05", "Alex_Msk",
-        "Danila_07", "Igor_13", "Nikita2003", "Stas_M", "Yura_98", "Timur_01",
+        // Plain first names — how real users name themselves on tbank reviews
+        "Даниил", "Никита", "Артём", "Кирилл", "Сергей", "Иван", "Богдан",
+        "Степан", "Юрий", "Виктория", "Макар", "Георгий", "Алексей", "Михаил",
+        "Дмитрий", "Владимир", "Екатерина", "Мария", "Елена", "Анна", "Андрей",
+        "Максим", "Александр", "Ольга", "Наталья", "Павел", "Роман", "Илья",
+        "Евгений", "Тимур", "Данила", "Ибрагим",
 
-        // lowercase internet nicks
-        "sashok", "denchik", "artemka", "den4ik", "maxik_ru", "andrey.k", "lena_spb",
-        "olga_msk", "tema_ekb", "dimon228", "kostyan_77", "pasha2000", "vova_96",
-        "alex.gm", "sanya_pro", "kirya_05", "tolik_rnd",
+        // Name + digit / underscore / city — typical internet marketplace pattern
+        "max_94", "alex_msk", "lena_2005", "andrey.k", "dima_777", "sergey88",
+        "olga_spb", "petr_p", "vadim_k", "kirill_m", "nastya.a", "yulia_r",
+        "roman_2k", "artem.g", "nikita_93", "denis.k", "vasya_01", "tanya_msk",
+        "mihail_77", "pavel_ekb", "katya_nn", "igor_2003", "anton_k", "slava_rnd",
+        "timur_99", "stas_msk", "gleb_98", "tema_spb", "vlad_k", "oleg_07",
 
-        // Gaming handles
-        "RedDragon", "NightFox", "FrostBite", "ShadowWolf", "Viper", "PixelHunter", "NeonRider",
-        "IronFist", "DarkPhoenix", "SilentStorm", "CyberFox", "MadMax", "ProGamer_RU",
-        "ToxicLord", "GhostRider", "BlueFire", "LoneWolf77", "SniperKing", "PhantomZ",
-        "KillerMax", "VoidWalker", "RustyBlade", "AceSpade", "Grim228",
+        // Simple lowercase handles (seen often on marketplaces)
+        "tema", "denchik", "artemka", "maxik", "kotik", "murka", "sanek",
+        "vovan", "tolik", "kostya.m", "zhenya", "rusik",
 
-        // Mixed Russian+Latin / cyrillic nicks
-        "Димка_К", "Артёмыч", "Лёха77", "Серый_М", "Кирюха_RU", "Настяш",
-
-        // Simple first-name style
-        "Артём", "Даня", "Никита", "Егор", "Глеб", "Марк", "Тимур", "Валя", "Полина", "Света",
-        "Илья", "Юра", "Валера", "Стас",
+        // Plain transliterations (also common)
+        "Dmitriy", "Andrey", "Sergey", "Aleksey", "Mikhail", "Natalia",
+        "Ekaterina", "Vladimir", "Kirill", "Pavel",
     };
 
     /// <summary>

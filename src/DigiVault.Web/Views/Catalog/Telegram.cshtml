@@ -15,6 +15,15 @@
         padding: 1rem 0;
     }
 
+    .game-sidebar-spacer {
+        width: 280px;
+        flex-shrink: 0;
+    }
+
+    @@media (max-width: 1200px) {
+        .game-sidebar-spacer { display: none; }
+    }
+
     /* Main Content */
     .game-main {
         flex-grow: 1;
@@ -547,6 +556,9 @@
 
 <div class="container container-wide">
     <div class="game-page">
+        <!-- Left spacer (same width as sidebar on other pages) -->
+        <div class="game-sidebar-spacer"></div>
+
         <!-- Main Content -->
         <main class="game-main">
             <!-- Username input -->

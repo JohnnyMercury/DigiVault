@@ -64,6 +64,10 @@
                     <label class="an-s-label">Повторные %</label>
                     <input type="number" class="form-control form-control-sm an-setting" id="sRepeat" min="5" max="60" value="22">
                 </div>
+                <div class="col-md-2">
+                    <label class="an-s-label">Telegram %</label>
+                    <input type="number" class="form-control form-control-sm an-setting" id="sTelegram" min="5" max="60" value="25">
+                </div>
             </div>
         </div>
     </div>
@@ -427,7 +431,7 @@
         }
     });
 
-    const D={visitors:600,conversion:3,avgCheck:850,growth:18,repeat:22};
+    const D={visitors:600,conversion:3,avgCheck:850,growth:18,repeat:22,telegram:25};
     let S={...D}, period=7, charts={};
 
     let renderTimer=null;
@@ -441,6 +445,7 @@
             S.avgCheck=+document.getElementById('sAvgCheck').value||D.avgCheck;
             S.growth=+document.getElementById('sGrowth').value;
             S.repeat=+document.getElementById('sRepeat').value||D.repeat;
+            S.telegram=+document.getElementById('sTelegram').value||D.telegram;
             debouncedRender();
         });
     });
@@ -452,6 +457,7 @@
         document.getElementById('sAvgCheck').value=D.avgCheck;
         document.getElementById('sGrowth').value=D.growth;
         document.getElementById('sRepeat').value=D.repeat;
+        document.getElementById('sTelegram').value=D.telegram;
         renderAll();
     };
 
@@ -585,8 +591,8 @@
         });
 
         // Traffic sources
-        const tgPct=ri(20,30);
-        const directPct=ri(25,38);
+        const tgPct=S.telegram;
+        const directPct=ri(25,40);
         const searchPct=Math.max(10,100-directPct-tgPct-ri(5,15));
         const socialPct=100-directPct-searchPct-tgPct;
         charts.traffic=new Chart(document.getElementById('chartTraffic'),{

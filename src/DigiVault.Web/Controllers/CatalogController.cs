@@ -42,6 +42,68 @@ public class CatalogController : Controller
         }
     }
 
+    /// <summary>
+    /// Loads a ProductReviewsViewModel for the given product and sets it as ViewBag.Reviews.
+    /// Provide exactly one of gameId/giftCardId/vpnId.
+    /// productType is "Game" | "GiftCard" | "VpnProvider", productSlug is the entity slug.
+    /// </summary>
+    private async Task LoadReviewsViewBagAsync(string productType, string productSlug,
+        int? gameId = null, int? giftCardId = null, int? vpnId = null)
+    {
+        IQueryable<ProductReview> query = _context.ProductReviews
+            .Where(r => r.IsApproved);
+
+        if (gameId.HasValue) query = query.Where(r => r.GameId == gameId);
+        else if (giftCardId.HasValue) query = query.Where(r => r.GiftCardId == giftCardId);
+        else if (vpnId.HasValue) query = query.Where(r => r.VpnProviderId == vpnId);
+        else { ViewBag.Reviews = new ProductReviewsViewModel { ProductType = productType, ProductSlug = productSlug }; return; }
+
+        var total = await query.CountAsync();
+        var avg = total > 0 ? await query.AverageAsync(r => (double)r.Rating) : 0;
+
+        var latest = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(3)
+            .ToListAsync();
+
+        // Can user review? Need auth + completed order containing this product.
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        bool canReview = false;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            canReview = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.GameProduct)
+                .AnyAsync(oi => oi.Order.UserId == userId
+                    && oi.Order.Status == OrderStatus.Completed
+                    && oi.GameProduct != null
+                    && ((gameId != null && oi.GameProduct.GameId == gameId)
+                        || (giftCardId != null && oi.GameProduct.GiftCardId == giftCardId)
+                        || (vpnId != null && oi.GameProduct.VpnProviderId == vpnId)));
+
+            // Exclude users who already reviewed this product
+            if (canReview)
+            {
+                var alreadyReviewed = await _context.ProductReviews.AnyAsync(r => r.UserId == userId
+                    && ((gameId != null && r.GameId == gameId)
+                        || (giftCardId != null && r.GiftCardId == giftCardId)
+                        || (vpnId != null && r.VpnProviderId == vpnId)));
+                if (alreadyReviewed) canReview = false;
+            }
+        }
+
+        ViewBag.Reviews = new ProductReviewsViewModel
+        {
+            Reviews = latest,
+            TotalCount = total,
+            AverageRating = avg,
+            ProductType = productType,
+            ProductSlug = productSlug,
+            IsAuthenticated = User.Identity?.IsAuthenticated ?? false,
+            CanReview = canReview,
+        };
+    }
+
     [HttpPost]
     [Authorize]
     [ValidateAntiForgeryToken]
@@ -233,6 +295,7 @@ public class CatalogController : Controller
         ViewBag.Game = game;
         ViewBag.AllGames = allGames;
         await SetUserBalanceAsync();
+        await LoadReviewsViewBagAsync("Game", game.Slug, gameId: game.Id);
 
         return View("Game", new List<Product>());
     }
@@ -279,6 +342,7 @@ public class CatalogController : Controller
         ViewBag.GiftCard = card;
         ViewBag.AllGiftCards = allCards;
         await SetUserBalanceAsync();
+        await LoadReviewsViewBagAsync("GiftCard", card.Slug, giftCardId: card.Id);
         return View("GiftCard");
     }
 
@@ -325,6 +389,7 @@ public class CatalogController : Controller
         ViewBag.VpnProvider = provider;
         ViewBag.AllVpnProviders = allProviders;
         await SetUserBalanceAsync();
+        await LoadReviewsViewBagAsync("VpnProvider", provider.Slug, vpnId: provider.Id);
         return View("VpnProvider");
     }
 
@@ -353,6 +418,33 @@ public class CatalogController : Controller
         ViewBag.MinStars = int.TryParse(minStarsSetting?.Value, out var mins) ? mins : 50;
         ViewBag.MaxStars = int.TryParse(maxStarsSetting?.Value, out var maxs) ? maxs : 25000;
         await SetUserBalanceAsync();
+
+        // Reviews for Telegram page — aggregate stars + premium cards together
+        var starsCard = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-stars");
+        var tgCardIds = new List<int>();
+        if (starsCard != null) tgCardIds.Add(starsCard.Id);
+        if (premiumCard != null) tgCardIds.Add(premiumCard.Id);
+
+        if (tgCardIds.Any())
+        {
+            var tgReviews = _context.ProductReviews.Where(r => r.IsApproved && r.GiftCardId != null && tgCardIds.Contains(r.GiftCardId!.Value));
+            var tgTotal = await tgReviews.CountAsync();
+            var tgAvg = tgTotal > 0 ? await tgReviews.AverageAsync(r => (double)r.Rating) : 0;
+            var tgLatest = await tgReviews.OrderByDescending(r => r.CreatedAt).Take(3).ToListAsync();
+
+            // Telegram review submission isn't supported inline (no single slug) — redirect to /Reviews
+            ViewBag.Reviews = new ProductReviewsViewModel
+            {
+                Reviews = tgLatest,
+                TotalCount = tgTotal,
+                AverageRating = tgAvg,
+                ProductType = "GiftCard",
+                ProductSlug = "telegram-stars",
+                IsAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                CanReview = false, // Telegram page aggregates 2 products, so we send user to specific page
+            };
+        }
+
         return View("Telegram");
     }
 }

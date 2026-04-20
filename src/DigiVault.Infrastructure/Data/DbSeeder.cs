@@ -243,5 +243,8 @@ public static class DbSeeder
             );
             await context.SaveChangesAsync();
         }
+
+        // Seed demo reviews (~250 realistic fake reviews across all products)
+        await ReviewsSeeder.SeedAsync(context);
     }
 }

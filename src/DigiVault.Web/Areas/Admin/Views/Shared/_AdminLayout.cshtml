@@ -572,6 +572,10 @@
                         <i class="bi bi-bag-check-fill"></i>
                         <span>Заказы</span>
                     </a>
+                    <a asp-controller="Reviews" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reviews" ? "active" : "")">
+                        <i class="bi bi-chat-square-quote-fill"></i>
+                        <span>Отзывы</span>
+                    </a>
                     <a asp-controller="Transactions" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transactions" ? "active" : "")">
                         <i class="bi bi-credit-card-fill"></i>
                         <span>Транзакции</span>

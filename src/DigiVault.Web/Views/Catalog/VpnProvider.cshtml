@@ -714,6 +714,13 @@
                     }
                 </div>
             </div>
+
+            @if (ViewBag.Reviews != null)
+            {
+                <div style="padding: 0 1.5rem;">
+                    @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
+                </div>
+            }
         </main>
 
         <!-- Payment Sidebar -->

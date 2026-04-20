@@ -40,6 +40,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // App Settings
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
+    // Product Reviews
+    public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -313,6 +316,43 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Value).HasMaxLength(500).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(300);
             entity.HasIndex(e => e.Key).IsUnique();
+        });
+
+        // ProductReview configuration
+        builder.Entity<ProductReview>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AuthorName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.AuthorRole).HasMaxLength(150);
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Text).HasMaxLength(2000).IsRequired();
+            entity.Property(e => e.AdminReply).HasMaxLength(2000);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.Game)
+                .WithMany()
+                .HasForeignKey(e => e.GameId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.GiftCard)
+                .WithMany()
+                .HasForeignKey(e => e.GiftCardId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.VpnProvider)
+                .WithMany()
+                .HasForeignKey(e => e.VpnProviderId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.GameId);
+            entity.HasIndex(e => e.GiftCardId);
+            entity.HasIndex(e => e.VpnProviderId);
+            entity.HasIndex(e => e.IsApproved);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Rating);
         });
 
         // WalletTransaction configuration

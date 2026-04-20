@@ -1,0 +1,208 @@
+@using DigiVault.Core.Entities
+@model DigiVault.Web.Models.ProductReviewsViewModel
+@{
+    string InitialsOf(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "?";
+        var parts = name.Split(new[] { ' ', '_', '.', '-' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return (parts[0][0].ToString() + parts[1][0].ToString()).ToUpperInvariant();
+        return name.Length >= 2 ? name.Substring(0, 2).ToUpperInvariant() : name.ToUpperInvariant();
+    }
+    string AvatarColorFor(string name)
+    {
+        var colors = new[] {
+            "linear-gradient(135deg, #667eea, #764ba2)",
+            "linear-gradient(135deg, #f093fb, #f5576c)",
+            "linear-gradient(135deg, #4facfe, #00f2fe)",
+            "linear-gradient(135deg, #43e97b, #38f9d7)",
+            "linear-gradient(135deg, #fa709a, #fee140)",
+            "linear-gradient(135deg, #a18cd1, #fbc2eb)",
+            "linear-gradient(135deg, #30cfd0, #330867)",
+            "linear-gradient(135deg, #ff9a9e, #fad0c4)",
+        };
+        unchecked
+        {
+            int hash = 0;
+            foreach (var c in name) hash = hash * 31 + c;
+            return colors[Math.Abs(hash) % colors.Length];
+        }
+    }
+    string FormatDate(DateTime date)
+    {
+        var months = new[] { "янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек" };
+        return $"{date.Day} {months[date.Month - 1]} {date.Year}";
+    }
+}
+
+<section class="product-reviews-section mt-5 mb-4">
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
+        <div>
+            <h3 class="mb-2" style="font-weight:700;">Отзывы покупателей</h3>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.75rem; font-weight:800; color:#fff;">@Model.AverageRating.ToString("F1")</span>
+                    <div>
+                        <div>
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                var filled = s <= Math.Round(Model.AverageRating);
+                                <i class="bi @(filled ? "bi-star-fill" : "bi-star")" style="color:@(filled ? "#fbbf24" : "rgba(255,255,255,0.2)"); font-size:0.85rem;"></i>
+                            }
+                        </div>
+                        <small class="text-muted">Из @Model.TotalCount отзывов</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            @if (!Model.IsAuthenticated)
+            {
+                <a href="/Account/Login" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Войдите, чтобы оставить отзыв">
+                    <i class="bi bi-pencil-square me-1"></i>Написать отзыв
+                </a>
+            }
+            else if (!Model.CanReview)
+            {
+                <button type="button" class="btn btn-outline-light" disabled
+                        data-bs-toggle="tooltip" title="Оставить отзыв можно только после покупки этого товара">
+                    <i class="bi bi-pencil-square me-1"></i>Написать отзыв
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                    <i class="bi bi-pencil-square me-1"></i>Написать отзыв
+                </button>
+            }
+            <a href="/Reviews?product=@Model.ProductSlug" class="btn btn-outline-light">
+                Смотреть все <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Reviews.Any())
+    {
+        <div class="pr-empty">
+            <i class="bi bi-chat-square-text"></i>
+            <p>Пока нет отзывов на этот товар</p>
+            @if (Model.CanReview)
+            {
+                <small>Станьте первым, кто оставит отзыв!</small>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var r in Model.Reviews)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="pr-card h-100">
+                        <div class="d-flex gap-2 align-items-center mb-2">
+                            <div class="pr-avatar" style="background: @AvatarColorFor(r.AuthorName);">@InitialsOf(r.AuthorName)</div>
+                            <div class="flex-grow-1" style="min-width:0;">
+                                <div class="pr-author text-truncate">@r.AuthorName</div>
+                                <div class="pr-date">@FormatDate(r.CreatedAt)</div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                <i class="bi @(s <= r.Rating ? "bi-star-fill" : "bi-star")" style="color:@(s <= r.Rating ? "#fbbf24" : "rgba(255,255,255,0.15)"); font-size:0.8rem;"></i>
+                            }
+                            @if (r.IsVerifiedPurchase)
+                            {
+                                <span class="pr-verified ms-2"><i class="bi bi-patch-check-fill"></i> Проверено</span>
+                            }
+                        </div>
+                        <div class="pr-title">@r.Title</div>
+                        <p class="pr-text">@r.Text</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@if (Model.CanReview)
+{
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: #14141f; border: 1px solid var(--card-border);">
+                <form method="post" action="/Reviews/Create">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productType" value="@Model.ProductType" />
+                    <input type="hidden" name="productSlug" value="@Model.ProductSlug" />
+                    <div class="modal-header" style="border-color: var(--card-border);">
+                        <h5 class="modal-title text-white">Оставить отзыв о товаре</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-white">Ваша оценка</label>
+                            <div class="rating-input" id="ratingInput">
+                                <input type="hidden" name="rating" id="ratingValue" value="5" required />
+                                @for (int s = 1; s <= 5; s++)
+                                {
+                                    <i class="bi bi-star-fill rating-star-input @(s <= 5 ? "filled" : "")" data-value="@s"></i>
+                                }
+                                <span class="rating-label-text ms-2">Отлично</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white">Заголовок</label>
+                            <input type="text" name="title" required maxlength="200" class="form-control" placeholder="Кратко опишите впечатление">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-white">Отзыв</label>
+                            <textarea name="text" required maxlength="2000" rows="5" class="form-control" placeholder="Расскажите о вашем опыте покупки — скорость доставки, работа товара, поддержка..."></textarea>
+                        </div>
+                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Отзыв опубликуется сразу после отправки</small>
+                    </div>
+                    <div class="modal-footer" style="border-color: var(--card-border);">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-primary">Опубликовать отзыв</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .product-reviews-section { color: #fff; }
+    .pr-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.1rem; transition: all 0.2s; }
+    .pr-card:hover { border-color: rgba(102,126,234,0.3); transform: translateY(-2px); }
+    .pr-avatar { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 0.85rem; flex-shrink: 0; }
+    .pr-author { color: #fff; font-weight: 600; font-size: 0.9rem; }
+    .pr-date { color: rgba(255,255,255,0.35); font-size: 0.75rem; }
+    .pr-verified { color: #22c55e; font-size: 0.7rem; font-weight: 500; }
+    .pr-title { color: #fff; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .pr-text { color: rgba(255,255,255,0.65); font-size: 0.85rem; line-height: 1.55; margin: 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .pr-empty { text-align: center; padding: 3rem 1rem; background: var(--card-bg); border: 1px dashed var(--card-border); border-radius: 14px; color: rgba(255,255,255,0.5); }
+    .pr-empty i { font-size: 2.5rem; color: rgba(255,255,255,0.15); margin-bottom: 0.5rem; display: block; }
+    .pr-empty p { margin: 0.5rem 0 0.3rem; font-weight: 500; }
+
+    .rating-input { display: inline-flex; align-items: center; gap: 4px; }
+    .rating-star-input { font-size: 1.6rem; cursor: pointer; color: rgba(255,255,255,0.2); transition: color 0.1s; }
+    .rating-star-input.filled { color: #fbbf24; }
+    .rating-label-text { color: rgba(255,255,255,0.65); font-size: 0.9rem; }
+</style>
+
+<script>
+    (function() {
+        const stars = document.querySelectorAll('#ratingInput .rating-star-input');
+        const input = document.getElementById('ratingValue');
+        const label = document.querySelector('#ratingInput .rating-label-text');
+        const labels = ['Ужасно', 'Плохо', 'Нормально', 'Хорошо', 'Отлично'];
+        if (!stars.length) return;
+        stars.forEach(s => {
+            s.addEventListener('click', () => {
+                const v = +s.dataset.value;
+                input.value = v;
+                stars.forEach(x => x.classList.toggle('filled', +x.dataset.value <= v));
+                if (label) label.textContent = labels[v - 1];
+            });
+        });
+    })();
+</script>

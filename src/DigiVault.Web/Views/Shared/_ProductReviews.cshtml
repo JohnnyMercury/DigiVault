@@ -35,26 +35,22 @@
 }
 
 <section class="product-reviews-section mt-5 mb-4">
-    <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4">
-        <div>
-            <h3 class="mb-2" style="font-weight:700;">Отзывы покупателей</h3>
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="d-flex align-items-center gap-2">
-                    <span style="font-size:1.75rem; font-weight:800; color:#fff;">@Model.AverageRating.ToString("F1")</span>
-                    <div>
-                        <div>
-                            @for (int s = 1; s <= 5; s++)
-                            {
-                                var filled = s <= Math.Round(Model.AverageRating);
-                                <i class="bi @(filled ? "bi-star-fill" : "bi-star")" style="color:@(filled ? "#fbbf24" : "rgba(255,255,255,0.2)"); font-size:0.85rem;"></i>
-                            }
-                        </div>
-                        <small class="text-muted">Из @Model.TotalCount отзывов</small>
-                    </div>
+    <h3 class="mb-3" style="font-weight:700; color:#fff;">Отзывы покупателей</h3>
+    <div class="pr-header-row">
+        <div class="pr-summary">
+            <span class="pr-avg-value">@Model.AverageRating.ToString("F1")</span>
+            <div class="pr-avg-meta">
+                <div class="pr-avg-stars">
+                    @for (int s = 1; s <= 5; s++)
+                    {
+                        var filled = s <= Math.Round(Model.AverageRating);
+                        <i class="bi @(filled ? "bi-star-fill" : "bi-star")" style="color:@(filled ? "#fbbf24" : "rgba(255,255,255,0.2)");"></i>
+                    }
                 </div>
+                <small class="text-muted">Из @Model.TotalCount отзывов</small>
             </div>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="pr-actions">
             @if (!Model.IsAuthenticated)
             {
                 <a href="/Account/Login" class="btn btn-outline-light" data-bs-toggle="tooltip" title="Войдите, чтобы оставить отзыв">
@@ -93,10 +89,10 @@
     }
     else
     {
-        <div class="row g-3">
+        <div class="pr-grid">
             @foreach (var r in Model.Reviews)
             {
-                <div class="col-md-6 col-lg-4">
+                <div>
                     <div class="pr-card h-100">
                         <div class="d-flex gap-2 align-items-center mb-2">
                             <div class="pr-avatar" style="background: @AvatarColorFor(r.AuthorName);">@InitialsOf(r.AuthorName)</div>
@@ -170,7 +166,22 @@
 }
 
 <style>
-    .product-reviews-section { color: #fff; }
+    .product-reviews-section { color: #fff; max-width: 100%; }
+    .pr-header-row {
+        display: flex; align-items: center; justify-content: flex-start;
+        gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+        padding: 1rem 1.25rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
+    }
+    .pr-summary { display: flex; align-items: center; gap: 12px; }
+    .pr-avg-value { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; }
+    .pr-avg-stars i { font-size: 0.9rem; }
+    .pr-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
+    .pr-actions .btn { padding: 0.5rem 1rem; font-weight: 600; border-radius: 10px; }
+
+    .pr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    @@media (max-width: 1100px) { .pr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @@media (max-width: 720px)  { .pr-grid { grid-template-columns: minmax(0, 1fr); } }
+
     .pr-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.1rem; transition: all 0.2s; }
     .pr-card:hover { border-color: rgba(102,126,234,0.3); transform: translateY(-2px); }
     .pr-avatar { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 0.85rem; flex-shrink: 0; }

@@ -95,12 +95,12 @@ public class ReviewsController : Controller
             .Take(pageSize)
             .ToListAsync();
 
-        // Check if current user can write reviews (has any completed order)
+        // Check if current user can write reviews (has any completed order OR is admin)
         var userId = _userManager.GetUserId(User);
         bool hasPurchase = false;
         if (userId != null)
         {
-            hasPurchase = await _context.Orders
+            hasPurchase = User.IsInRole("Admin") || await _context.Orders
                 .AnyAsync(o => o.UserId == userId && o.Status == OrderStatus.Completed);
         }
 
@@ -177,21 +177,26 @@ public class ReviewsController : Controller
                 return BadRequest();
         }
 
-        // Verify purchase: user must have a completed order containing this specific product
-        var hasPurchased = await _context.OrderItems
-            .Include(oi => oi.Order)
-            .Include(oi => oi.GameProduct)
-            .AnyAsync(oi => oi.Order.UserId == user.Id
-                && oi.Order.Status == OrderStatus.Completed
-                && oi.GameProduct != null
-                && (gameId != null && oi.GameProduct.GameId == gameId
-                    || giftCardId != null && oi.GameProduct.GiftCardId == giftCardId
-                    || vpnId != null && oi.GameProduct.VpnProviderId == vpnId));
-
-        if (!hasPurchased)
+        // Verify purchase: user must have a completed order containing this specific product.
+        // Admins bypass this check for demo/testing purposes.
+        bool isAdmin = User.IsInRole("Admin");
+        if (!isAdmin)
         {
-            TempData["ErrorMessage"] = "Оставить отзыв можно только после покупки этого товара";
-            return RedirectToReferer(productType, productSlug);
+            var hasPurchased = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.GameProduct)
+                .AnyAsync(oi => oi.Order.UserId == user.Id
+                    && oi.Order.Status == OrderStatus.Completed
+                    && oi.GameProduct != null
+                    && (gameId != null && oi.GameProduct.GameId == gameId
+                        || giftCardId != null && oi.GameProduct.GiftCardId == giftCardId
+                        || vpnId != null && oi.GameProduct.VpnProviderId == vpnId));
+
+            if (!hasPurchased)
+            {
+                TempData["ErrorMessage"] = "Оставить отзыв можно только после покупки этого товара";
+                return RedirectToReferer(productType, productSlug);
+            }
         }
 
         // Check for duplicate review from this user for this product

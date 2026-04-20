@@ -67,21 +67,31 @@ public class CatalogController : Controller
             .ToListAsync();
 
         // Can user review? Need auth + completed order containing this product.
+        // Admins bypass the purchase check (so they can author/test reviews on any product).
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         bool canReview = false;
         if (!string.IsNullOrEmpty(userId))
         {
-            canReview = await _context.OrderItems
-                .Include(oi => oi.Order)
-                .Include(oi => oi.GameProduct)
-                .AnyAsync(oi => oi.Order.UserId == userId
-                    && oi.Order.Status == OrderStatus.Completed
-                    && oi.GameProduct != null
-                    && ((gameId != null && oi.GameProduct.GameId == gameId)
-                        || (giftCardId != null && oi.GameProduct.GiftCardId == giftCardId)
-                        || (vpnId != null && oi.GameProduct.VpnProviderId == vpnId)));
+            bool isAdmin = User.IsInRole("Admin");
 
-            // Exclude users who already reviewed this product
+            if (isAdmin)
+            {
+                canReview = true;
+            }
+            else
+            {
+                canReview = await _context.OrderItems
+                    .Include(oi => oi.Order)
+                    .Include(oi => oi.GameProduct)
+                    .AnyAsync(oi => oi.Order.UserId == userId
+                        && oi.Order.Status == OrderStatus.Completed
+                        && oi.GameProduct != null
+                        && ((gameId != null && oi.GameProduct.GameId == gameId)
+                            || (giftCardId != null && oi.GameProduct.GiftCardId == giftCardId)
+                            || (vpnId != null && oi.GameProduct.VpnProviderId == vpnId)));
+            }
+
+            // Exclude users who already reviewed this product (applies to admins too)
             if (canReview)
             {
                 var alreadyReviewed = await _context.ProductReviews.AnyAsync(r => r.UserId == userId

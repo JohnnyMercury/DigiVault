@@ -1604,9 +1604,7 @@
 
             @if (ViewBag.Reviews != null)
             {
-                <div class="container" style="padding: 0 1.5rem;">
-                    @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
-                </div>
+                @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
             }
         </main>
 

@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Оплата и доставка";
+}
+
+<div class="container py-5">
+    <div class="policy-page">
+        <h1 class="policy-title"><span class="gradient-text">Оплата</span> и доставка</h1>
+
+        <div class="policy-card">
+            <div class="section">
+                <h5>Процесс покупки</h5>
+                <p>Покупка товара на Key Zona занимает меньше минуты:</p>
+                <ol class="steps-list">
+                    <li>Выберите интересующий вас товар в каталоге</li>
+                    <li>Ознакомьтесь со всей информацией о нём</li>
+                    <li>Укажите данные для доставки (UID, логин, email или номер)</li>
+                    <li>Нажмите кнопку «Купить» и оплатите удобным способом</li>
+                </ol>
+            </div>
+
+            <div class="section">
+                <h5>Доставка</h5>
+                <p>После успешной оплаты средства автоматически зачисляются на ваш игровой аккаунт или ключ активации приходит на указанную при покупке почту. Остаётся только активировать купленный товар.</p>
+            </div>
+
+            <div class="row g-4 mt-1">
+                <div class="col-md-6">
+                    <div class="info-card h-100">
+                        <h6><i class="bi bi-credit-card me-2" style="color:#667eea;"></i>Способы оплаты</h6>
+                        <ul>
+                            <li>Баланс Key Zona</li>
+                            <li>Банковская карта (Visa / Mastercard / МИР)</li>
+                            <li>СБП — система быстрых платежей</li>
+                            <li>P2P перевод</li>
+                            <li>QR-код</li>
+                            <li>Криптовалюта</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-card h-100">
+                        <h6><i class="bi bi-lightning-charge-fill me-2" style="color:#fbbf24;"></i>Время доставки</h6>
+                        <p>В большинстве случаев доставка происходит моментально после оплаты. В редких случаях может потребоваться до 10 минут на обработку транзакции платёжной системой.</p>
+                        <p class="mb-0">Если доставка задержалась, напишите в поддержку — разберёмся в течение рабочего дня.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-card h-100">
+                        <h6><i class="bi bi-shield-check me-2" style="color:#22c55e;"></i>Безопасность</h6>
+                        <p class="mb-0">Все платежи проходят через сертифицированные платёжные шлюзы с защитой 3-D Secure. Данные карт не сохраняются на нашей стороне.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-card h-100">
+                        <h6><i class="bi bi-headset me-2" style="color:#f093fb;"></i>Поддержка</h6>
+                        <p class="mb-0">Если возникли вопросы по оплате или доставке — пишите в Telegram <a href="https://t.me/key_zona_support" target="_blank">@@key_zona_support</a> или на <a href="mailto:helper.user.post@gmail.com">helper.user.post@gmail.com</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .policy-page { max-width: 960px; margin: 0 auto; }
+    .policy-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 2rem; }
+    .policy-title .gradient-text { background: linear-gradient(135deg, #667eea 0%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .policy-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: rgba(255,255,255,0.75);
+        line-height: 1.7;
+    }
+    .policy-card .section { margin-bottom: 1.75rem; }
+    .policy-card h5 { color: #667eea; font-weight: 700; margin-bottom: 1rem; }
+    .policy-card p { margin-bottom: 0.85rem; }
+    .policy-card a { color: #667eea; text-decoration: none; }
+    .policy-card a:hover { text-decoration: underline; }
+
+    .steps-list { padding-left: 1.25rem; }
+    .steps-list li { margin-bottom: 0.5rem; }
+
+    .info-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        transition: all 0.2s;
+    }
+    .info-card:hover { border-color: rgba(102,126,234,0.3); transform: translateY(-2px); }
+    .info-card h6 { color: #fff; font-weight: 600; margin-bottom: 0.85rem; }
+    .info-card ul { padding-left: 1.1rem; margin: 0; }
+    .info-card li { padding: 3px 0; }
+    .info-card p { margin-bottom: 0.5rem; }
+    .info-card p:last-child { margin-bottom: 0; }
+
+    @@media (max-width: 768px) {
+        .policy-card { padding: 1.5rem; }
+        .policy-title { font-size: 1.75rem; }
+    }
+</style>
+}

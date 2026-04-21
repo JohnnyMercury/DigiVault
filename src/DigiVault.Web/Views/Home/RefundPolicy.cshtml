@@ -1,0 +1,173 @@
+@{
+    ViewData["Title"] = "Политика возврата";
+}
+
+<div class="container py-5">
+    <div class="policy-page">
+        <h1 class="policy-title"><span class="gradient-text">Политика</span> возврата</h1>
+
+        <div class="policy-card">
+            <!-- Условия возврата -->
+            <div class="policy-section text-center mb-5">
+                <i class="bi bi-clipboard2-check policy-icon" style="color:#667eea;"></i>
+                <h5 style="color:#667eea;">Условия возврата</h5>
+                <p>Вы можете запросить возврат средств, если полученные услуги были некачественными или не предоставлены в соответствии с условиями заказа.</p>
+            </div>
+
+            <!-- Процедура возврата -->
+            <div class="policy-section text-center mb-5">
+                <i class="bi bi-arrow-repeat policy-icon" style="color:#4facfe;"></i>
+                <h5 style="color:#4facfe;">Процедура возврата</h5>
+                <p>Для запроса возврата свяжитесь с нашей службой поддержки по указанным контактным данным. Мы рассмотрим ваш запрос и произведем возврат средств на ваш баланс или карту.</p>
+                <div class="contact-info mt-4">
+                    <p><i class="bi bi-envelope me-2" style="color:#667eea;"></i>Email: <a href="mailto:helper.user.post@gmail.com">helper.user.post@gmail.com</a></p>
+                    <p class="mb-0"><i class="bi bi-telegram me-2" style="color:#2AABEE;"></i>Telegram: <a href="https://t.me/key_zona_support" target="_blank">@@key_zona_support</a></p>
+                </div>
+            </div>
+
+            <!-- Сроки возврата -->
+            <div class="policy-section text-center">
+                <i class="bi bi-clock policy-icon" style="color:#22c55e;"></i>
+                <h5 style="color:#22c55e;">Сроки возврата</h5>
+                <p>Мы постараемся рассмотреть ваш запрос в течение трёх рабочих дней.</p>
+                <div class="timeline mt-4">
+                    <div class="timeline-item">
+                        <i class="bi bi-send me-2" style="color:#667eea;"></i>
+                        <span>День 1: получение и регистрация вашего запроса</span>
+                    </div>
+                    <div class="timeline-item">
+                        <i class="bi bi-search me-2" style="color:#4facfe;"></i>
+                        <span>День 2-3: рассмотрение запроса и принятие решения</span>
+                    </div>
+                    <div class="timeline-item">
+                        <i class="bi bi-check-circle-fill me-2" style="color:#22c55e;"></i>
+                        <span>День 3: возврат средств на указанные реквизиты</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Важная информация -->
+            <div class="important-info mt-5">
+                <h6><i class="bi bi-info-circle-fill me-2"></i>Важно знать:</h6>
+                <ul>
+                    <li>Все запросы на возврат рассматриваются индивидуально</li>
+                    <li>Необходимо предоставить номер заказа и описание проблемы</li>
+                    <li>Возврат производится тем же способом, которым была совершена оплата</li>
+                    <li>В случае одобрения возврата средства поступят в течение 5-10 рабочих дней</li>
+                </ul>
+            </div>
+
+            <!-- FAQ -->
+            <div class="faq-section mt-5">
+                <h5 style="color:#667eea;" class="mb-4">Часто задаваемые вопросы</h5>
+
+                <div class="faq-item">
+                    <h6><i class="bi bi-question-circle me-2" style="color:#667eea;"></i>В каких случаях я могу вернуть покупку?</h6>
+                    <p>Возврат возможен если: ключ не работает, товар не соответствует описанию, возникли технические проблемы с активацией или услуга не была предоставлена.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h6><i class="bi bi-question-circle me-2" style="color:#667eea;"></i>Что нужно указать в запросе на возврат?</h6>
+                    <p>Укажите номер заказа, дату покупки, причину возврата и приложите скриншоты, подтверждающие проблему (если применимо).</p>
+                </div>
+
+                <div class="faq-item mb-0">
+                    <h6><i class="bi bi-question-circle me-2" style="color:#667eea;"></i>Могу ли я вернуть активированный ключ?</h6>
+                    <p class="mb-0">К сожалению, после активации ключа возврат невозможен. Рекомендуем проверять все требования товара перед покупкой.</p>
+                </div>
+            </div>
+
+            <!-- Реквизиты -->
+            <div class="policy-section mt-5">
+                <h5 style="color:#667eea;" class="mb-3">Реквизиты</h5>
+                <div class="contact-info">
+                    <p class="fw-bold mb-2" style="color:#fff;">ОсОО «ТИАМАТ»</p>
+                    <p class="mb-1">Адрес: г. Бишкек, Свердловский р-н, Городок Строителей 9/2</p>
+                    <p class="mb-1">ИНН: 00509202210110</p>
+                    <p class="mb-1">Код ОКПО: 31564096</p>
+                    <p class="mb-0">Директор: Чайковский Александр Леонтьевич</p>
+                </div>
+            </div>
+
+            <!-- Кнопка связи -->
+            <div class="text-center mt-5">
+                <a href="https://t.me/key_zona_support" target="_blank" class="btn btn-primary btn-lg" style="padding: 0.9rem 2.5rem; border-radius: 30px;">
+                    <i class="bi bi-headset me-2"></i>Связаться с поддержкой
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .policy-page { max-width: 960px; margin: 0 auto; }
+    .policy-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 2rem; }
+    .policy-title .gradient-text { background: linear-gradient(135deg, #667eea 0%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .policy-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: rgba(255,255,255,0.75);
+        line-height: 1.7;
+    }
+
+    .policy-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+    .policy-section h5 { font-weight: 700; margin-bottom: 1rem; }
+    .policy-section p { margin-bottom: 0; }
+
+    .contact-info {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        display: inline-block;
+        min-width: 320px;
+    }
+    .contact-info p { margin-bottom: 0.5rem; color: rgba(255,255,255,0.75); }
+    .contact-info a { color: #667eea; text-decoration: none; }
+    .contact-info a:hover { text-decoration: underline; }
+
+    .timeline {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        display: inline-block;
+    }
+    .timeline-item { padding: 6px 0; color: rgba(255,255,255,0.75); }
+
+    .important-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        color: #fff;
+    }
+    .important-info h6 { color: #fff; margin-bottom: 1rem; font-weight: 700; }
+    .important-info ul { padding-left: 1.25rem; margin: 0; }
+    .important-info li { margin-bottom: 0.5rem; }
+    .important-info li:last-child { margin-bottom: 0; }
+
+    .faq-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+    .faq-item:hover { border-color: rgba(102,126,234,0.4); transform: translateY(-2px); }
+    .faq-item h6 { color: #fff; margin-bottom: 0.5rem; font-weight: 600; }
+    .faq-item p { color: rgba(255,255,255,0.65); margin: 0; }
+
+    @@media (max-width: 768px) {
+        .policy-card { padding: 1.5rem; }
+        .policy-title { font-size: 1.75rem; }
+        .contact-info, .timeline { min-width: 0; width: 100%; }
+    }
+</style>
+}

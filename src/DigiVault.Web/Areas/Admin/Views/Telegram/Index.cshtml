@@ -48,6 +48,42 @@
     </div>
 </div>
 
+<!-- Premium Card Image -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-image me-2" style="color: #667eea;"></i>Карточка «Telegram Premium» в каталоге</h5>
+    </div>
+    <div class="p-4">
+        <form asp-action="UpdatePremiumImage" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="row align-items-center g-3">
+                <div class="col-auto">
+                    @if (!string.IsNullOrEmpty(premiumCard?.ImageUrl))
+                    {
+                        <img src="@premiumCard.ImageUrl" alt="Premium" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 1px solid var(--card-border);">
+                    }
+                    else
+                    {
+                        <div style="width: 120px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, #6C5CE7, #a855f7); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-diamond-fill" style="font-size: 2.5rem; color: #fff;"></i>
+                        </div>
+                    }
+                </div>
+                <div class="col">
+                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Изображение карточки</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*">
+                    <small class="text-muted">Рекомендуемый размер: 400×400 px. Отображается на главной, в каталоге и на странице покупки.</small>
+                    <div class="mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload me-1"></i>Загрузить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Premium Plans -->
 <div class="data-card mb-4">
     <div class="data-card-header">

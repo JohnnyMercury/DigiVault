@@ -36,6 +36,34 @@ public class TelegramController : AdminBaseController
         return View();
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePremiumImage(IFormFile imageFile)
+    {
+        var premiumCard = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-premium");
+        if (premiumCard == null)
+        {
+            TempData["ErrorMessage"] = "Карточка Telegram Premium не найдена";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (imageFile == null || imageFile.Length == 0)
+        {
+            TempData["ErrorMessage"] = "Выберите изображение";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Delete old image if it's an upload
+        if (!string.IsNullOrEmpty(premiumCard.ImageUrl) && premiumCard.ImageUrl.StartsWith("/images/uploads/"))
+            _fileService.DeleteImage(premiumCard.ImageUrl);
+
+        premiumCard.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Изображение обновлено";
+        return RedirectToAction(nameof(Index));
+    }
+
     // === Premium Products Management ===
 
     public async Task<IActionResult> CreateProduct()

@@ -1,56 +1,43 @@
 @using DigiVault.Core.Entities
 @{
-    ViewData["Title"] = "Telegram";
-    var starsCard = ViewBag.StarsCard as GiftCard;
+    ViewData["Title"] = "Telegram Premium";
     var premiumCard = ViewBag.PremiumCard as GiftCard;
     var premiumProducts = premiumCard?.Products?.OrderBy(p => p.SortOrder).ThenBy(p => p.Price).ToList()
         ?? new List<GameProduct>();
-    var starRate = (string)ViewBag.StarRate;
-    var minStars = (string)ViewBag.MinStars;
-    var maxStars = (string)ViewBag.MaxStars;
     var telegramOrders = (int)ViewBag.TelegramOrders;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-0"><i class="bi bi-send-fill me-2" style="color: #2AABEE;"></i>Telegram</h4>
-        <small class="text-muted">Управление звёздами и Premium подписками</small>
+        <h4 class="mb-0"><i class="bi bi-send-fill me-2" style="color: #2AABEE;"></i>Telegram Premium</h4>
+        <small class="text-muted">Управление тарифами Premium-подписки</small>
     </div>
-    <a href="/Catalog/Telegram" target="_blank" class="btn btn-outline-light">
+    <a href="/Catalog/GiftCard/telegram-premium" target="_blank" class="btn btn-outline-light">
         <i class="bi bi-box-arrow-up-right me-1"></i>Открыть на сайте
     </a>
 </div>
 
 <!-- Stats -->
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(42, 171, 238, 0.2), rgba(34, 158, 217, 0.2)); color: #2AABEE;">
-                <i class="bi bi-star-fill"></i>
-            </div>
-            <div class="stat-value">@starRate &#8381;</div>
-            <div class="stat-label">Цена за 1 звезду</div>
-        </div>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2)); color: #667eea;">
                 <i class="bi bi-diamond-fill"></i>
             </div>
             <div class="stat-value">@premiumProducts.Count(p => p.IsActive)</div>
-            <div class="stat-label">Тарифов Premium</div>
+            <div class="stat-label">Активных тарифов</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
             <div class="stat-icon products">
-                <i class="bi bi-hash"></i>
+                <i class="bi bi-collection-fill"></i>
             </div>
-            <div class="stat-value">@minStars - @maxStars</div>
-            <div class="stat-label">Диапазон звёзд</div>
+            <div class="stat-value">@premiumProducts.Count</div>
+            <div class="stat-label">Всего тарифов</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="stat-card">
             <div class="stat-icon orders">
                 <i class="bi bi-bag-check-fill"></i>
@@ -58,79 +45,6 @@
             <div class="stat-value">@telegramOrders</div>
             <div class="stat-label">Заказов Telegram</div>
         </div>
-    </div>
-</div>
-
-<!-- Stars Card Image -->
-<div class="data-card mb-4">
-    <div class="data-card-header">
-        <h5 class="data-card-title"><i class="bi bi-image me-2" style="color: #2AABEE;"></i>Карточка «Звёзды Телеграма» в каталоге</h5>
-    </div>
-    <div class="p-4">
-        <form asp-action="UpdateStarsImage" method="post" enctype="multipart/form-data">
-            @Html.AntiForgeryToken()
-            <div class="row align-items-center g-3">
-                <div class="col-auto">
-                    @if (!string.IsNullOrEmpty(starsCard?.ImageUrl))
-                    {
-                        <img src="@starsCard.ImageUrl" alt="Stars" style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 1px solid var(--card-border);">
-                    }
-                    else
-                    {
-                        <div style="width: 120px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, #2AABEE, #229ED9); display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-star-fill" style="font-size: 2.5rem; color: #FFD700;"></i>
-                        </div>
-                    }
-                </div>
-                <div class="col">
-                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Изображение карточки</label>
-                    <input type="file" name="imageFile" class="form-control" accept="image/*">
-                    <small class="text-muted">Рекомендуемый размер: 400×400 px. Отображается в каталоге.</small>
-                    <div class="mt-2">
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-upload me-1"></i>Загрузить
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Star Settings -->
-<div class="data-card mb-4">
-    <div class="data-card-header">
-        <h5 class="data-card-title"><i class="bi bi-star-fill me-2" style="color: #FFD700;"></i>Настройки звёзд</h5>
-    </div>
-    <div class="p-4">
-        <form asp-action="UpdateStarSettings" method="post">
-            @Html.AntiForgeryToken()
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Курс (&#8381; за 1 звезду)</label>
-                    <div class="input-group">
-                        <input type="text" name="starRate" class="form-control" value="@starRate" required>
-                        <span class="input-group-text" style="background: rgba(255,255,255,0.05); border-color: var(--card-border); color: rgba(255,255,255,0.5);">&#8381;</span>
-                    </div>
-                    <small class="text-muted">Например: 1.5 означает 75&#8381; за 50 звёзд</small>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Минимум звёзд</label>
-                    <input type="number" name="minStars" class="form-control" value="@minStars" min="1" required>
-                    <small class="text-muted">Минимальный заказ</small>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Максимум звёзд</label>
-                    <input type="number" name="maxStars" class="form-control" value="@maxStars" min="1" required>
-                    <small class="text-muted">Максимальный заказ</small>
-                </div>
-            </div>
-            <div class="mt-3">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-lg me-1"></i>Сохранить настройки
-                </button>
-            </div>
-        </form>
     </div>
 </div>
 

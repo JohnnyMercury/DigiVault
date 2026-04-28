@@ -16,25 +16,11 @@ public static class ReviewsSeeder
     // Mix of short and detailed, all sound like real gamer/buyer speech.
     // ------------------------------------------------------------
 
-    private static readonly (string Title, string Text)[] TelegramStarsPositive =
+    // NOTE: Telegram Stars was removed from the catalog. Templates are no longer
+    // referenced by SeedAsync; left here in case the product is reactivated later.
+    private static readonly (string Title, string Text)[] TelegramStarsPositive_Unused =
     {
-        ("Быстро зачислили Stars", "Покупал 500 звёзд, все пришло на аккаунт минут за 5. Цена заметно ниже чем в самом телеге. Буду брать ещё."),
-        ("Все работает", "Впервые покупал звёзды тут. Ввел юзернейм, оплатил, через пару минут всё на месте. Удобно"),
-        ("норм сервис", "Брал 1000 звёзд. Зачислились сразу, никаких проблем. рекомендую"),
-        ("Выгоднее чем в Telegram", "Пересчитал, через сайт выходит процентов на 25 дешевле чем покупать напрямую. Постоянно тут беру."),
-        ("Все четко", "Оплата прошла без проблем, звезды прилетели почти мгновенно. Саппорт на связи был, хоть и не понадобился."),
-        ("Анонимно и быстро", "Плюс что можно анонимно купить никто не видит кто отправил. Отлично для подарков"),
-        ("Покупал 2500 звёзд", "Большой пакет со скидкой. Пришло без заминок. Подарил другу на ДР он был рад)"),
-        ("Быстрее чем ожидал", "Думал будет задержка минут 10-15, а пришло за 2 минуты буквально. Круто"),
-        ("Все ок", "Купил 100 звёзд, пришли сразу. Все работает, претензий нет."),
-        ("Постоянный покупатель", "Беру звезды уже третий раз, ни разу не было косяков. Цены адекватные"),
-        ("Рекомендую", "Быстро, недорого, работает. Что ещё нужно) Спасибо"),
-        ("Спасибо за сервис", "Помогли разобраться когда ввел неверный юзернейм. Саппорт быстро ответил отзывчивые ребята"),
-        ("Отличная цена", "Сравнивал с другими сайтами, тут выходит выгоднее всего. Брать тут безопасно."),
-        ("Все пришло", "250 звёзд, зачислили за пару минут. Никакого обмана"),
-        ("Быстрая оплата", "Оплатил через СБП, мгновенно. Звёзды на аккаунте. Буду возвращаться."),
-        ("огонь", "звезды пришли за минуту никаких проблем. беру 3й раз уже"),
-        ("Выручили", "Срочно нужно было подарить 1000 звезд другу, все быстро прошло. Спасибо)"),
+        ("Быстро зачислили Stars", "Покупал 500 звёзд, все пришло на аккаунт минут за 5."),
     };
 
     private static readonly (string Title, string Text)[] TelegramPremiumPositive =
@@ -272,7 +258,7 @@ public static class ReviewsSeeder
 
     // Bump this when review templates change — forces existing demo reviews to be
     // wiped and reseeded. Real user-authored reviews (UserId != null) are never touched.
-    private const string SeedVersion = "2";
+    private const string SeedVersion = "3";
     private const string SeedVersionKey = "reviews:seed_version";
 
     public static async Task SeedAsync(ApplicationDbContext context)
@@ -374,11 +360,10 @@ public static class ReviewsSeeder
         if (mlbb != null) AddReviews(10, MobileLegendsPositive, gameId: mlbb.Id);
 
         // ==== Gift Cards ====
-        var tgStars = giftCards.FirstOrDefault(g => g.Slug == "telegram-stars");
-        if (tgStars != null) AddReviews(50, TelegramStarsPositive, giftCardId: tgStars.Id);
-
+        // Telegram Stars removed from catalog — no reviews seeded for it anymore.
+        // Bumped Premium count since it absorbs former stars traffic.
         var tgPremium = giftCards.FirstOrDefault(g => g.Slug == "telegram-premium");
-        if (tgPremium != null) AddReviews(25, TelegramPremiumPositive, giftCardId: tgPremium.Id);
+        if (tgPremium != null) AddReviews(45, TelegramPremiumPositive, giftCardId: tgPremium.Id);
 
         var psn = giftCards.FirstOrDefault(g => g.Slug == "psn");
         if (psn != null) AddReviews(20, PsnPositive, giftCardId: psn.Id);

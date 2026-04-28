@@ -167,7 +167,7 @@ public class CatalogController : Controller
         {
             var giftCards = await _context.GiftCards
                 .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-                .Where(g => g.IsActive && g.Slug != "telegram-premium")
+                .Where(g => g.IsActive)
                 .ToListAsync();
 
             items.AddRange(giftCards.Select(g => new CatalogItemViewModel
@@ -179,8 +179,8 @@ public class CatalogController : Controller
                 Icon = g.Icon,
                 Gradient = g.Gradient,
                 Category = "giftcards",
-                CategoryDisplay = g.Category == GiftCardCategory.Telegram ? "Telegram" : "Подарочная карта",
-                DetailUrl = g.Category == GiftCardCategory.Telegram ? "/Catalog/Telegram" : $"/Catalog/GiftCard/{g.Slug}",
+                CategoryDisplay = "Подарочная карта",
+                DetailUrl = $"/Catalog/GiftCard/{g.Slug}",
                 ProductCount = g.Products.Count,
                 MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null,
                 MaxDiscount = g.Products.Any() ? g.Products.Max(p => p.Discount) : null
@@ -332,9 +332,9 @@ public class CatalogController : Controller
         if (string.IsNullOrEmpty(slug))
             return NotFound();
 
-        // Redirect telegram slugs to dedicated Telegram page
-        if (slug.ToLower().StartsWith("telegram"))
-            return RedirectToAction("Telegram");
+        // Legacy: telegram-stars was removed; route stale links to telegram-premium.
+        if (slug.ToLower() == "telegram-stars")
+            return RedirectToActionPermanent("GiftCard", new { slug = "telegram-premium" });
 
         var card = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
@@ -344,7 +344,7 @@ public class CatalogController : Controller
             return NotFound();
 
         var allCards = await _context.GiftCards
-            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
+            .Where(g => g.IsActive)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();
@@ -359,7 +359,7 @@ public class CatalogController : Controller
     public async Task<IActionResult> GiftCards()
     {
         var giftCards = await _context.GiftCards
-            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
+            .Where(g => g.IsActive)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();
@@ -403,58 +403,10 @@ public class CatalogController : Controller
         return View("VpnProvider");
     }
 
-    public async Task<IActionResult> Telegram()
-    {
-        // Load Premium plans from DB
-        var premiumCard = await _context.GiftCards
-            .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
-            .FirstOrDefaultAsync(g => g.Slug == "telegram-premium" && g.IsActive);
-
-        var premiumProducts = premiumCard?.Products
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.SortOrder)
-            .ThenBy(p => p.Price)
-            .ToList() ?? new List<GameProduct>();
-
-        // Star pricing config from DB
-        var starRateSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:star_rate");
-        var minStarsSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:min_stars");
-        var maxStarsSetting = await _context.AppSettings.FirstOrDefaultAsync(s => s.Key == "telegram:max_stars");
-
-        ViewBag.PremiumCard = premiumCard;
-        ViewBag.PremiumProducts = premiumProducts;
-        ViewBag.StarRate = decimal.TryParse(starRateSetting?.Value, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out var sr) ? sr : 1.5m;
-        ViewBag.MinStars = int.TryParse(minStarsSetting?.Value, out var mins) ? mins : 50;
-        ViewBag.MaxStars = int.TryParse(maxStarsSetting?.Value, out var maxs) ? maxs : 25000;
-        await SetUserBalanceAsync();
-
-        // Reviews for Telegram page — aggregate stars + premium cards together
-        var starsCard = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-stars");
-        var tgCardIds = new List<int>();
-        if (starsCard != null) tgCardIds.Add(starsCard.Id);
-        if (premiumCard != null) tgCardIds.Add(premiumCard.Id);
-
-        if (tgCardIds.Any())
-        {
-            var tgReviews = _context.ProductReviews.Where(r => r.IsApproved && r.GiftCardId != null && tgCardIds.Contains(r.GiftCardId!.Value));
-            var tgTotal = await tgReviews.CountAsync();
-            var tgAvg = tgTotal > 0 ? await tgReviews.AverageAsync(r => (double)r.Rating) : 0;
-            var tgLatest = await tgReviews.OrderByDescending(r => r.CreatedAt).Take(3).ToListAsync();
-
-            // Telegram review submission isn't supported inline (no single slug) — redirect to /Reviews
-            ViewBag.Reviews = new ProductReviewsViewModel
-            {
-                Reviews = tgLatest,
-                TotalCount = tgTotal,
-                AverageRating = tgAvg,
-                ProductType = "GiftCard",
-                ProductSlug = "telegram-stars",
-                IsAuthenticated = User.Identity?.IsAuthenticated ?? false,
-                CanReview = false, // Telegram page aggregates 2 products, so we send user to specific page
-            };
-        }
-
-        return View("Telegram");
-    }
+    /// <summary>
+    /// Legacy route. Telegram Stars was removed; this route now permanently redirects
+    /// to the Telegram Premium product page.
+    /// </summary>
+    public IActionResult Telegram()
+        => RedirectToActionPermanent("GiftCard", new { slug = "telegram-premium" });
 }

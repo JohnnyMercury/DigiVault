@@ -41,11 +41,10 @@ public class HomeController : Controller
         }));
 
         // Gift Cards — telegram-stars is soft-disabled at DB level. Telegram Premium
-        // is accessed via its own /Catalog/Telegram tab, so the whole Telegram category
-        // is hidden from the regular homepage grid.
+        // is included in the grid; its tile links to the dedicated /Catalog/Telegram tab.
         var giftCards = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-            .Where(g => g.IsActive && g.Category != DigiVault.Core.Entities.GiftCardCategory.Telegram)
+            .Where(g => g.IsActive)
             .ToListAsync();
 
         items.AddRange(giftCards.Select(g => new CatalogItemViewModel
@@ -57,8 +56,8 @@ public class HomeController : Controller
             Icon = g.Icon,
             Gradient = g.Gradient,
             Category = "giftcards",
-            CategoryDisplay = "Подарочная карта",
-            DetailUrl = $"/Catalog/GiftCard/{g.Slug}",
+            CategoryDisplay = g.Category == DigiVault.Core.Entities.GiftCardCategory.Telegram ? "Telegram" : "Подарочная карта",
+            DetailUrl = g.Category == DigiVault.Core.Entities.GiftCardCategory.Telegram ? "/Catalog/Telegram" : $"/Catalog/GiftCard/{g.Slug}",
             ProductCount = g.Products.Count,
             MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null
         }));

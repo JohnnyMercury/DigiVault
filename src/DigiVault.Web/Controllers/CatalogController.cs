@@ -165,11 +165,11 @@ public class CatalogController : Controller
 
         if (showGiftCards)
         {
-            // Telegram Premium has its own dedicated tab at /Catalog/Telegram —
-            // hide the whole Telegram category from the regular giftcard grid.
+            // Telegram Premium is included in the grid; its tile links to the
+            // dedicated /Catalog/Telegram tab instead of the standard giftcard URL.
             var giftCards = await _context.GiftCards
                 .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-                .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
+                .Where(g => g.IsActive)
                 .ToListAsync();
 
             items.AddRange(giftCards.Select(g => new CatalogItemViewModel
@@ -181,8 +181,8 @@ public class CatalogController : Controller
                 Icon = g.Icon,
                 Gradient = g.Gradient,
                 Category = "giftcards",
-                CategoryDisplay = "Подарочная карта",
-                DetailUrl = $"/Catalog/GiftCard/{g.Slug}",
+                CategoryDisplay = g.Category == GiftCardCategory.Telegram ? "Telegram" : "Подарочная карта",
+                DetailUrl = g.Category == GiftCardCategory.Telegram ? "/Catalog/Telegram" : $"/Catalog/GiftCard/{g.Slug}",
                 ProductCount = g.Products.Count,
                 MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null,
                 MaxDiscount = g.Products.Any() ? g.Products.Max(p => p.Discount) : null

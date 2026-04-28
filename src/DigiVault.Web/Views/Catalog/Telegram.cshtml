@@ -2,10 +2,7 @@
 @{
     var premiumCard = ViewBag.PremiumCard as GiftCard;
     var premiumProducts = ViewBag.PremiumProducts as List<GameProduct> ?? new List<GameProduct>();
-    var starRate = (decimal)(ViewBag.StarRate ?? 1.5m);
-    var minStars = (int)(ViewBag.MinStars ?? 50);
-    var maxStars = (int)(ViewBag.MaxStars ?? 25000);
-    ViewData["Title"] = "Telegram — Звёзды и Премиум";
+    ViewData["Title"] = "Telegram Premium";
 }
 
 <style>
@@ -677,7 +674,7 @@
                 <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
                 <span class="tg-hero-badge green"><i class="bi bi-speedometer2"></i>Высокая скорость</span>
             </div>
-            <h1 class="tg-hero-title">Пополни звёзды в Telegram</h1>
+            <h1 class="tg-hero-title">Telegram Premium</h1>
         </div>
     </div>
 
@@ -690,22 +687,8 @@
             <!-- Username input -->
             <div class="uid-section">
                 <span class="uid-prefix">@@</span>
-                <input type="text" class="uid-input" id="tgUsername" placeholder="Введите юзернейм Telegram" autocomplete="off" spellcheck="false">
-                <label class="uid-checkbox">
-                    <input type="checkbox" id="tgAnonymous">
-                    Анонимно
-                </label>
+                <input type="text" class="uid-input" id="tgUsername" placeholder="Введите юзернейм Telegram получателя" autocomplete="off" spellcheck="false">
             </div>
-
-            <!-- Stars input -->
-            <div class="uid-section" style="border-color: rgba(42, 171, 238, 0.15);">
-                <div class="stars-input-wrapper">
-                    <input type="number" id="starsInput" placeholder="Количество звёзд (от @minStars до @maxStars.ToString("N0"))" min="@minStars" max="@maxStars" oninput="onStarsInput(this)">
-                    <span class="stars-icon">⭐</span>
-                </div>
-                <span class="stars-price-display" id="starsPrice"></span>
-            </div>
-            <div class="stars-error" id="starsError"></div>
 
             <!-- Telegram Premium Section -->
             @if (premiumProducts.Any())
@@ -829,11 +812,11 @@
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>Как происходит доставка звёзд?</span>
+                    <span>Как активируется Telegram Premium?</span>
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">После оплаты звёзды зачисляются напрямую на ваш Telegram-аккаунт через официальный механизм. Мы используем публичный юзернейм для отправки — процесс полностью автоматизирован и безопасен.</div>
+                    <div class="faq-answer-inner">После оплаты подписка активируется на указанный юзернейм автоматически в течение 1-3 минут. В Telegram у получателя появится значок Premium и доступ ко всем плюшкам.</div>
                 </div>
             </div>
 
@@ -853,7 +836,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Перейдите в Настройки Telegram → нажмите на поле «Имя пользователя» → придумайте уникальное имя и сохраните. После этого вы сможете получать звёзды и подарки по юзернейму.</div>
+                    <div class="faq-answer-inner">Перейдите в Настройки Telegram → нажмите на поле «Имя пользователя» → придумайте уникальное имя и сохраните. Без юзернейма получить Premium не получится — он нужен как идентификатор аккаунта.</div>
                 </div>
             </div>
 
@@ -863,27 +846,27 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Абсолютно. Пополнение звёзд происходит через официальные инструменты Telegram. Мы не запрашиваем пароль, код подтверждения или доступ к аккаунту — только публичный юзернейм.</div>
+                    <div class="faq-answer-inner">Абсолютно. Активация Premium происходит через официальные инструменты Telegram. Мы не запрашиваем пароль, код подтверждения или доступ к аккаунту — только публичный юзернейм.</div>
                 </div>
             </div>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>Получу ли я ровно столько звёзд, сколько заказал?</span>
+                    <span>Можно подарить Premium другому человеку?</span>
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Да, зачисление происходит без скрытых комиссий. Заказали 500 звёзд — получите ровно 500. Количество всегда совпадает с тем, что указано при оформлении.</div>
+                    <div class="faq-answer-inner">Да, просто введите юзернейм получателя при оформлении. Подарок придёт ему напрямую — никаких сообщений или промокодов отправлять не нужно.</div>
                 </div>
             </div>
 
             <div class="faq-item">
                 <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>Какие лимиты на покупку?</span>
+                    <span>Что входит в Telegram Premium?</span>
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer">
-                    <div class="faq-answer-inner">Минимальный заказ — @minStars звёзд, максимальный — @maxStars.ToString("N0") звёзд за один платёж. Количество покупок не ограничено — можно оформить несколько заказов подряд.</div>
+                    <div class="faq-answer-inner">Удвоенные лимиты на чаты, папки и закреплённые сообщения, загрузка файлов до 4 ГБ, ускоренная скачка, эксклюзивные стикеры и реакции, голосовые сообщения в текст, закрытый бейдж в профиле, без рекламы в публичных каналах.</div>
                 </div>
             </div>
         </div>
@@ -1010,74 +993,23 @@
         if (!wasOpen) item.classList.add('open');
     }
 
-    const starRate = @(starRate);
-    const minStars = @(minStars);
-    const maxStars = @(maxStars);
 
     let selectedPrice = 0;
     let selectedOldPrice = 0;
     let selectedAmount = '';
     let selectedImageUrl = '';
     let selectedProductId = 0;
-    let selectionMode = ''; // 'stars' or 'premium'
-
-    // --- Stars input ---
-    function onStarsInput(input) {
-        const val = parseInt(input.value) || 0;
-        const errorEl = document.getElementById('starsError');
-        const priceEl = document.getElementById('starsPrice');
-
-        // Clear premium selection
-        document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
-
-        if (val <= 0) {
-            errorEl.classList.remove('visible');
-            priceEl.textContent = '';
-            resetSidebar();
-            selectionMode = '';
-            return;
-        }
-
-        if (val < minStars || val > maxStars) {
-            errorEl.textContent = 'Вы ввели неверную сумму. Минимальная сумма \u2014 ' + minStars + ' зв\u0451зд, максимальная \u2014 ' + maxStars.toLocaleString('ru-RU') + ' зв\u0451зд';
-            errorEl.classList.add('visible');
-            priceEl.textContent = '';
-            resetSidebar();
-            selectionMode = '';
-            return;
-        }
-
-        errorEl.classList.remove('visible');
-
-        const price = Math.ceil(val * starRate);
-        priceEl.textContent = '= ' + price.toLocaleString('ru-RU') + ' \u20BD';
-
-        selectionMode = 'stars';
-        selectedProductId = 0;
-        selectedPrice = price;
-        selectedOldPrice = price;
-        selectedAmount = val.toLocaleString('ru-RU') + ' \u2B50 зв\u0451зд';
-
-        // Update sidebar
-        document.getElementById('paymentIcon').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
-        document.getElementById('paymentIcon').innerHTML = '<span>\u2B50</span>';
-        document.getElementById('paymentName').textContent = 'Telegram Stars';
-        document.getElementById('selectedAmount').textContent = val.toLocaleString('ru-RU') + ' зв\u0451зд';
-        document.getElementById('originalPrice').textContent = price.toLocaleString('ru-RU') + ' \u20BD';
-        document.getElementById('discount').textContent = '-0 \u20BD';
-        document.getElementById('totalPrice').textContent = price.toLocaleString('ru-RU') + ' \u20BD';
-        document.getElementById('buttonPrice').textContent = price.toLocaleString('ru-RU');
-    }
+    let selectionMode = 'premium';
 
     function resetSidebar() {
         selectedPrice = 0;
         selectedOldPrice = 0;
         selectedAmount = '';
         selectedProductId = 0;
-        document.getElementById('paymentIcon').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
-        document.getElementById('paymentIcon').innerHTML = '<span>\u2B50</span>';
-        document.getElementById('paymentName').textContent = 'Telegram';
-        document.getElementById('selectedAmount').textContent = '\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u043E\u0432\u0430\u0440';
+        document.getElementById('paymentIcon').style.background = 'linear-gradient(135deg, #6C5CE7, #a855f7)';
+        document.getElementById('paymentIcon').innerHTML = '<span>\uD83D\uDC8E</span>';
+        document.getElementById('paymentName').textContent = 'Telegram Premium';
+        document.getElementById('selectedAmount').textContent = '\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u0430\u0440\u0438\u0444';
         document.getElementById('originalPrice').textContent = '0 \u20BD';
         document.getElementById('discount').textContent = '-0 \u20BD';
         document.getElementById('totalPrice').textContent = '0 \u20BD';
@@ -1086,12 +1018,6 @@
 
     // --- Premium selection ---
     function selectPremium(item, productId, amount, displayName, price, oldPrice) {
-        // Clear stars input
-        const starsInput = document.getElementById('starsInput');
-        starsInput.value = '';
-        document.getElementById('starsPrice').textContent = '';
-        document.getElementById('starsError').classList.remove('visible');
-
         // Select card
         document.querySelectorAll('.product-item').forEach(c => c.classList.remove('selected'));
         item.classList.add('selected');
@@ -1142,18 +1068,12 @@
             document.getElementById('modalInput').value = '@@' + tgUser.value.trim().replace(/^@@/, '');
         }
 
-        if (selectionMode === 'stars') {
-            document.getElementById('modalProductName').textContent = 'Telegram Stars';
-            document.getElementById('modalImage').style.background = 'linear-gradient(135deg, #2AABEE, #229ED9)';
-            document.getElementById('modalImage').innerHTML = '<span class="modal-placeholder">\u2B50</span>';
+        document.getElementById('modalProductName').textContent = 'Telegram Premium';
+        document.getElementById('modalImage').style.background = '@(premiumCard?.Gradient ?? "linear-gradient(135deg, #6C5CE7, #a855f7)")';
+        if (selectedImageUrl) {
+            document.getElementById('modalImage').innerHTML = '<img src="' + selectedImageUrl + '" alt="Premium" />';
         } else {
-            document.getElementById('modalProductName').textContent = 'Telegram Premium';
-            document.getElementById('modalImage').style.background = '@(premiumCard?.Gradient ?? "linear-gradient(135deg, #6C5CE7, #a855f7)")';
-            if (selectedImageUrl) {
-                document.getElementById('modalImage').innerHTML = '<img src="' + selectedImageUrl + '" alt="Premium" />';
-            } else {
-                document.getElementById('modalImage').innerHTML = '<span class="modal-placeholder">\uD83D\uDC8E</span>';
-            }
+            document.getElementById('modalImage').innerHTML = '<span class="modal-placeholder">\uD83D\uDC8E</span>';
         }
 
         document.getElementById('modalProductDesc').textContent = selectedAmount;
@@ -1194,14 +1114,7 @@
         if (!val) { alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u044E\u0437\u0435\u0440\u043D\u0435\u0439\u043C Telegram'); input.focus(); return; }
         if (!agree.checked) { alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u0438\u043C\u0438\u0442\u0435 \u0443\u0441\u043B\u043E\u0432\u0438\u044F \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u043E\u0433\u043E \u0441\u043E\u0433\u043B\u0430\u0448\u0435\u043D\u0438\u044F'); return; }
 
-        if (selectionMode === 'stars') {
-            // Stars purchase — productId is 0, we pass star quantity
-            const starsVal = parseInt(document.getElementById('starsInput').value) || 0;
-            if (starsVal < minStars || starsVal > maxStars) {
-                alert('\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E\u0435 \u043A\u043E\u043B\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u0437\u0432\u0451\u0437\u0434');
-                return;
-            }
-        } else if (!selectedProductId) {
+        if (!selectedProductId) {
             alert('\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0442\u043E\u0432\u0430\u0440');
             return;
         }
@@ -1220,13 +1133,7 @@
 
         const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
-        let body;
-        if (selectionMode === 'stars') {
-            const starsVal = parseInt(document.getElementById('starsInput').value);
-            body = JSON.stringify({ starQuantity: starsVal, deliveryInfo: val, paymentMethod: 'balance' });
-        } else {
-            body = JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' });
-        }
+        const body = JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: 'balance' });
 
         fetch('/Catalog/Purchase', {
             method: 'POST',

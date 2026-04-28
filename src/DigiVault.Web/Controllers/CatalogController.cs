@@ -165,9 +165,11 @@ public class CatalogController : Controller
 
         if (showGiftCards)
         {
+            // Telegram Premium has its own dedicated tab at /Catalog/Telegram —
+            // hide the whole Telegram category from the regular giftcard grid.
             var giftCards = await _context.GiftCards
                 .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-                .Where(g => g.IsActive)
+                .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
                 .ToListAsync();
 
             items.AddRange(giftCards.Select(g => new CatalogItemViewModel
@@ -332,9 +334,10 @@ public class CatalogController : Controller
         if (string.IsNullOrEmpty(slug))
             return NotFound();
 
-        // Legacy: telegram-stars was removed; route stale links to telegram-premium.
-        if (slug.ToLower() == "telegram-stars")
-            return RedirectToActionPermanent("GiftCard", new { slug = "telegram-premium" });
+        // Telegram Stars was removed entirely — fold legacy links onto the Telegram tab.
+        // Telegram Premium has its own dedicated tab at /Catalog/Telegram, so route there.
+        if (slug.ToLower().StartsWith("telegram"))
+            return RedirectToActionPermanent("Telegram");
 
         var card = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
@@ -344,7 +347,7 @@ public class CatalogController : Controller
             return NotFound();
 
         var allCards = await _context.GiftCards
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();
@@ -358,8 +361,10 @@ public class CatalogController : Controller
 
     public async Task<IActionResult> GiftCards()
     {
+        // Hide Telegram-category cards from the giftcards listing —
+        // they're accessed via the dedicated /Catalog/Telegram tab.
         var giftCards = await _context.GiftCards
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();
@@ -404,9 +409,29 @@ public class CatalogController : Controller
     }
 
     /// <summary>
-    /// Legacy route. Telegram Stars was removed; this route now permanently redirects
-    /// to the Telegram Premium product page.
+    /// Dedicated Telegram Premium tab. Telegram Stars was removed but this page
+    /// remains as the canonical product page for Telegram Premium subscriptions.
     /// </summary>
-    public IActionResult Telegram()
-        => RedirectToActionPermanent("GiftCard", new { slug = "telegram-premium" });
+    public async Task<IActionResult> Telegram()
+    {
+        var premiumCard = await _context.GiftCards
+            .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
+            .FirstOrDefaultAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+
+        if (premiumCard == null)
+            return NotFound();
+
+        var premiumProducts = premiumCard.Products
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Price)
+            .ToList();
+
+        ViewBag.PremiumCard = premiumCard;
+        ViewBag.PremiumProducts = premiumProducts;
+        await SetUserBalanceAsync();
+        await LoadReviewsViewBagAsync("GiftCard", premiumCard.Slug, giftCardId: premiumCard.Id);
+
+        return View("Telegram");
+    }
 }

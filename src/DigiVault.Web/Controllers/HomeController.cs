@@ -40,11 +40,12 @@ public class HomeController : Controller
             MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null
         }));
 
-        // Gift Cards — telegram-stars is soft-disabled at DB level (IsActive=false),
-        // so it's filtered out automatically. Telegram-premium shows as a regular tile.
+        // Gift Cards — telegram-stars is soft-disabled at DB level. Telegram Premium
+        // is accessed via its own /Catalog/Telegram tab, so the whole Telegram category
+        // is hidden from the regular homepage grid.
         var giftCards = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-            .Where(g => g.IsActive)
+            .Where(g => g.IsActive && g.Category != DigiVault.Core.Entities.GiftCardCategory.Telegram)
             .ToListAsync();
 
         items.AddRange(giftCards.Select(g => new CatalogItemViewModel

@@ -104,17 +104,27 @@ public class EnotPaymentProvider : IPaymentProvider
             ["expire"] = 300,
         };
 
-        // Filter checkout methods. If the caller passed a specific Enot service
-        // code (e.g. "card", "mir_card", "sbp", "p2p_card", "bitcoin", "usdt_trc20"
-        // selected on the modal's step 2), we lock the checkout to exactly that
-        // service so the user sees a single payment method on Enot's page.
-        // Otherwise fall back to broader filtering by PaymentMethod.
+        // Filter checkout methods exposed on Enot's hosted page. We accept three
+        // metadata keys, in priority order:
+        //   enot_service   — single specific service (e.g. "mir_card") for fine-
+        //                    grained pickers; locks checkout to one option
+        //   enot_services  — comma-separated list, set by OrderService based on
+        //                    the top-level UI category (card/sbp/qr/p2p/...)
+        //   <fallback>     — derive from PaymentMethod enum (legacy; PaymentMethod
+        //                    has no QR/P2P values so this is approximate)
         var explicitService = request.Metadata != null
             && request.Metadata.TryGetValue("enot_service", out var es) ? es : null;
+        var serviceList = request.Metadata != null
+            && request.Metadata.TryGetValue("enot_services", out var esl) ? esl : null;
 
         if (!string.IsNullOrWhiteSpace(explicitService))
         {
             body["include_service"] = new[] { explicitService };
+        }
+        else if (!string.IsNullOrWhiteSpace(serviceList))
+        {
+            var arr = serviceList.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (arr.Length > 0) body["include_service"] = arr;
         }
         else if (request.Method == PaymentMethod.Card)
         {

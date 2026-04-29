@@ -218,6 +218,15 @@ public class OrderService : IOrderService
             if (!string.IsNullOrWhiteSpace(enotService))
                 metadata["enot_service"] = enotService.Trim();
 
+            // Per top-level UI category (card / sbp / qr / p2p / crypto / wallet),
+            // hand the gateway the EXACT list of services to expose. Without this
+            // we'd fall back to PaymentMethod-based filtering — but our enum
+            // doesn't have QR or P2P values, so they'd collapse into SBP/Card and
+            // the user would see the wrong options on Enot's checkout page.
+            var enotServices = MapPaymentMethodToEnotServices(paymentMethod);
+            if (enotServices.Length > 0)
+                metadata["enot_services"] = string.Join(",", enotServices);
+
             var paymentRequest = new DigiVault.Core.Models.Payment.PaymentRequest
             {
                 UserId      = userId,
@@ -291,10 +300,28 @@ public class OrderService : IOrderService
     {
         "card"   => DigiVault.Core.Enums.PaymentMethod.Card,
         "sbp"    => DigiVault.Core.Enums.PaymentMethod.SBP,
-        "qr"     => DigiVault.Core.Enums.PaymentMethod.SBP,    // Enot serves SBP QR via the same `sbp` service
-        "p2p"    => DigiVault.Core.Enums.PaymentMethod.Card,   // P2P card via Enot is the `card` service
+        "qr"     => DigiVault.Core.Enums.PaymentMethod.SBP,    // routing only — exact services come from MapPaymentMethodToEnotServices
+        "p2p"    => DigiVault.Core.Enums.PaymentMethod.Card,
         "crypto" => DigiVault.Core.Enums.PaymentMethod.Crypto,
+        "wallet" => DigiVault.Core.Enums.PaymentMethod.YooMoney,
         _        => DigiVault.Core.Enums.PaymentMethod.Card,
+    };
+
+    /// <summary>
+    /// Top-level UI category → list of Enot service codes to expose on the
+    /// gateway's hosted checkout. This keeps each tile in our modal mapped to
+    /// a tightly-scoped set of options (e.g. "QR" only shows SBP, not P2P SBP;
+    /// "P2P" shows just the two P2P services, not all card flavours).
+    /// </summary>
+    private static string[] MapPaymentMethodToEnotServices(string raw) => raw?.ToLowerInvariant() switch
+    {
+        "card"   => new[] { "card", "mir_card", "apple_pay", "google_pay" },
+        "sbp"    => new[] { "sbp" },
+        "qr"     => new[] { "sbp" },          // SBP is the QR method in Russia — Enot renders it as a scannable QR
+        "p2p"    => new[] { "p2p_card", "p2p_sbp" },
+        "crypto" => new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin", "ton", "trx", "bitcoin_cash", "dash" },
+        "wallet" => new[] { "qiwi", "yoomoney", "webmoney", "advcash", "perfect_money" },
+        _        => Array.Empty<string>(),
     };
 
     public static string GenerateOrderNumber()

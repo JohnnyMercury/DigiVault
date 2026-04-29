@@ -1785,7 +1785,7 @@
                                 </div>
                             </div>
                         }
-                        <div class="modal-pay-method disabled" data-method="card">
+                        <div class="modal-pay-method" data-method="card" onclick="selectModalPayment(this)">
                             <div class="modal-pay-method-left">
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                                     <i class="bi bi-credit-card"></i>
@@ -1796,10 +1796,10 @@
                                 </div>
                             </div>
                             <div class="modal-pay-method-right">
-                                <span class="modal-pay-badge-soon">Скоро</span>
+                                <span class="modal-pay-radio"></span>
                             </div>
                         </div>
-                        <div class="modal-pay-method disabled" data-method="sbp">
+                        <div class="modal-pay-method" data-method="sbp" onclick="selectModalPayment(this)">
                             <div class="modal-pay-method-left">
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
                                     <i class="bi bi-lightning-charge"></i>
@@ -1810,10 +1810,10 @@
                                 </div>
                             </div>
                             <div class="modal-pay-method-right">
-                                <span class="modal-pay-badge-soon">Скоро</span>
+                                <span class="modal-pay-radio"></span>
                             </div>
                         </div>
-                        <div class="modal-pay-method disabled" data-method="p2p">
+                        <div class="modal-pay-method" data-method="p2p" onclick="selectModalPayment(this)">
                             <div class="modal-pay-method-left">
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #ec4899, #e11d48);">
                                     <i class="bi bi-people"></i>
@@ -1824,10 +1824,10 @@
                                 </div>
                             </div>
                             <div class="modal-pay-method-right">
-                                <span class="modal-pay-badge-soon">Скоро</span>
+                                <span class="modal-pay-radio"></span>
                             </div>
                         </div>
-                        <div class="modal-pay-method disabled" data-method="qr">
+                        <div class="modal-pay-method" data-method="qr" onclick="selectModalPayment(this)">
                             <div class="modal-pay-method-left">
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                                     <i class="bi bi-qr-code"></i>
@@ -1838,7 +1838,7 @@
                                 </div>
                             </div>
                             <div class="modal-pay-method-right">
-                                <span class="modal-pay-badge-soon">Скоро</span>
+                                <span class="modal-pay-radio"></span>
                             </div>
                         </div>
                     </div>
@@ -2089,12 +2089,17 @@
         fetch('/Catalog/Purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-            body: JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: deliveryInfo, paymentMethod: 'balance' })
+            body: JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: deliveryInfo, paymentMethod: (document.querySelector('.modal-pay-method.selected')?.dataset.method || 'balance') })
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+                if (data.redirectUrl) {
+                    // External payment — hand off to provider's hosted checkout.
+                    window.location.href = data.redirectUrl;
+                } else {
+                    showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+                }
             } else {
                 alert(data.errorMessage || 'Ошибка при покупке');
                 btn.disabled = false;

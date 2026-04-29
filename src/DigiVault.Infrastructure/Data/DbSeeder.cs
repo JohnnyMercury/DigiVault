@@ -246,5 +246,28 @@ public static class DbSeeder
 
         // Seed demo reviews (~250 realistic fake reviews across all products)
         await ReviewsSeeder.SeedAsync(context);
+
+        // Seed Enot payment provider config (real keys from the merchant cabinet).
+        // Keys can be edited later via /Admin/PaymentProviders.
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "enot"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "enot",
+                DisplayName = "Enot",
+                IsEnabled   = true,
+                Priority    = 10,
+                ApiKey      = "1c7b4970850d33ae175b2e9efd855cedeeec82a5",
+                SecretKey   = "f883bfefb973aebb9bc5ce988377f47576c68518",
+                MerchantId  = "d97c634f-16f2-4918-910a-f686364f06eb",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

@@ -14,6 +14,15 @@ public class PurchaseResult
     public string? ProductKey { get; set; }
     public string? ErrorMessage { get; set; }
     public decimal? NewBalance { get; set; }
+
+    /// <summary>
+    /// For external-payment purchases: where to redirect the user so they can
+    /// pay on the provider's hosted page (Enot, YooKassa, etc.).
+    /// </summary>
+    public string? RedirectUrl { get; set; }
+
+    /// <summary>For external-payment purchases: our internal Order id.</summary>
+    public int? OrderId { get; set; }
 }
 
 public interface IOrderService
@@ -23,6 +32,15 @@ public interface IOrderService
     Task<OrderHistoryViewModel> GetOrderHistoryAsync(string userId, int page = 1, int pageSize = 10);
     Task<List<TransactionViewModel>> GetTransactionsAsync(string userId, int count = 20);
     Task<PurchaseResult> CreatePurchaseAsync(string userId, int gameProductId, int quantity, string? deliveryInfo);
+
+    /// <summary>
+    /// Creates an Order in <see cref="OrderStatus.Pending"/> and asks the
+    /// payment provider for a hosted-checkout URL. The user is redirected
+    /// there; on successful webhook the order moves to Processing →
+    /// Completed via the fulfilment pipeline.
+    /// </summary>
+    Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId, int quantity,
+        string? deliveryInfo, string paymentMethod, string siteBaseUrl, string? clientIp);
 }
 
 public class OrderService : IOrderService
@@ -30,14 +48,17 @@ public class OrderService : IOrderService
     private readonly ApplicationDbContext _context;
     private readonly IBalanceService _balanceService;
     private readonly IFulfilmentService _fulfilment;
+    private readonly DigiVault.Core.Interfaces.IPaymentProviderFactory _providerFactory;
     private readonly ILogger<OrderService> _logger;
 
     public OrderService(ApplicationDbContext context, IBalanceService balanceService,
-        IFulfilmentService fulfilment, ILogger<OrderService> logger)
+        IFulfilmentService fulfilment, DigiVault.Core.Interfaces.IPaymentProviderFactory providerFactory,
+        ILogger<OrderService> logger)
     {
         _context = context;
         _balanceService = balanceService;
         _fulfilment = fulfilment;
+        _providerFactory = providerFactory;
         _logger = logger;
     }
 
@@ -132,6 +153,138 @@ public class OrderService : IOrderService
             return new PurchaseResult { Success = false, ErrorMessage = "Произошла ошибка при оформлении заказа" };
         }
     }
+
+    public async Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId,
+        int quantity, string? deliveryInfo, string paymentMethod, string siteBaseUrl, string? clientIp)
+    {
+        try
+        {
+            // 1. Validate product + stock
+            var gameProduct = await _context.GameProducts
+                .FirstOrDefaultAsync(gp => gp.Id == gameProductId && gp.IsActive);
+            if (gameProduct == null)
+                return new PurchaseResult { Success = false, ErrorMessage = "Товар не найден или недоступен" };
+            if (gameProduct.StockQuantity < quantity)
+                return new PurchaseResult { Success = false, ErrorMessage = "Товар временно недоступен (нет в наличии)" };
+
+            var totalPrice = gameProduct.Price * quantity;
+
+            // 2. Resolve the provider that handles this method.
+            var method = MapPaymentMethod(paymentMethod);
+            var provider = _providerFactory.GetProviderForMethod(method);
+            if (provider == null || !provider.IsEnabled)
+                return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
+
+            // 3. Create the Order in Pending — payment hasn't arrived yet.
+            //    Stock is decremented up-front to avoid two simultaneous checkouts
+            //    going through; if the user abandons the flow we let the order
+            //    expire naturally (no auto-refund logic for now).
+            var orderNumber = GenerateOrderNumber();
+            var order = new Order
+            {
+                UserId = userId,
+                OrderNumber = orderNumber,
+                TotalAmount = totalPrice,
+                Status = OrderStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                DeliveryInfo = deliveryInfo
+            };
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            var orderItem = new OrderItem
+            {
+                OrderId = order.Id,
+                GameProductId = gameProductId,
+                Quantity = quantity,
+                UnitPrice = gameProduct.Price,
+                TotalPrice = totalPrice
+            };
+            _context.OrderItems.Add(orderItem);
+            gameProduct.StockQuantity -= quantity;
+            await _context.SaveChangesAsync();
+
+            // 4. Ask the provider to create a payment. We pass our future webhook,
+            //    success and fail URLs — the user lands back here after Enot.
+            var user = await _context.Users.FindAsync(userId);
+            var siteBase = siteBaseUrl.TrimEnd('/');
+            var paymentRequest = new DigiVault.Core.Models.Payment.PaymentRequest
+            {
+                UserId      = userId,
+                Amount      = totalPrice,
+                Currency    = "RUB",
+                Method      = method,
+                Email       = user?.Email,
+                Description = $"Заказ {orderNumber}: {gameProduct.Name}",
+                OrderId     = order.Id,
+                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
+                CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
+                WebhookUrl  = $"{siteBase}/api/webhooks/{provider.Name}",
+                ClientIp    = clientIp,
+            };
+
+            var providerResult = await provider.CreatePaymentAsync(paymentRequest);
+            if (!providerResult.Success || string.IsNullOrEmpty(providerResult.RedirectUrl))
+            {
+                // Roll back the Order — provider rejected us.
+                _context.OrderItems.Remove(orderItem);
+                _context.Orders.Remove(order);
+                gameProduct.StockQuantity += quantity;
+                await _context.SaveChangesAsync();
+                return new PurchaseResult { Success = false,
+                    ErrorMessage = providerResult.ErrorMessage ?? "Не удалось создать платёж" };
+            }
+
+            // 5. Persist the PaymentTransaction so the webhook can find it.
+            //    transaction.TransactionId == provider's order_id (what we control).
+            //    transaction.ProviderTransactionId == provider's invoice id (what they return).
+            _context.PaymentTransactions.Add(new PaymentTransaction
+            {
+                TransactionId         = providerResult.TransactionId ?? Guid.NewGuid().ToString("N"),
+                ProviderTransactionId = providerResult.ProviderTransactionId,
+                ProviderName          = provider.Name,
+                UserId                = userId,
+                OrderId               = order.Id,
+                Method                = method,
+                Status                = DigiVault.Core.Enums.PaymentStatus.Pending,
+                Amount                = totalPrice,
+                Currency              = "RUB",
+                Description           = paymentRequest.Description,
+                ClientIp              = clientIp,
+                CreatedAt             = DateTime.UtcNow,
+                UpdatedAt             = DateTime.UtcNow,
+            });
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "External purchase initiated: Order {OrderNumber}, Provider {Provider}, User {UserId}, Amount {Amount}",
+                orderNumber, provider.Name, userId, totalPrice);
+
+            return new PurchaseResult
+            {
+                Success     = true,
+                OrderNumber = orderNumber,
+                OrderId     = order.Id,
+                RedirectUrl = providerResult.RedirectUrl,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "External purchase failed for user {UserId}, product {GameProductId}",
+                userId, gameProductId);
+            return new PurchaseResult { Success = false, ErrorMessage = "Произошла ошибка при оформлении заказа" };
+        }
+    }
+
+    private static DigiVault.Core.Enums.PaymentMethod MapPaymentMethod(string raw) => raw?.ToLowerInvariant() switch
+    {
+        "card"   => DigiVault.Core.Enums.PaymentMethod.Card,
+        "sbp"    => DigiVault.Core.Enums.PaymentMethod.SBP,
+        "qr"     => DigiVault.Core.Enums.PaymentMethod.SBP,    // Enot serves SBP QR via the same `sbp` service
+        "p2p"    => DigiVault.Core.Enums.PaymentMethod.Card,   // P2P card via Enot is the `card` service
+        "crypto" => DigiVault.Core.Enums.PaymentMethod.Crypto,
+        _        => DigiVault.Core.Enums.PaymentMethod.Card,
+    };
 
     public static string GenerateOrderNumber()
     {

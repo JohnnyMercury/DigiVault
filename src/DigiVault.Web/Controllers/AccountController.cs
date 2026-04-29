@@ -413,4 +413,41 @@ public class AccountController : Controller
     {
         return View();
     }
+
+    /// <summary>
+    /// Landing after a successful external payment. The provider's webhook
+    /// has likely already flipped the order to Completed (or will within
+    /// seconds via the fulfilment background sweeper). We just route the
+    /// user to the order details page.
+    /// </summary>
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> PaymentSuccess(int orderId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction("Login");
+
+        var order = await _orderService.GetOrderAsync(user.Id, orderId);
+        if (order == null) return RedirectToAction(nameof(Orders));
+
+        TempData["SuccessMessage"] = "Оплата прошла успешно. Товар будет в кабинете в течение минуты.";
+        return RedirectToAction(nameof(OrderDetails), new { orderNumber = order.OrderNumber });
+    }
+
+    /// <summary>
+    /// Landing after a cancelled/failed external payment.
+    /// </summary>
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> PaymentFail(int orderId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return RedirectToAction("Login");
+
+        var order = await _orderService.GetOrderAsync(user.Id, orderId);
+        TempData["ErrorMessage"] = "Платёж не был завершён. Попробуйте ещё раз или свяжитесь с поддержкой.";
+        if (order != null)
+            return RedirectToAction(nameof(OrderDetails), new { orderNumber = order.OrderNumber });
+        return RedirectToAction(nameof(Orders));
+    }
 }

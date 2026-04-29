@@ -248,7 +248,6 @@ public class PaymentService : IPaymentService
 
     private async Task CompletePaymentInternalAsync(PaymentTransaction transaction)
     {
-        // Зачисляем средства на баланс
         var user = await _context.Users.FindAsync(transaction.UserId);
         if (user == null)
         {
@@ -256,9 +255,19 @@ public class PaymentService : IPaymentService
             return;
         }
 
-        user.Balance += transaction.Amount;
+        // Order-linked payment: the money pays for an order, not for a wallet
+        // top-up. Don't credit the user's balance — fulfilment will be handed
+        // off to IFulfilmentService by WebhooksController right after this method.
+        if (transaction.OrderId.HasValue)
+        {
+            _logger.LogInformation(
+                "Order-linked payment completed: User {UserId}, Order {OrderId}, Amount {Amount} RUB, Txn {TransactionId} — fulfilment will follow",
+                transaction.UserId, transaction.OrderId, transaction.Amount, transaction.TransactionId);
+            return;
+        }
 
-        // Создаем запись о транзакции баланса
+        // Wallet top-up: credit the balance.
+        user.Balance += transaction.Amount;
         _context.Transactions.Add(new Transaction
         {
             UserId = transaction.UserId,

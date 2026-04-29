@@ -64,7 +64,9 @@ builder.Services.AddScoped<DigiVault.Web.Services.Fulfilment.IFulfilmentService,
 builder.Services.AddHostedService<DigiVault.Web.Services.Fulfilment.OrderFulfilmentBackgroundService>();
 
 // Payment infrastructure
+builder.Services.AddHttpClient(); // for Enot/other providers' outbound HTTP
 builder.Services.AddScoped<IPaymentProvider, TestPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Enot.EnotPaymentProvider>();
 // TODO: Add real providers here:
 // builder.Services.AddScoped<IPaymentProvider, YooKassaProvider>();
 // builder.Services.AddScoped<IPaymentProvider, StripeProvider>();

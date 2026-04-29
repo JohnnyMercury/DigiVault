@@ -123,11 +123,21 @@ public class CatalogController : Controller
         if (string.IsNullOrEmpty(userId))
             return Json(new PurchaseResult { Success = false, ErrorMessage = "Необходимо войти в аккаунт" });
 
-        if (request.PaymentMethod != "balance")
-            return Json(new PurchaseResult { Success = false, ErrorMessage = "Пока доступна только оплата с баланса" });
+        // Wallet — synchronous fulfilment, no redirect.
+        if (request.PaymentMethod == "balance")
+        {
+            var balanceResult = await _orderService.CreatePurchaseAsync(userId, request.GameProductId, 1, request.DeliveryInfo);
+            return Json(balanceResult);
+        }
 
-        var result = await _orderService.CreatePurchaseAsync(userId, request.GameProductId, 1, request.DeliveryInfo);
-        return Json(result);
+        // External payment (card / sbp / qr / p2p / crypto): create Pending order
+        // and ask the provider for a hosted-checkout URL. Client redirects.
+        var siteBaseUrl = $"{Request.Scheme}://{Request.Host}";
+        var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var extResult = await _orderService.CreateExternalPurchaseAsync(
+            userId, request.GameProductId, 1, request.DeliveryInfo,
+            request.PaymentMethod, siteBaseUrl, clientIp);
+        return Json(extResult);
     }
 
     public async Task<IActionResult> Index(string? category = null, string? search = null, string? sort = null, int page = 1)

@@ -159,46 +159,37 @@
 <script>
 (function () {
     /**
-     * Catalogue: which Enot services are exposed for each top-level method.
-     * Edit when Enot's enabled tariffs change in the merchant cabinet.
-     * Each entry's `code` is sent as enotService → Enot's include_service[0].
+     * Catalogue of payment-service providers (PSPs) we've integrated per
+     * top-level method category. Today only Enot.io is wired up — and it
+     * supports every category. When new gateways come online (BlvckPay,
+     * PayPecker, YooKassa, Stripe), add them as additional entries to the
+     * relevant arrays — UI shows them as separate provider tiles.
+     *
+     * Each tile, when clicked, sends just the top-level paymentMethod to
+     * the backend. The backend's IPaymentProviderFactory.GetProviderForMethod
+     * picks the gateway. Specific Enot service codes (card / mir_card /
+     * apple_pay / etc.) are NOT exposed to the user — Enot's own checkout
+     * page handles intra-method choice.
      */
-    const ENOT_SERVICES = {
+    const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
+    const PROVIDERS_BY_METHOD = {
         card: [
-            { code: 'card',       title: 'Visa / MasterCard',  desc: 'Российские и зарубежные банки', icon: 'bi-credit-card-2-front', color: 'linear-gradient(135deg, #4facfe, #00f2fe)' },
-            { code: 'mir_card',   title: 'Карта МИР',          desc: 'Российские карты',              icon: 'bi-credit-card',         color: 'linear-gradient(135deg, #22c55e, #16a34a)' },
-            { code: 'apple_pay',  title: 'Apple Pay',          desc: 'iPhone / Mac',                  icon: 'bi-apple',               color: 'linear-gradient(135deg, #1a1a1a, #4a4a4a)' },
-            { code: 'google_pay', title: 'Google Pay',         desc: 'Android / Google Wallet',       icon: 'bi-google',              color: 'linear-gradient(135deg, #4285f4, #34a853)' },
-            { code: 'p2p_card',   title: 'P2P на карту',       desc: 'Прямой перевод с карты на карту', icon: 'bi-people',            color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР, Apple Pay, Google Pay', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
         ],
         sbp: [
-            { code: 'sbp',     title: 'СБП',     desc: 'Система быстрых платежей',  icon: 'bi-lightning-charge', color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' },
-            { code: 'p2p_sbp', title: 'P2P СБП', desc: 'P2P через систему быстрых платежей', icon: 'bi-people', color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'Система быстрых платежей',                      icon: 'bi-lightning-charge',     color: ENOT_BADGE },
         ],
         qr: [
-            { code: 'sbp', title: 'СБП QR-код', desc: 'Сканируйте QR в банковском приложении', icon: 'bi-qr-code', color: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'QR-код через СБП',                              icon: 'bi-qr-code',              color: ENOT_BADGE },
         ],
         p2p: [
-            { code: 'p2p_card', title: 'P2P Карта', desc: 'Перевод на карту получателя',  icon: 'bi-credit-card', color: 'linear-gradient(135deg, #ec4899, #db2777)' },
-            { code: 'p2p_sbp',  title: 'P2P СБП',   desc: 'Перевод через СБП',            icon: 'bi-lightning-charge', color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'P2P-перевод на карту или через СБП',           icon: 'bi-people',               color: ENOT_BADGE },
         ],
         crypto: [
-            { code: 'bitcoin',      title: 'Bitcoin',       desc: 'BTC',                icon: 'bi-currency-bitcoin', color: 'linear-gradient(135deg, #f7931a, #e76b00)' },
-            { code: 'usdt_trc20',   title: 'USDT TRC20',    desc: 'Tether в сети TRON', icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #26a17b, #1a7d5c)' },
-            { code: 'usdt_erc20',   title: 'USDT ERC20',    desc: 'Tether в сети ETH',  icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #26a17b, #1a7d5c)' },
-            { code: 'ethereum',     title: 'Ethereum',      desc: 'ETH',                icon: 'bi-diamond-fill',     color: 'linear-gradient(135deg, #627eea, #4357c7)' },
-            { code: 'litecoin',     title: 'Litecoin',      desc: 'LTC',                icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #345d9d, #1d3a6a)' },
-            { code: 'ton',          title: 'TON',           desc: 'The Open Network',   icon: 'bi-send-fill',        color: 'linear-gradient(135deg, #0098ea, #0077b8)' },
-            { code: 'trx',          title: 'TRON',          desc: 'TRX',                icon: 'bi-triangle-fill',    color: 'linear-gradient(135deg, #ef0027, #c20020)' },
-            { code: 'bitcoin_cash', title: 'Bitcoin Cash',  desc: 'BCH',                icon: 'bi-currency-bitcoin', color: 'linear-gradient(135deg, #0ac18e, #069970)' },
-            { code: 'dash',         title: 'DASH',          desc: 'DASH',               icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #008ce7, #006fb8)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'BTC, USDT (TRC20/ERC20), ETH, LTC, TON и др.', icon: 'bi-currency-bitcoin',     color: ENOT_BADGE },
         ],
         wallet: [
-            { code: 'qiwi',          title: 'QIWI',          desc: 'QIWI Кошелёк',     icon: 'bi-wallet2',     color: 'linear-gradient(135deg, #ff8c00, #d97706)' },
-            { code: 'yoomoney',      title: 'ЮMoney',        desc: 'Яндекс.Деньги',    icon: 'bi-wallet-fill', color: 'linear-gradient(135deg, #8b3a8b, #6b1f6b)' },
-            { code: 'webmoney',      title: 'WebMoney',      desc: 'WebMoney Transfer', icon: 'bi-wallet',     color: 'linear-gradient(135deg, #0099d8, #006ba6)' },
-            { code: 'advcash',       title: 'Advcash',       desc: 'Advanced Cash',    icon: 'bi-wallet-fill', color: 'linear-gradient(135deg, #1f6feb, #0c4ac3)' },
-            { code: 'perfect_money', title: 'Perfect Money', desc: 'Perfect Money',    icon: 'bi-cash-coin',   color: 'linear-gradient(135deg, #d4af37, #a37e1f)' },
+            { code: 'enot', title: 'Enot Pay', desc: 'QIWI, ЮMoney, WebMoney, Advcash',              icon: 'bi-wallet2',              color: ENOT_BADGE },
         ],
     };
 
@@ -212,12 +203,12 @@
     };
 
     let currentMethod  = null;
-    let currentService = null;
+    let currentProvider = null;
 
     window.openPaymentStep2 = function (method) {
-        const services = ENOT_SERVICES[method];
-        if (!services || services.length === 0) {
-            console.warn('[ps2] no services for method:', method);
+        const providers = PROVIDERS_BY_METHOD[method];
+        if (!providers || providers.length === 0) {
+            console.warn('[ps2] no providers for method:', method);
             return false;
         }
         const grid    = document.getElementById('paymentStep2Grid');
@@ -227,20 +218,20 @@
         const step2El = document.getElementById('paymentStep2');
         if (!grid || !step1 || !step2El) return false;
 
-        currentMethod  = method;
-        currentService = null;
+        currentMethod   = method;
+        currentProvider = null;
         if (label) label.textContent = METHOD_LABELS[method] || method;
-        if (count) count.textContent = services.length;
+        if (count) count.textContent = providers.length;
 
-        grid.innerHTML = services.map(s => `
-            <div class="ps2-tile" data-method="${method}" data-service="${s.code}">
-                <div class="ps2-tile-icon" style="background: ${s.color};">
-                    <i class="bi ${s.icon}"></i>
+        grid.innerHTML = providers.map(p => `
+            <div class="ps2-tile" data-method="${method}" data-provider="${p.code}">
+                <div class="ps2-tile-icon" style="background: ${p.color};">
+                    <i class="bi ${p.icon}"></i>
                 </div>
                 <div class="ps2-tile-text">
-                    <div class="ps2-tile-name">${s.title}</div>
+                    <div class="ps2-tile-name">${p.title}</div>
                     <div class="ps2-tile-meta">
-                        <span>${s.desc}</span>
+                        <span>${p.desc}</span>
                         <span>·</span>
                         <span class="ps2-tile-free"><i class="bi bi-check-circle-fill"></i> Без комиссии</span>
                     </div>
@@ -252,6 +243,14 @@
         grid.querySelectorAll('.ps2-tile').forEach(tile => {
             tile.addEventListener('click', () => selectTile(tile));
         });
+
+        // Single-provider quick-pick: auto-select the only tile so the user
+        // doesn't have to click twice. The Pay button at the bottom is the
+        // real trigger.
+        if (providers.length === 1) {
+            const onlyTile = grid.querySelector('.ps2-tile');
+            if (onlyTile) selectTile(onlyTile);
+        }
 
         // Reset Pay button
         const payBtn = document.getElementById('paymentStep2PayBtn');
@@ -279,9 +278,8 @@
     function selectTile(tile) {
         document.querySelectorAll('.ps2-tile').forEach(t => t.classList.remove('selected'));
         tile.classList.add('selected');
-        currentService = tile.dataset.service;
+        currentProvider = tile.dataset.provider;
 
-        // Update Pay button label with order total if the page set window.lastSelectedPrice.
         const payBtn = document.getElementById('paymentStep2PayBtn');
         const total  = window.lastSelectedPrice || 0;
         if (total > 0) {
@@ -293,13 +291,16 @@
     }
 
     window.confirmStep2Selection = function () {
-        if (!currentMethod || !currentService) return;
+        if (!currentMethod || !currentProvider) return;
         const payBtn = document.getElementById('paymentStep2PayBtn');
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка…';
 
+        // We pass only the top-level method. The picked provider's
+        // hosted-checkout page lets the user finish the payment using any
+        // service the gateway supports for that method category.
         if (typeof window.submitPurchaseWithService === 'function') {
-            window.submitPurchaseWithService(currentMethod, currentService, null);
+            window.submitPurchaseWithService(currentMethod, null, null);
         } else {
             console.error('submitPurchaseWithService is not defined on this page');
             alert('Ошибка инициализации');

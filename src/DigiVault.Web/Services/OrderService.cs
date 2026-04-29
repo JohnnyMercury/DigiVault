@@ -300,8 +300,6 @@ public class OrderService : IOrderService
     {
         "card" => DigiVault.Core.Enums.PaymentMethod.Card,
         "sbp"  => DigiVault.Core.Enums.PaymentMethod.SBP,
-        "qr"   => DigiVault.Core.Enums.PaymentMethod.SBP,    // routing only — exact services come from MapPaymentMethodToEnotServices
-        "p2p"  => DigiVault.Core.Enums.PaymentMethod.Card,
         _      => DigiVault.Core.Enums.PaymentMethod.Card,
     };
 
@@ -314,10 +312,8 @@ public class OrderService : IOrderService
     /// </summary>
     private static string[] MapPaymentMethodToEnotServices(string raw) => raw?.ToLowerInvariant() switch
     {
-        "card" => new[] { "card" },                         // Visa / MC / МИР через единый карточный тариф Enot
-        "sbp"  => new[] { "sbp" },                          // СБП по реквизитам
-        "qr"   => new[] { "sbp" },                          // QR-код Enot отрисовывает в рамках того же SBP-тарифа
-        "p2p"  => new[] { "card" },                         // P2P-перевод не имеет отдельного тарифа — направляем на карточный шлюз
+        "card" => new[] { "card" },                         // Visa / MC / МИР — единый карточный тариф Enot
+        "sbp"  => new[] { "sbp" },                          // СБП — Enot рендерит в т.ч. как QR-код в hosted-checkout
         _      => Array.Empty<string>(),
     };
 

@@ -177,24 +177,16 @@
     const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
     const PROVIDERS_BY_METHOD = {
         card: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР',                    icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
         ],
         sbp: [
-            { code: 'enot', title: 'Enot Pay', desc: 'СБП — оплата по реквизитам',               icon: 'bi-lightning-charge',     color: ENOT_BADGE },
-        ],
-        qr: [
-            { code: 'enot', title: 'Enot Pay', desc: 'СБП — оплата сканированием QR-кода',       icon: 'bi-qr-code',              color: ENOT_BADGE },
-        ],
-        p2p: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Перевод по номеру карты (Visa / МИР)',     icon: 'bi-people-fill',          color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'СБП — реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE },
         ],
     };
 
     const METHOD_LABELS = {
         card: 'Банковская карта',
         sbp:  'СБП',
-        qr:   'QR-код',
-        p2p:  'P2P перевод',
     };
 
     let currentMethod  = null;

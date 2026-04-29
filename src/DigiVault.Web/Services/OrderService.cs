@@ -38,9 +38,11 @@ public interface IOrderService
     /// payment provider for a hosted-checkout URL. The user is redirected
     /// there; on successful webhook the order moves to Processing →
     /// Completed via the fulfilment pipeline.
+    /// <paramref name="enotService"/> — optional Enot service code to lock
+    /// the checkout to a single payment system (e.g. <c>"card"</c>, <c>"sbp"</c>).
     /// </summary>
     Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId, int quantity,
-        string? deliveryInfo, string paymentMethod, string siteBaseUrl, string? clientIp);
+        string? deliveryInfo, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp);
 }
 
 public class OrderService : IOrderService
@@ -155,7 +157,8 @@ public class OrderService : IOrderService
     }
 
     public async Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId,
-        int quantity, string? deliveryInfo, string paymentMethod, string siteBaseUrl, string? clientIp)
+        int quantity, string? deliveryInfo, string paymentMethod, string? enotService,
+        string siteBaseUrl, string? clientIp)
     {
         try
         {
@@ -211,6 +214,10 @@ public class OrderService : IOrderService
             //    success and fail URLs — the user lands back here after Enot.
             var user = await _context.Users.FindAsync(userId);
             var siteBase = siteBaseUrl.TrimEnd('/');
+            var metadata = new Dictionary<string, string>();
+            if (!string.IsNullOrWhiteSpace(enotService))
+                metadata["enot_service"] = enotService.Trim();
+
             var paymentRequest = new DigiVault.Core.Models.Payment.PaymentRequest
             {
                 UserId      = userId,
@@ -224,6 +231,7 @@ public class OrderService : IOrderService
                 CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
                 WebhookUrl  = $"{siteBase}/api/webhooks/{provider.Name}",
                 ClientIp    = clientIp,
+                Metadata    = metadata.Count > 0 ? metadata : null,
             };
 
             var providerResult = await provider.CreatePaymentAsync(paymentRequest);

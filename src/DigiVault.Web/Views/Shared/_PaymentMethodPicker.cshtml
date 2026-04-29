@@ -1,0 +1,242 @@
+@*
+    Step-2 payment method picker — Cyborg-style two-step modal.
+
+    Render this partial once per product page, anywhere inside the existing
+    purchase modal body. It exposes a global `window.openPaymentStep2(method)`
+    that hides step 1 (`#paymentStep1`) and reveals the picker filtered by the
+    chosen high-level method ("card" / "sbp" / "qr" / "p2p" / "crypto" / "wallet").
+
+    The picker tile click submits the purchase with two fields:
+       paymentMethod  — top-level (card/sbp/...) used for backend routing
+       enotService    — exact Enot service code (e.g. "card", "mir_card",
+                        "sbp", "p2p_card", "bitcoin", "usdt_trc20")
+    They're consumed by Catalog/Purchase → CreateExternalPurchaseAsync
+    → EnotPaymentProvider (lock include_service).
+*@
+
+<div id="paymentStep2" class="payment-step2" style="display:none;">
+    <div class="payment-step2-header">
+        <button type="button" class="payment-step2-back" onclick="closePaymentStep2()">
+            <i class="bi bi-arrow-left"></i> Назад
+        </button>
+        <div>
+            <h4 class="payment-step2-title">Выберите платёжную систему</h4>
+            <div class="payment-step2-subtitle">Способ: <span id="paymentStep2MethodLabel">—</span></div>
+        </div>
+    </div>
+    <div class="payment-step2-grid" id="paymentStep2Grid"></div>
+    <div class="payment-step2-footer">
+        <i class="bi bi-shield-lock"></i>
+        Платёж проходит через Enot.io. Мы не сохраняем данные карты.
+    </div>
+</div>
+
+<style>
+    .payment-step2 {
+        animation: paymentStep2In 0.18s ease-out;
+    }
+    @@keyframes paymentStep2In {
+        from { opacity: 0; transform: translateX(20px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .payment-step2-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .payment-step2-back {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        color: rgba(255,255,255,0.85);
+        padding: 0.5rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: background 0.2s;
+    }
+    .payment-step2-back:hover { background: rgba(255,255,255,0.12); }
+    .payment-step2-title { color: #fff; font-size: 1.1rem; font-weight: 700; margin: 0 0 0.2rem; }
+    .payment-step2-subtitle { color: rgba(255,255,255,0.5); font-size: 0.8rem; }
+
+    .payment-step2-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+    }
+    @@media (max-width: 480px) {
+        .payment-step2-grid { grid-template-columns: 1fr; }
+    }
+
+    .payment-step2-tile {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.85rem 1rem;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.18s;
+        text-align: left;
+    }
+    .payment-step2-tile:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.45);
+        transform: translateY(-1px);
+    }
+    .payment-step2-tile.processing {
+        pointer-events: none;
+        opacity: 0.55;
+    }
+    .payment-step2-tile-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+    .payment-step2-tile-text { display: flex; flex-direction: column; min-width: 0; }
+    .payment-step2-tile-title { color: #fff; font-weight: 600; font-size: 0.92rem; }
+    .payment-step2-tile-desc { color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 0.1rem; }
+
+    .payment-step2-footer {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.45);
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .payment-step2-footer i { color: #22c55e; }
+</style>
+
+<script>
+(function () {
+    // Mapping: top-level method → list of specific Enot services.
+    // Edit this catalogue when Enot enables/disables tariffs in the merchant
+    // cabinet. Each entry's `code` is what gets sent to backend as enotService
+    // and forwarded as Enot's `include_service[0]`.
+    const ENOT_SERVICES = {
+        card: [
+            { code: 'card',       title: 'Visa / MasterCard',  desc: 'Российские и зарубежные банки', icon: 'bi-credit-card-2-front', color: 'linear-gradient(135deg, #667eea, #764ba2)' },
+            { code: 'mir_card',   title: 'Карта МИР',          desc: 'Российские карты',              icon: 'bi-credit-card',         color: 'linear-gradient(135deg, #22c55e, #16a34a)' },
+            { code: 'apple_pay',  title: 'Apple Pay',          desc: 'Через iPhone или Mac',          icon: 'bi-apple',               color: 'linear-gradient(135deg, #1a1a1a, #4a4a4a)' },
+            { code: 'google_pay', title: 'Google Pay',         desc: 'Через устройство Android',      icon: 'bi-google',              color: 'linear-gradient(135deg, #4285f4, #34a853)' },
+            { code: 'p2p_card',   title: 'P2P Карта',          desc: 'Перевод на карту',              icon: 'bi-people',              color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+        ],
+        sbp: [
+            { code: 'sbp',     title: 'СБП',     desc: 'Система быстрых платежей',  icon: 'bi-lightning-charge', color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' },
+            { code: 'p2p_sbp', title: 'P2P СБП', desc: 'P2P через СБП',             icon: 'bi-people',           color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+        ],
+        qr: [
+            { code: 'sbp', title: 'СБП QR-код', desc: 'Сканируйте QR-код в банковском приложении', icon: 'bi-qr-code', color: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+        ],
+        p2p: [
+            { code: 'p2p_card', title: 'P2P Карта', desc: 'Перевод на карту получателя', icon: 'bi-credit-card', color: 'linear-gradient(135deg, #ec4899, #db2777)' },
+            { code: 'p2p_sbp',  title: 'P2P СБП',   desc: 'Перевод через СБП',           icon: 'bi-lightning-charge', color: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' },
+        ],
+        crypto: [
+            { code: 'bitcoin',      title: 'Bitcoin',       desc: 'BTC',                icon: 'bi-currency-bitcoin', color: 'linear-gradient(135deg, #f7931a, #e76b00)' },
+            { code: 'usdt_trc20',   title: 'USDT TRC20',    desc: 'Tether в сети TRON', icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #26a17b, #1a7d5c)' },
+            { code: 'usdt_erc20',   title: 'USDT ERC20',    desc: 'Tether в сети Ethereum', icon: 'bi-circle-fill',  color: 'linear-gradient(135deg, #26a17b, #1a7d5c)' },
+            { code: 'ethereum',     title: 'Ethereum',      desc: 'ETH',                icon: 'bi-diamond-fill',     color: 'linear-gradient(135deg, #627eea, #4357c7)' },
+            { code: 'litecoin',     title: 'Litecoin',      desc: 'LTC',                icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #345d9d, #1d3a6a)' },
+            { code: 'ton',          title: 'TON',           desc: 'The Open Network',   icon: 'bi-send-fill',        color: 'linear-gradient(135deg, #0098ea, #0077b8)' },
+            { code: 'trx',          title: 'TRON',          desc: 'TRX',                icon: 'bi-triangle-fill',    color: 'linear-gradient(135deg, #ef0027, #c20020)' },
+            { code: 'bitcoin_cash', title: 'Bitcoin Cash',  desc: 'BCH',                icon: 'bi-currency-bitcoin', color: 'linear-gradient(135deg, #0ac18e, #069970)' },
+            { code: 'dash',         title: 'DASH',          desc: 'DASH',               icon: 'bi-circle-fill',      color: 'linear-gradient(135deg, #008ce7, #006fb8)' },
+        ],
+        wallet: [
+            { code: 'qiwi',          title: 'QIWI',          desc: 'QIWI Кошелёк',     icon: 'bi-wallet2',     color: 'linear-gradient(135deg, #ff8c00, #d97706)' },
+            { code: 'yoomoney',      title: 'ЮMoney',        desc: 'Яндекс.Деньги',    icon: 'bi-wallet-fill', color: 'linear-gradient(135deg, #8b3a8b, #6b1f6b)' },
+            { code: 'webmoney',      title: 'WebMoney',      desc: 'WebMoney Transfer', icon: 'bi-wallet',     color: 'linear-gradient(135deg, #0099d8, #006ba6)' },
+            { code: 'advcash',       title: 'Advcash',       desc: 'Advanced Cash',    icon: 'bi-wallet-fill', color: 'linear-gradient(135deg, #1f6feb, #0c4ac3)' },
+            { code: 'perfect_money', title: 'Perfect Money', desc: 'Perfect Money',    icon: 'bi-cash-coin',   color: 'linear-gradient(135deg, #d4af37, #a37e1f)' },
+        ],
+    };
+
+    const METHOD_LABELS = {
+        card:   'Банковская карта',
+        sbp:    'СБП',
+        qr:     'QR-код',
+        p2p:    'P2P перевод',
+        crypto: 'Криптовалюта',
+        wallet: 'Электронные кошельки',
+    };
+
+    /**
+     * Hides step 1 (assumed to live in #paymentStep1) and shows the step-2
+     * grid filtered by the chosen top-level method.
+     */
+    window.openPaymentStep2 = function (method) {
+        const services = ENOT_SERVICES[method];
+        if (!services || services.length === 0) {
+            console.warn('No services for method:', method);
+            return false;
+        }
+
+        const grid  = document.getElementById('paymentStep2Grid');
+        const label = document.getElementById('paymentStep2MethodLabel');
+        const step1 = document.getElementById('paymentStep1');
+        const step2 = document.getElementById('paymentStep2');
+        if (!grid || !step1 || !step2) return false;
+
+        if (label) label.textContent = METHOD_LABELS[method] || method;
+
+        grid.innerHTML = services.map(s => `
+            <div class="payment-step2-tile" data-method="${method}" data-service="${s.code}">
+                <div class="payment-step2-tile-icon" style="background: ${s.color};">
+                    <i class="bi ${s.icon}"></i>
+                </div>
+                <div class="payment-step2-tile-text">
+                    <span class="payment-step2-tile-title">${s.title}</span>
+                    <span class="payment-step2-tile-desc">${s.desc}</span>
+                </div>
+            </div>
+        `).join('');
+
+        // Wire clicks. Each tile triggers the page-level submit function with
+        // the picked method + service. The product view is responsible for
+        // exposing `window.submitPurchaseWithService(method, serviceCode, tile)`.
+        grid.querySelectorAll('.payment-step2-tile').forEach(tile => {
+            tile.addEventListener('click', () => {
+                if (tile.classList.contains('processing')) return;
+                tile.classList.add('processing');
+                grid.querySelectorAll('.payment-step2-tile').forEach(t => {
+                    if (t !== tile) t.classList.add('processing');
+                });
+                const m = tile.dataset.method;
+                const s = tile.dataset.service;
+                if (typeof window.submitPurchaseWithService === 'function') {
+                    window.submitPurchaseWithService(m, s, tile);
+                } else {
+                    console.error('submitPurchaseWithService not defined on this page');
+                }
+            });
+        });
+
+        step1.style.display = 'none';
+        step2.style.display = 'block';
+        return true;
+    };
+
+    window.closePaymentStep2 = function () {
+        const step1 = document.getElementById('paymentStep1');
+        const step2 = document.getElementById('paymentStep2');
+        if (step1) step1.style.display = '';
+        if (step2) step2.style.display = 'none';
+    };
+})();
+</script>

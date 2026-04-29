@@ -883,7 +883,7 @@
             <h3>Купить товар</h3>
             <button class="purchase-modal-close" onclick="closePurchaseModal()">&times;</button>
         </div>
-        <div class="purchase-modal-body">
+        <div class="purchase-modal-body" id="paymentStep1">
             <div class="purchase-modal-left">
                 <div class="purchase-modal-image" id="modalImage" style="background: linear-gradient(135deg, #2AABEE, #229ED9);">
                     <span class="modal-placeholder">⭐</span>
@@ -978,6 +978,12 @@
                 </button>
             </div>
         </div>
+        <div class="purchase-modal-body" id="paymentStep2Wrapper" style="display:none;">
+            <div style="width:100%;">
+                @await Html.PartialAsync("_PaymentMethodPicker")
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1131,11 +1137,24 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430...';
 
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
         const selectedMethod = document.querySelector('.modal-pay-method.selected')?.dataset.method || 'balance';
-        const body = JSON.stringify({ gameProductId: selectedProductId, deliveryInfo: val, paymentMethod: selectedMethod });
+        if (selectedMethod !== 'balance') {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
+            window.openPaymentStep2(selectedMethod);
+            return;
+        }
+        submitPurchaseFetchTg({ method: 'balance', service: null, deliveryInfo: val, btn: btn });
+    }
 
+    function submitPurchaseFetchTg({ method, service, deliveryInfo, btn }) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const body = JSON.stringify({
+            gameProductId: selectedProductId,
+            deliveryInfo: deliveryInfo,
+            paymentMethod: method,
+            enotService: service,
+        });
         fetch('/Catalog/Purchase', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
@@ -1144,23 +1163,24 @@
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                if (data.redirectUrl) {
-                    window.location.href = data.redirectUrl;
-                    return;
-                }
+                if (data.redirectUrl) { window.location.href = data.redirectUrl; return; }
                 showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
             } else {
                 alert(data.errorMessage || '\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043A\u0443\u043F\u043A\u0435');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C'; }
             }
         })
         .catch(() => {
             alert('\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u043E\u0435\u0434\u0438\u043D\u0435\u043D\u0438\u044F');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C'; }
         });
     }
+
+    window.submitPurchaseWithService = function (method, serviceCode, tile) {
+        const input = document.getElementById('modalInput');
+        const val = input ? input.value.trim() : '';
+        submitPurchaseFetchTg({ method: method, service: serviceCode, deliveryInfo: val, btn: null });
+    };
 
     function showPurchaseSuccess(orderNumber, productKey, newBalance) {
         const modal = document.querySelector('.purchase-modal-body');

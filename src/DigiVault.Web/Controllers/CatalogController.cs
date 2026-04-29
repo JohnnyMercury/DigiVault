@@ -16,6 +16,12 @@ public class PurchaseRequest
     public int GameProductId { get; set; }
     public string? DeliveryInfo { get; set; }
     public string PaymentMethod { get; set; } = "balance";
+    /// <summary>
+    /// Specific Enot service code chosen on the modal's step 2 (e.g. "card",
+    /// "mir_card", "sbp", "p2p_card", "bitcoin", "usdt_trc20"). Empty for
+    /// balance purchases. Passed through as Enot's <c>include_service</c>.
+    /// </summary>
+    public string? EnotService { get; set; }
 }
 
 public class CatalogController : Controller
@@ -136,7 +142,7 @@ public class CatalogController : Controller
         var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
         var extResult = await _orderService.CreateExternalPurchaseAsync(
             userId, request.GameProductId, 1, request.DeliveryInfo,
-            request.PaymentMethod, siteBaseUrl, clientIp);
+            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
         return Json(extResult);
     }
 

@@ -104,13 +104,30 @@ public class EnotPaymentProvider : IPaymentProvider
             ["expire"] = 300,
         };
 
-        // Filter checkout methods by what the customer chose, when possible.
-        if (request.Method == PaymentMethod.Card)
-            body["include_service"] = new[] { "card" };
+        // Filter checkout methods. If the caller passed a specific Enot service
+        // code (e.g. "card", "mir_card", "sbp", "p2p_card", "bitcoin", "usdt_trc20"
+        // selected on the modal's step 2), we lock the checkout to exactly that
+        // service so the user sees a single payment method on Enot's page.
+        // Otherwise fall back to broader filtering by PaymentMethod.
+        var explicitService = request.Metadata != null
+            && request.Metadata.TryGetValue("enot_service", out var es) ? es : null;
+
+        if (!string.IsNullOrWhiteSpace(explicitService))
+        {
+            body["include_service"] = new[] { explicitService };
+        }
+        else if (request.Method == PaymentMethod.Card)
+        {
+            body["include_service"] = new[] { "card", "mir_card", "apple_pay", "google_pay", "p2p_card" };
+        }
         else if (request.Method == PaymentMethod.SBP)
-            body["include_service"] = new[] { "sbp" };
+        {
+            body["include_service"] = new[] { "sbp", "p2p_sbp" };
+        }
         else if (request.Method == PaymentMethod.Crypto)
-            body["include_service"] = new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin" };
+        {
+            body["include_service"] = new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin", "ton", "trx" };
+        }
 
         // Strip nulls so Enot's validator stays happy.
         var payload = body.Where(kv => kv.Value != null)

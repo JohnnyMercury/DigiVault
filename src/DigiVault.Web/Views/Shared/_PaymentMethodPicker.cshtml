@@ -154,6 +154,40 @@
         font-size: 0.75rem;
     }
     .ps2-footer i { color: #4facfe; }
+
+    .ps2-empty {
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+        gap: 0.5rem;
+        padding: 1.6rem 1rem;
+        background: rgba(255,255,255,0.03);
+        border: 1.5px dashed rgba(255,255,255,0.12);
+        border-radius: 14px;
+    }
+    .ps2-empty-icon {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(102,126,234,0.18), rgba(118,75,162,0.18));
+        color: #a5b4fc;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+    }
+    .ps2-empty-title { color: #fff; font-weight: 700; font-size: 1rem; }
+    .ps2-empty-desc { color: rgba(255,255,255,0.55); font-size: 0.85rem; line-height: 1.45; }
+    .ps2-empty-desc b { color: rgba(255,255,255,0.85); }
+    .ps2-empty-back {
+        margin-top: 0.4rem;
+        padding: 0.55rem 1rem;
+        background: rgba(102,126,234,0.12);
+        color: #a5b4fc;
+        border: 1px solid rgba(102,126,234,0.4);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    .ps2-empty-back:hover { background: rgba(102,126,234,0.2); border-color: #667eea; }
 </style>
 
 <script>
@@ -182,22 +216,24 @@
         sbp: [
             { code: 'enot', title: 'Enot Pay', desc: 'СБП — реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE },
         ],
+        // qr и p2p: плитки на шаге 1 видны как заготовка под будущие PSP
+        // (BlvckPay / PayPecker). Когда подключим — добавляем сюда записи.
+        qr:  [],
+        p2p: [],
     };
 
     const METHOD_LABELS = {
         card: 'Банковская карта',
         sbp:  'СБП',
+        qr:   'QR-код',
+        p2p:  'P2P перевод',
     };
 
     let currentMethod  = null;
     let currentProvider = null;
 
     window.openPaymentStep2 = function (method) {
-        const providers = PROVIDERS_BY_METHOD[method];
-        if (!providers || providers.length === 0) {
-            console.warn('[ps2] no providers for method:', method);
-            return false;
-        }
+        const providers = PROVIDERS_BY_METHOD[method] || [];
         const grid    = document.getElementById('paymentStep2Grid');
         const label   = document.getElementById('paymentStep2MethodLabel');
         const count   = document.getElementById('paymentStep2Count');
@@ -210,39 +246,60 @@
         if (label) label.textContent = METHOD_LABELS[method] || method;
         if (count) count.textContent = providers.length;
 
-        grid.innerHTML = providers.map(p => `
-            <div class="ps2-tile" data-method="${method}" data-provider="${p.code}">
-                <div class="ps2-tile-icon" style="background: ${p.color};">
-                    <i class="bi ${p.icon}"></i>
-                </div>
-                <div class="ps2-tile-text">
-                    <div class="ps2-tile-name">${p.title}</div>
-                    <div class="ps2-tile-meta">
-                        <span>${p.desc}</span>
-                        <span>·</span>
-                        <span class="ps2-tile-free"><i class="bi bi-check-circle-fill"></i> Без комиссии</span>
-                    </div>
-                </div>
-                <div class="ps2-tile-radio"></div>
-            </div>
-        `).join('');
-
-        grid.querySelectorAll('.ps2-tile').forEach(tile => {
-            tile.addEventListener('click', () => selectTile(tile));
-        });
-
-        // Single-provider quick-pick: auto-select the only tile so the user
-        // doesn't have to click twice. The Pay button at the bottom is the
-        // real trigger.
-        if (providers.length === 1) {
-            const onlyTile = grid.querySelector('.ps2-tile');
-            if (onlyTile) selectTile(onlyTile);
-        }
-
-        // Reset Pay button
         const payBtn = document.getElementById('paymentStep2PayBtn');
-        payBtn.disabled = true;
-        payBtn.textContent = 'Выберите систему';
+
+        if (providers.length === 0) {
+            // Empty-state: метод заявлен, но PSP под него ещё не подключён.
+            // Плитка остаётся в шаге 1 как заготовка — но здесь честно
+            // показываем «скоро».
+            grid.innerHTML = `
+                <div class="ps2-empty">
+                    <div class="ps2-empty-icon"><i class="bi bi-clock-history"></i></div>
+                    <div class="ps2-empty-title">Скоро будет доступно</div>
+                    <div class="ps2-empty-desc">
+                        Подключаем платёжного провайдера для этого метода.<br/>
+                        А пока используйте <b>Банковскую карту</b> или <b>СБП</b>.
+                    </div>
+                    <button type="button" class="ps2-empty-back" onclick="closePaymentStep2()">
+                        <i class="bi bi-arrow-left"></i> Выбрать другой метод
+                    </button>
+                </div>
+            `;
+            payBtn.disabled = true;
+            payBtn.textContent = 'Метод недоступен';
+        } else {
+            grid.innerHTML = providers.map(p => `
+                <div class="ps2-tile" data-method="${method}" data-provider="${p.code}">
+                    <div class="ps2-tile-icon" style="background: ${p.color};">
+                        <i class="bi ${p.icon}"></i>
+                    </div>
+                    <div class="ps2-tile-text">
+                        <div class="ps2-tile-name">${p.title}</div>
+                        <div class="ps2-tile-meta">
+                            <span>${p.desc}</span>
+                            <span>·</span>
+                            <span class="ps2-tile-free"><i class="bi bi-check-circle-fill"></i> Без комиссии</span>
+                        </div>
+                    </div>
+                    <div class="ps2-tile-radio"></div>
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.ps2-tile').forEach(tile => {
+                tile.addEventListener('click', () => selectTile(tile));
+            });
+
+            // Single-provider quick-pick: auto-select the only tile so the user
+            // doesn't have to click twice. The Pay button at the bottom is the
+            // real trigger.
+            if (providers.length === 1) {
+                const onlyTile = grid.querySelector('.ps2-tile');
+                if (onlyTile) selectTile(onlyTile);
+            }
+
+            payBtn.disabled = true;
+            payBtn.textContent = 'Выберите систему';
+        }
 
         // Toggle modal screens — also hide the picker wrapper that exists as a
         // sibling so only one modal-body renders at a time.

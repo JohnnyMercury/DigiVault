@@ -104,6 +104,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(e => e.Id);
             entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
             entity.Property(e => e.TotalPrice).HasPrecision(18, 2);
+            // PostgreSQL jsonb for the delivery payload — schema is documented in
+            // Web/Services/Fulfilment/DeliveryPayload.cs.
+            entity.Property(e => e.DeliveryPayloadJson).HasColumnType("jsonb");
+            entity.Property(e => e.DeliveryStatus).HasConversion<int>();
+            entity.HasIndex(e => e.DeliveryStatus);
             entity.HasOne(e => e.Order)
                 .WithMany(o => o.OrderItems)
                 .HasForeignKey(e => e.OrderId)

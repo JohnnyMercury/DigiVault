@@ -1,4 +1,5 @@
 using DigiVault.Core.Enums;
+using DigiVault.Web.Services.Fulfilment;
 
 namespace DigiVault.Web.ViewModels;
 
@@ -39,6 +40,14 @@ public class OrderItemViewModel
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
+
+    /// <summary>Per-item delivery state (Pending / Delivered / Failed).</summary>
+    public DeliveryStatus DeliveryStatus { get; set; }
+
+    /// <summary>Decoded payload (CodeCredential or ConfirmationCredential) — null while delivery is Pending.</summary>
+    public DeliveryPayload? Delivery { get; set; }
+
+    /// <summary>Legacy support — old orders that still use ProductKey rows.</summary>
     public List<string> ProductKeys { get; set; } = new();
 }
 

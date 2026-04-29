@@ -1,6 +1,7 @@
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Web.Services.Fulfilment;
 using DigiVault.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,12 +29,15 @@ public class OrderService : IOrderService
 {
     private readonly ApplicationDbContext _context;
     private readonly IBalanceService _balanceService;
+    private readonly IFulfilmentService _fulfilment;
     private readonly ILogger<OrderService> _logger;
 
-    public OrderService(ApplicationDbContext context, IBalanceService balanceService, ILogger<OrderService> logger)
+    public OrderService(ApplicationDbContext context, IBalanceService balanceService,
+        IFulfilmentService fulfilment, ILogger<OrderService> logger)
     {
         _context = context;
         _balanceService = balanceService;
+        _fulfilment = fulfilment;
         _logger = logger;
     }
 
@@ -63,25 +67,22 @@ public class OrderService : IOrderService
             if (!deductResult)
                 return new PurchaseResult { Success = false, ErrorMessage = "Ошибка при списании средств" };
 
-            // 4. Создать заказ
+            // 4. Создать заказ в состоянии Processing — оплата прошла, ждём доставку.
+            //    Финальный статус Completed выставляет IFulfilmentService.
             var orderNumber = GenerateOrderNumber();
-            var productKey = GenerateProductKey();
-
             var order = new Order
             {
                 UserId = userId,
                 OrderNumber = orderNumber,
                 TotalAmount = totalPrice,
-                Status = OrderStatus.Completed,
+                Status = OrderStatus.Processing,
                 CreatedAt = DateTime.UtcNow,
-                CompletedAt = DateTime.UtcNow,
                 DeliveryInfo = deliveryInfo
             };
-
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // 5. Создать OrderItem
+            // 5. Создать OrderItem (DeliveryStatus = Pending по умолчанию).
             var orderItem = new OrderItem
             {
                 OrderId = order.Id,
@@ -90,24 +91,9 @@ public class OrderService : IOrderService
                 UnitPrice = gameProduct.Price,
                 TotalPrice = totalPrice
             };
-
             _context.OrderItems.Add(orderItem);
-            await _context.SaveChangesAsync();
 
-            // 6. Создать ProductKey
-            var key = new ProductKey
-            {
-                GameProductId = gameProductId,
-                KeyValue = productKey,
-                IsUsed = true,
-                OrderItemId = orderItem.Id,
-                CreatedAt = DateTime.UtcNow,
-                UsedAt = DateTime.UtcNow
-            };
-
-            _context.ProductKeys.Add(key);
-
-            // 7. Создать Transaction запись
+            // 6. Транзакция в кошельке.
             var transaction = new Transaction
             {
                 UserId = userId,
@@ -117,15 +103,17 @@ public class OrderService : IOrderService
                 OrderId = order.Id,
                 CreatedAt = DateTime.UtcNow
             };
-
             _context.Transactions.Add(transaction);
 
-            // 8. Уменьшить остаток
+            // 7. Уменьшить остаток.
             gameProduct.StockQuantity -= quantity;
-
             await _context.SaveChangesAsync();
 
-            // Получить обновлённый баланс
+            // 8. Прогнать фулфилмент сразу — генерация payload синхронна и быстрая.
+            //    Если упадёт по какой-то причине — фоновый OrderFulfilmentBackgroundService
+            //    добьёт заказ в течение 30 секунд.
+            await _fulfilment.DeliverOrderAsync(order.Id);
+
             var newBalance = await _balanceService.GetBalanceAsync(userId);
 
             _logger.LogInformation("Purchase completed: Order {OrderNumber}, User {UserId}, Product {ProductName}, Amount {Amount}",
@@ -135,7 +123,6 @@ public class OrderService : IOrderService
             {
                 Success = true,
                 OrderNumber = orderNumber,
-                ProductKey = productKey,
                 NewBalance = newBalance
             };
         }
@@ -149,11 +136,6 @@ public class OrderService : IOrderService
     public static string GenerateOrderNumber()
     {
         return $"DV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
-    }
-
-    public static string GenerateProductKey()
-    {
-        return Guid.NewGuid().ToString().ToUpper();
     }
 
     public async Task<OrderViewModel?> GetOrderAsync(string userId, int orderId)
@@ -240,6 +222,8 @@ public class OrderService : IOrderService
                 Quantity = oi.Quantity,
                 UnitPrice = oi.UnitPrice,
                 TotalPrice = oi.TotalPrice,
+                DeliveryStatus = oi.DeliveryStatus,
+                Delivery = DeliveryPayload.Deserialize(oi.DeliveryPayloadJson),
                 ProductKeys = oi.ProductKeys.Select(k => k.KeyValue).ToList()
             }).ToList()
         };

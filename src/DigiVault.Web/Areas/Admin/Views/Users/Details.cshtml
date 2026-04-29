@@ -45,6 +45,10 @@
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-header border-secondary">Actions</div>
             <div class="card-body">
+                <a asp-action="Cabinet" asp-route-id="@Model.Id" class="btn btn-primary w-100 mb-3">
+                    <i class="bi bi-eye-fill me-1"></i>Посмотреть как клиент
+                </a>
+
                 <form asp-action="ToggleActive" method="post" class="mb-3">
                     <input type="hidden" name="id" value="@Model.Id" />
                     <button type="submit" class="btn btn-@(Model.IsActive ? "warning" : "success") w-100">

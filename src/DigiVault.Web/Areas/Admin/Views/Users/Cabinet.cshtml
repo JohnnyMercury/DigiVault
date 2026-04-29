@@ -1,0 +1,154 @@
+@using DigiVault.Core.Entities
+@using DigiVault.Web.ViewModels
+@model OrderHistoryViewModel
+@{
+    var user = (ApplicationUser)ViewBag.TargetUser;
+    var transactions = (List<TransactionViewModel>)ViewBag.Transactions;
+    ViewData["Title"] = $"Кабинет: {user.Email}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-eye-fill me-2"></i>Кабинет пользователя</h4>
+        <small class="text-muted">Read-only режим: вы видите кабинет глазами клиента. Действия не выполняются.</small>
+    </div>
+    <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left me-1"></i>К профилю
+    </a>
+</div>
+
+<!-- User snapshot -->
+<div class="data-card mb-4">
+    <div class="p-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-auto">
+                <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-gradient);
+                            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; font-weight: 700;">
+                    @{ var nm = (user.UserName ?? user.Email ?? "?").Trim(); }
+                    @(nm.Length >= 1 ? nm[0].ToString().ToUpperInvariant() : "?")
+                </div>
+            </div>
+            <div class="col">
+                <div style="color: #fff; font-weight: 600; font-size: 1.1rem;">@user.UserName</div>
+                <div class="text-muted small">@user.Email</div>
+            </div>
+            <div class="col-auto text-end">
+                <div class="text-muted small">Баланс</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: #22c55e;">@user.Balance.ToString("N2") ₽</div>
+            </div>
+            <div class="col-auto text-end">
+                <div class="text-muted small">Зарегистрирован</div>
+                <div>@user.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-bag-check me-2"></i>Заказы (@Model.Orders.Count из @(Model.TotalPages * 10))</h5>
+    </div>
+    @if (!Model.Orders.Any())
+    {
+        <div class="empty-state">У пользователя нет заказов</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Номер</th>
+                        <th>Дата</th>
+                        <th>Товары</th>
+                        <th>Сумма</th>
+                        <th>Статус</th>
+                        <th>Доставка</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Orders)
+                    {
+                        var deliveredCount = order.Items.Count(i => i.DeliveryStatus == DigiVault.Core.Enums.DeliveryStatus.Delivered);
+                        var pendingCount   = order.Items.Count(i => i.DeliveryStatus == DigiVault.Core.Enums.DeliveryStatus.Pending);
+                        var failedCount    = order.Items.Count(i => i.DeliveryStatus == DigiVault.Core.Enums.DeliveryStatus.Failed);
+
+                        <tr>
+                            <td><code>@order.OrderNumber</code></td>
+                            <td>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                @foreach (var item in order.Items)
+                                {
+                                    <div class="text-truncate" style="max-width: 240px;">@item.ProductName <span class="text-muted">×@item.Quantity</span></div>
+                                }
+                            </td>
+                            <td><span style="color:#22c55e; font-weight:600;">@order.TotalAmount.ToString("N2") ₽</span></td>
+                            <td><span class="badge bg-@order.StatusClass">@order.StatusName</span></td>
+                            <td>
+                                @if (deliveredCount > 0) { <span class="badge bg-success">@deliveredCount delivered</span> }
+                                @if (pendingCount > 0)   { <span class="badge bg-warning text-dark ms-1">@pendingCount pending</span> }
+                                @if (failedCount > 0)    { <span class="badge bg-danger ms-1">@failedCount failed</span> }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="CabinetOrder" asp-route-id="@user.Id" asp-route-orderId="@order.Id"
+                                   class="btn btn-sm btn-outline-light">
+                                    <i class="bi bi-eye"></i> Посмотреть
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="p-3 d-flex justify-content-center">
+            <nav>
+                <ul class="pagination">
+                    @for (var p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="Cabinet" asp-route-id="@user.Id" asp-route-page="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+<!-- Transactions -->
+<div class="data-card">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-credit-card me-2"></i>Последние транзакции</h5>
+    </div>
+    @if (!transactions.Any())
+    {
+        <div class="empty-state">Нет транзакций</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr><th>Тип</th><th>Описание</th><th class="text-end">Сумма</th><th>Дата</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in transactions)
+                    {
+                        <tr>
+                            <td><span class="badge bg-@t.TypeClass">@t.TypeName</span></td>
+                            <td>@t.Description</td>
+                            <td class="text-end"><span style="color: @(t.Type == DigiVault.Core.Enums.TransactionType.Deposit ? "#22c55e" : "#ef4444"); font-weight: 600;">@t.Amount.ToString("N2") ₽</span></td>
+                            <td>@t.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

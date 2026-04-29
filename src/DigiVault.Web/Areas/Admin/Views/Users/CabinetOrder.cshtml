@@ -1,0 +1,127 @@
+@using DigiVault.Core.Entities
+@using DigiVault.Web.ViewModels
+@model OrderViewModel
+@{
+    var user = (ApplicationUser)ViewBag.TargetUser;
+    ViewData["Title"] = $"Заказ {Model.OrderNumber} — {user.Email}";
+}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-eye-fill me-2"></i>Заказ глазами клиента</h4>
+        <small class="text-muted">@user.Email · @user.UserName</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Cabinet" asp-route-id="@user.Id" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i>К списку заказов
+        </a>
+        <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-outline-light">
+            <i class="bi bi-person me-1"></i>Профиль
+        </a>
+    </div>
+</div>
+
+<div class="data-card mb-4" style="border-color: rgba(102,126,234,0.3);">
+    <div class="p-3 d-flex align-items-center gap-2 small" style="background: rgba(102,126,234,0.08); color: rgba(255,255,255,0.7);">
+        <i class="bi bi-info-circle-fill" style="color: #667eea;"></i>
+        Это read-only-копия страницы заказа. Все интерактивные элементы (копирование кодов и т.д.) работают, но никаких изменений данных не происходит.
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title"><i class="bi bi-box me-2"></i>Товары в заказе</h5>
+                <span class="badge bg-@Model.StatusClass">@Model.StatusName</span>
+            </div>
+            <div class="p-4">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="order-item-row">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="flex-shrink-0">
+                                @if (item.ImageUrl != null)
+                                {
+                                    <img src="@item.ImageUrl" alt="@item.ProductName"
+                                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;">
+                                }
+                                else
+                                {
+                                    <div style="width: 80px; height: 80px; border-radius: 12px;
+                                                background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-image text-muted fs-3"></i>
+                                    </div>
+                                }
+                            </div>
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <h6 class="mb-1" style="color: #fff;">@item.ProductName</h6>
+                                <div class="text-muted small mb-2">
+                                    @item.Quantity × @item.UnitPrice.ToString("N0") ₽ =
+                                    <span style="color: #667eea; font-weight: 600;">@item.TotalPrice.ToString("N0") ₽</span>
+                                </div>
+                            </div>
+                        </div>
+                        @await Html.PartialAsync("/Views/Shared/_DeliveryPayload.cshtml", item)
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="data-card">
+            <div class="data-card-header">
+                <h5 class="data-card-title"><i class="bi bi-receipt me-2"></i>Информация</h5>
+            </div>
+            <div class="p-4">
+                <div class="mb-3">
+                    <div class="text-muted small">Номер заказа</div>
+                    <code>@Model.OrderNumber</code>
+                </div>
+                <div class="mb-3">
+                    <div class="text-muted small">Дата заказа</div>
+                    <div>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                </div>
+                @if (Model.CompletedAt.HasValue)
+                {
+                    <div class="mb-3">
+                        <div class="text-muted small">Выполнен</div>
+                        <div>@Model.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                    </div>
+                }
+                <hr style="border-color: var(--card-border);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span style="font-size: 1rem;">Итого</span>
+                    <span style="font-size: 1.4rem; font-weight: 700; color: #667eea;">@Model.TotalAmount.ToString("N0") ₽</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-item-row { padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .order-item-row:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.code-copy');
+            if (!btn) return;
+            const value = btn.dataset.value;
+            if (!value) return;
+            navigator.clipboard.writeText(value).then(() => {
+                btn.classList.add('copied');
+                const span = btn.querySelector('span');
+                const prev = span ? span.textContent : '';
+                if (span) span.textContent = 'Скопировано';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    if (span) span.textContent = prev;
+                }, 1500);
+            });
+        });
+    </script>
+}

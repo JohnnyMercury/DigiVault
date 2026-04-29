@@ -1,6 +1,9 @@
 @model OrderViewModel
 @{
     ViewData["Title"] = $"Заказ {Model.OrderNumber}";
+    // Use DigiVault layout (defined in _ViewStart). The partial below renders
+    // structured delivery payload — same look/feel for user cabinet and the
+    // admin "view as user" page.
 }
 
 <div class="container py-4">
@@ -12,55 +15,47 @@
         </ol>
     </nav>
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-8">
             <div class="card bg-dark border-secondary mb-4">
                 <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>Товары</h5>
+                    <h5 class="mb-0"><i class="bi bi-box me-2"></i>Товары в заказе</h5>
                     <span class="badge bg-@Model.StatusClass">@Model.StatusName</span>
                 </div>
                 <div class="card-body">
                     @foreach (var item in Model.Items)
                     {
-                        <div class="d-flex align-items-start mb-4 pb-4 border-bottom border-secondary">
-                            <div class="flex-shrink-0 me-3">
-                                @if (item.ImageUrl != null)
-                                {
-                                    <img src="@item.ImageUrl" alt="@item.ProductName" style="width: 80px; height: 80px; object-fit: cover;" class="rounded">
-                                }
-                                else
-                                {
-                                    <div class="bg-secondary d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">
-                                        <i class="bi bi-image text-muted"></i>
-                                    </div>
-                                }
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6>@item.ProductName</h6>
-                                <div class="text-muted small mb-2">
-                                    Кол-во: @item.Quantity x @item.UnitPrice.ToString("N0") ₽ = <span class="text-primary fw-bold">@item.TotalPrice.ToString("N0") ₽</span>
+                        <div class="order-item-row">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="flex-shrink-0">
+                                    @if (item.ImageUrl != null)
+                                    {
+                                        <img src="@item.ImageUrl" alt="@item.ProductName"
+                                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-secondary d-flex align-items-center justify-content-center"
+                                             style="width: 80px; height: 80px; border-radius: 12px;">
+                                            <i class="bi bi-image text-muted fs-3"></i>
+                                        </div>
+                                    }
                                 </div>
-                                @if (item.ProductKeys.Any())
-                                {
-                                    <div class="mt-2">
-                                        <label class="text-muted small">Ваши ключи:</label>
-                                        @foreach (var key in item.ProductKeys)
-                                        {
-                                            <div class="input-group input-group-sm mt-1">
-                                                <input type="text" class="form-control bg-dark border-secondary text-white font-monospace" value="@key" readonly>
-                                                <button class="btn btn-outline-primary copy-btn" type="button" data-value="@key">
-                                                    <i class="bi bi-clipboard"></i>
-                                                </button>
-                                            </div>
-                                        }
+                                <div class="flex-grow-1" style="min-width: 0;">
+                                    <h6 class="mb-1">@item.ProductName</h6>
+                                    <div class="text-muted small mb-2">
+                                        @item.Quantity × @item.UnitPrice.ToString("N0") ₽ =
+                                        <span class="text-primary fw-bold">@item.TotalPrice.ToString("N0") ₽</span>
                                     </div>
-                                }
+                                </div>
                             </div>
+                            @await Html.PartialAsync("_DeliveryPayload", item)
                         </div>
                     }
                 </div>
             </div>
         </div>
+
         <div class="col-lg-4">
             <div class="card bg-dark border-secondary">
                 <div class="card-header border-secondary">
@@ -73,13 +68,13 @@
                     </div>
                     <div class="mb-3">
                         <div class="text-muted small">Дата заказа</div>
-                        <div>@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</div>
+                        <div>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
                     </div>
                     @if (Model.CompletedAt.HasValue)
                     {
                         <div class="mb-3">
                             <div class="text-muted small">Выполнен</div>
-                            <div>@Model.CompletedAt.Value.ToString("MMMM dd, yyyy HH:mm")</div>
+                            <div>@Model.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
                         </div>
                     }
                     <hr class="border-secondary">
@@ -93,15 +88,36 @@
     </div>
 </div>
 
+<style>
+    .order-item-row { padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .order-item-row:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
+</style>
+
 @section Scripts {
     <script>
-        document.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                navigator.clipboard.writeText(this.dataset.value);
-                const icon = this.querySelector('i');
-                icon.className = 'bi bi-check';
-                setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+        // Single delegated handler for all .code-copy buttons in delivery payloads.
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.code-copy');
+            if (!btn) return;
+            const value = btn.dataset.value;
+            if (!value) return;
+            navigator.clipboard.writeText(value).then(() => {
+                btn.classList.add('copied');
+                const span = btn.querySelector('span');
+                const prev = span ? span.textContent : '';
+                if (span) span.textContent = 'Скопировано';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    if (span) span.textContent = prev;
+                }, 1500);
             });
         });
+
+        // Auto-refresh page if any item is still in Pending state — fulfilment
+        // happens within ~30s, so we poll once after 8s to pick up the result.
+        (function() {
+            const hasPending = document.querySelector('.dpayload.pending');
+            if (hasPending) setTimeout(() => location.reload(), 8000);
+        })();
     </script>
 }

@@ -1,5 +1,6 @@
 using DigiVault.Core.Entities;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,14 @@ public class UsersController : AdminBaseController
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IOrderService _orderService;
 
-    public UsersController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public UsersController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
+        IOrderService orderService)
     {
         _context = context;
         _userManager = userManager;
+        _orderService = orderService;
     }
 
     public async Task<IActionResult> Index(string? search = null, int page = 1)
@@ -110,5 +114,40 @@ public class UsersController : AdminBaseController
 
         TempData["SuccessMessage"] = $"Пользователь {user.Email} удалён";
         return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Read-only "view as user" — shows the user's order history exactly as
+    /// they would see it in their cabinet. No state-mutating actions are
+    /// rendered (no buttons, no forms). Used by support / verification.
+    /// </summary>
+    public async Task<IActionResult> Cabinet(string id, int page = 1)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        var history = await _orderService.GetOrderHistoryAsync(id, page);
+        var transactions = await _orderService.GetTransactionsAsync(id, count: 20);
+
+        ViewBag.TargetUser = user;
+        ViewBag.Transactions = transactions;
+        return View(history);
+    }
+
+    /// <summary>
+    /// Read-only view of one specific order belonging to <paramref name="id"/>,
+    /// rendered in the same layout the user sees. The view re-uses the
+    /// _DeliveryPayload partial so the admin sees identical credentials/cards.
+    /// </summary>
+    public async Task<IActionResult> CabinetOrder(string id, int orderId)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        var order = await _orderService.GetOrderAsync(id, orderId);
+        if (order == null) return NotFound();
+
+        ViewBag.TargetUser = user;
+        return View(order);
     }
 }

@@ -1,0 +1,186 @@
+@using DigiVault.Core.Enums
+@using DigiVault.Web.Services.Fulfilment
+@model DigiVault.Web.ViewModels.OrderItemViewModel
+
+@{
+    string FormatDate(DateTime utc)
+    {
+        var local = utc.ToLocalTime();
+        var months = new[] { "января", "февраля", "марта", "апреля", "мая", "июня",
+                             "июля", "августа", "сентября", "октября", "ноября", "декабря" };
+        return $"{local.Day} {months[local.Month - 1]} {local.Year}, {local:HH:mm}";
+    }
+    string FormatDateOnly(string? iso)
+    {
+        if (string.IsNullOrEmpty(iso)) return "";
+        if (!DateTime.TryParse(iso, out var d)) return iso;
+        var months = new[] { "января", "февраля", "марта", "апреля", "мая", "июня",
+                             "июля", "августа", "сентября", "октября", "ноября", "декабря" };
+        return $"{d.Day} {months[d.Month - 1]} {d.Year}";
+    }
+}
+
+@if (Model.DeliveryStatus == DeliveryStatus.Pending)
+{
+    <div class="dpayload pending">
+        <div class="dpayload-header">
+            <i class="bi bi-hourglass-split spin"></i>
+            <strong>Доставка в процессе</strong>
+        </div>
+        <p class="dpayload-text">Заказ оплачен. Товар будет автоматически доставлен в течение минуты — обновите страницу.</p>
+    </div>
+}
+else if (Model.DeliveryStatus == DeliveryStatus.Failed)
+{
+    <div class="dpayload failed">
+        <div class="dpayload-header">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Не удалось выдать товар</strong>
+        </div>
+        <p class="dpayload-text">Свяжитесь с поддержкой <a href="https://t.me/key_zona_support" target="_blank">@@key_zona_support</a> — вернём средства или выдадим вручную.</p>
+    </div>
+}
+else if (Model.Delivery is CodeCredential code)
+{
+    <div class="dpayload delivered code">
+        <div class="dpayload-header">
+            <i class="bi bi-key-fill"></i>
+            <strong>Код активации</strong>
+            @if (!string.IsNullOrEmpty(code.Region))
+            {
+                <span class="dpayload-region">Регион: @code.Region</span>
+            }
+        </div>
+        <div class="code-box">
+            <input type="text" class="code-input" value="@code.Code" readonly id="code-@Model.ProductId-@(code.Code.GetHashCode() & 0x7FFFFFFF)">
+            <button class="code-copy" type="button" data-value="@code.Code">
+                <i class="bi bi-clipboard"></i>
+                <span>Копировать</span>
+            </button>
+        </div>
+        @if (!string.IsNullOrEmpty(code.Instructions))
+        {
+            <div class="dpayload-instructions">
+                <i class="bi bi-info-circle"></i>
+                <span>@code.Instructions</span>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(code.ExpiresAt))
+        {
+            <div class="dpayload-meta">
+                <span>Действителен до: <strong>@FormatDateOnly(code.ExpiresAt)</strong></span>
+            </div>
+        }
+    </div>
+}
+else if (Model.Delivery is ConfirmationCredential conf)
+{
+    <div class="dpayload delivered confirmation">
+        <div class="dpayload-header">
+            <i class="bi bi-check-circle-fill"></i>
+            <strong>Транзакция выполнена</strong>
+        </div>
+        <div class="conf-grid">
+            <div class="conf-row">
+                <span class="conf-label">Получатель</span>
+                <span class="conf-value">@conf.Recipient</span>
+            </div>
+            <div class="conf-row">
+                <span class="conf-label">Зачислено</span>
+                <span class="conf-value">@conf.Amount</span>
+            </div>
+            <div class="conf-row">
+                <span class="conf-label">ID транзакции</span>
+                <span class="conf-value mono">@conf.TransactionId</span>
+            </div>
+            <div class="conf-row">
+                <span class="conf-label">Дата</span>
+                <span class="conf-value">@FormatDate(conf.CompletedAt)</span>
+            </div>
+            @if (!string.IsNullOrEmpty(conf.ValidUntil))
+            {
+                <div class="conf-row">
+                    <span class="conf-label">Действует до</span>
+                    <span class="conf-value">@FormatDateOnly(conf.ValidUntil)</span>
+                </div>
+            }
+        </div>
+    </div>
+}
+else if (Model.ProductKeys.Any())
+{
+    @* Legacy fallback for old orders that still have ProductKey rows. *@
+    <div class="dpayload delivered code">
+        <div class="dpayload-header">
+            <i class="bi bi-key-fill"></i>
+            <strong>Ваш ключ</strong>
+        </div>
+        @foreach (var key in Model.ProductKeys)
+        {
+            <div class="code-box">
+                <input type="text" class="code-input" value="@key" readonly>
+                <button class="code-copy" type="button" data-value="@key">
+                    <i class="bi bi-clipboard"></i>
+                    <span>Копировать</span>
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .dpayload {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+        border-radius: 14px;
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.75rem;
+        color: rgba(255,255,255,0.85);
+    }
+    .dpayload.pending { border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.05); }
+    .dpayload.failed { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
+    .dpayload.delivered.code { border-color: rgba(102, 126, 234, 0.35); background: rgba(102, 126, 234, 0.05); }
+    .dpayload.delivered.confirmation { border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.05); }
+
+    .dpayload-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; font-size: 0.95rem; }
+    .dpayload-header i { font-size: 1.15rem; }
+    .dpayload.pending .dpayload-header i { color: #fbbf24; }
+    .dpayload.failed .dpayload-header i { color: #ef4444; }
+    .dpayload.delivered.code .dpayload-header i { color: #667eea; }
+    .dpayload.delivered.confirmation .dpayload-header i { color: #22c55e; }
+    .dpayload-region { margin-left: auto; font-size: 0.75rem; padding: 2px 10px; border-radius: 6px;
+                       background: rgba(102,126,234,0.15); color: #a5b4fc; font-weight: 600; }
+
+    .dpayload-text { color: rgba(255,255,255,0.7); margin: 0; font-size: 0.9rem; }
+
+    .code-box { display: flex; gap: 0.5rem; align-items: stretch; margin: 0.5rem 0 0.75rem; }
+    .code-input {
+        flex: 1; min-width: 0; background: rgba(0,0,0,0.35); border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+        color: #fff; border-radius: 10px; padding: 0.7rem 0.95rem;
+        font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 1rem; letter-spacing: 0.04em;
+    }
+    .code-copy {
+        background: var(--primary-gradient, linear-gradient(135deg, #667eea, #764ba2));
+        border: none; color: #fff; border-radius: 10px; padding: 0 1rem;
+        font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;
+        cursor: pointer; transition: opacity 0.15s;
+    }
+    .code-copy:hover { opacity: 0.9; }
+    .code-copy.copied { background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+    .dpayload-instructions {
+        display: flex; gap: 0.5rem; font-size: 0.85rem; color: rgba(255,255,255,0.65);
+        background: rgba(0,0,0,0.2); border-radius: 8px; padding: 0.6rem 0.85rem; margin-top: 0.5rem;
+    }
+    .dpayload-instructions i { color: #4facfe; flex-shrink: 0; margin-top: 2px; }
+    .dpayload-meta { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 0.5rem; }
+
+    .conf-grid { display: grid; gap: 0.45rem; margin-top: 0.25rem; }
+    .conf-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
+    .conf-label { color: rgba(255,255,255,0.5); }
+    .conf-value { color: #fff; font-weight: 500; text-align: right; }
+    .conf-value.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #a5b4fc; }
+
+    @@keyframes dp-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .dpayload .spin { animation: dp-spin 1.5s linear infinite; }
+</style>

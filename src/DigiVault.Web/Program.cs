@@ -56,6 +56,13 @@ builder.Services.AddScoped<DigiVault.Web.Services.IOrderService, DigiVault.Web.S
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IGameService, GameService>();
 
+// Fulfilment — generates the actual delivered credentials for paid orders.
+builder.Services.AddScoped<DigiVault.Web.Services.Fulfilment.ICredentialGenerator,
+                          DigiVault.Web.Services.Fulfilment.CredentialGenerator>();
+builder.Services.AddScoped<DigiVault.Web.Services.Fulfilment.IFulfilmentService,
+                          DigiVault.Web.Services.Fulfilment.FulfilmentService>();
+builder.Services.AddHostedService<DigiVault.Web.Services.Fulfilment.OrderFulfilmentBackgroundService>();
+
 // Payment infrastructure
 builder.Services.AddScoped<IPaymentProvider, TestPaymentProvider>();
 // TODO: Add real providers here:

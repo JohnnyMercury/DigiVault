@@ -589,6 +589,19 @@
 
     .modal-pay-button { width: 100%; padding: 0.9rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
     .modal-pay-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+
+    .modal-error {
+        display: flex; align-items: flex-start; gap: 0.5rem;
+        padding: 0.65rem 0.9rem; margin: 0.35rem 0 0.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        color: #fca5a5; font-size: 0.85rem; line-height: 1.45;
+    }
+    .modal-error i { color: #ef4444; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .modal-guest-email-row { margin-top: 0.6rem; padding: 0.85rem 1rem; background: rgba(102,126,234,0.04); border: 1px solid rgba(102,126,234,0.2); border-radius: 12px; }
+    .modal-guest-email-label { display: block; color: rgba(255,255,255,0.7); font-size: 0.82rem; margin-bottom: 0.4rem; font-weight: 500; }
 </style>
 
 <div class="container container-wide">
@@ -820,7 +833,12 @@
                 {
                     <div class="modal-info-banner">
                         <i class="bi bi-info-circle" style="color: #667eea; margin-right: 0.3rem;"></i>
-                        Рекомендуем <a href="/Account/Register">зарегистрироваться</a> для сохранения истории покупок и использования баланса
+                        Покупка без регистрации возможна. <a href="/Account/Register">Создать аккаунт</a> чтобы сохранять историю и пользоваться балансом.
+                    </div>
+                    <div class="modal-guest-email-row">
+                        <label for="modalGuestEmail" class="modal-guest-email-label">Email для чека и связи</label>
+                        <input type="email" id="modalGuestEmail" class="modal-input" placeholder="example@email.com" autocomplete="email" />
+                        <div class="modal-hint" style="margin-top: 0.4rem;">На этот адрес отправим подтверждение оплаты и сможем восстановить доступ к заказу.</div>
                     </div>
                 }
 
@@ -887,7 +905,11 @@
                     <span>Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a></span>
                 </label>
 
-                <button class="modal-pay-button" onclick="processPurchase()">
+<div id="modalError" class="modal-error" style="display:none;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span id="modalErrorText"></span>
+                </div>
+                                <button class="modal-pay-button" onclick="processPurchase()">
                     <i class="bi bi-cart-check"></i> Оплатить
                 </button>
             </div>
@@ -939,7 +961,7 @@
 
     function openPurchaseModal() {
         if (selectedPrice <= 0) {
-            alert('Пожалуйста, выберите подписку');
+            showModalError('Пожалуйста, выберите подписку');
             return;
         }
         document.getElementById('modalProductDesc').textContent = selectedAmount;
@@ -975,23 +997,52 @@
         if (radio) radio.classList.add('active');
     }
 
+
+    // Inline form errors (replaces native showModalError() popups inside the modal).
+    function showModalError(msg) {
+        const el = document.getElementById('modalError');
+        const tx = document.getElementById('modalErrorText');
+        if (!el || !tx) { console.warn('modalError missing'); return; }
+        tx.textContent = msg;
+        el.style.display = 'flex';
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch {}
+    }
+    function clearModalError() {
+        const el = document.getElementById('modalError');
+        if (el) el.style.display = 'none';
+    }
+
     function processPurchase() {
+        clearModalError();
         const input = document.getElementById('modalInput');
         const val = input.value.trim();
         const agree = document.getElementById('modalAgree');
         const emailPattern = /^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-        if (!val) { alert('Пожалуйста, введите Email для доставки'); input.focus(); return; }
-        if (!emailPattern.test(val)) { alert('Введите корректный Email адрес'); input.focus(); return; }
-        if (!agree.checked) { alert('Пожалуйста, примите условия пользовательского соглашения'); return; }
-        if (!selectedProductId) { alert('Пожалуйста, выберите подписку'); return; }
+        if (!val) { showModalError('Пожалуйста, введите Email для доставки'); input.focus(); return; }
+        if (!emailPattern.test(val)) { showModalError('Введите корректный Email адрес'); input.focus(); return; }
+        if (!agree.checked) { showModalError('Пожалуйста, примите условия пользовательского соглашения'); return; }
+        if (!selectedProductId) { showModalError('Пожалуйста, выберите подписку'); return; }
 
         @if (!User.Identity?.IsAuthenticated ?? true)
         {
             <text>
-            window.location.href = '/Account/Login?returnUrl=' + encodeURIComponent(window.location.pathname);
-            return;
+            // Guest checkout: read email from the dedicated field; if it looks
+            // like an email, pass it. Backend resolves/creates the user.
+            const guestEmailEl = document.getElementById('modalGuestEmail');
+            const guestEmail = guestEmailEl ? guestEmailEl.value.trim() : '';
+            const looksLikeEmail = /^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/.test(guestEmail);
+            if (!looksLikeEmail) {
+                showModalError('Введите Email чтобы оформить заказ без регистрации');
+                if (guestEmailEl) guestEmailEl.focus();
+                return;
+            }
+            window.guestCheckoutEmail = guestEmail;
             </text>
+        }
+        else
+        {
+            <text>window.guestCheckoutEmail = null;</text>
         }
 
         const btn = document.querySelector('.modal-pay-button');
@@ -1017,6 +1068,7 @@
             deliveryInfo: deliveryInfo,
             paymentMethod: method,
             enotService: service,
+            email: window.guestCheckoutEmail || null,
         });
         fetch('/Catalog/Purchase', {
             method: 'POST',
@@ -1029,12 +1081,12 @@
                 if (data.redirectUrl) { window.location.href = data.redirectUrl; return; }
                 showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
             } else {
-                alert(data.errorMessage || 'Ошибка при покупке');
+                showModalError(data.errorMessage || 'Ошибка при покупке');
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить'; }
             }
         })
         .catch(() => {
-            alert('Ошибка соединения');
+            showModalError('Ошибка соединения');
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить'; }
         });
     }

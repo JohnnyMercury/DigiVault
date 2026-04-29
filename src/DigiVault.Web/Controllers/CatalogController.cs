@@ -22,6 +22,13 @@ public class PurchaseRequest
     /// balance purchases. Passed through as Enot's <c>include_service</c>.
     /// </summary>
     public string? EnotService { get; set; }
+    /// <summary>
+    /// Email for guest checkout. Required when the user is not authenticated.
+    /// We auto-create an <see cref="ApplicationUser"/> with this email if one
+    /// doesn't exist, so the order can later be looked up and the customer
+    /// can recover it via password reset.
+    /// </summary>
+    public string? Email { get; set; }
 }
 
 public class CatalogController : Controller
@@ -29,13 +36,19 @@ public class CatalogController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IGameService _gameService;
     private readonly IOrderService _orderService;
+    private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<CatalogController> _logger;
     private const int PageSize = 24;
 
-    public CatalogController(ApplicationDbContext context, IGameService gameService, IOrderService orderService)
+    public CatalogController(ApplicationDbContext context, IGameService gameService,
+        IOrderService orderService, Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager,
+        ILogger<CatalogController> logger)
     {
         _context = context;
         _gameService = gameService;
         _orderService = orderService;
+        _userManager = userManager;
+        _logger = logger;
     }
 
     private async Task SetUserBalanceAsync()
@@ -121,29 +134,77 @@ public class CatalogController : Controller
     }
 
     [HttpPost]
-    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Purchase([FromBody] PurchaseRequest request)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Json(new PurchaseResult { Success = false, ErrorMessage = "Необходимо войти в аккаунт" });
 
-        // Wallet — synchronous fulfilment, no redirect.
+        // Balance purchases require a real account — guests have no balance.
         if (request.PaymentMethod == "balance")
         {
+            if (string.IsNullOrEmpty(userId))
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Войдите в аккаунт чтобы оплатить с баланса" });
             var balanceResult = await _orderService.CreatePurchaseAsync(userId, request.GameProductId, 1, request.DeliveryInfo);
             return Json(balanceResult);
         }
 
-        // External payment (card / sbp / qr / p2p / crypto): create Pending order
-        // and ask the provider for a hosted-checkout URL. Client redirects.
+        // External payment — guest checkout allowed. We auto-provision an
+        // ApplicationUser for the given email so the order has a real owner.
+        if (string.IsNullOrEmpty(userId))
+        {
+            var guestEmail = (request.Email ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(guestEmail))
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Введите Email для оформления заказа" });
+
+            // Lightweight email shape check.
+            if (!System.Text.RegularExpressions.Regex.IsMatch(guestEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Введите корректный Email" });
+
+            userId = await ResolveOrCreateGuestUserAsync(guestEmail);
+            if (userId == null)
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Не удалось создать гостевой аккаунт. Попробуйте войти и повторить." });
+        }
+
         var siteBaseUrl = $"{Request.Scheme}://{Request.Host}";
         var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
         var extResult = await _orderService.CreateExternalPurchaseAsync(
             userId, request.GameProductId, 1, request.DeliveryInfo,
             request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
         return Json(extResult);
+    }
+
+    /// <summary>
+    /// Finds the <see cref="ApplicationUser"/> with the given email, or creates
+    /// a new one (with a random password) so the order can be linked to a real
+    /// account. The customer can later recover access via "forgot password".
+    /// </summary>
+    private async Task<string?> ResolveOrCreateGuestUserAsync(string email)
+    {
+        var existing = await _userManager.FindByEmailAsync(email);
+        if (existing != null) return existing.Id;
+
+        var user = new ApplicationUser
+        {
+            UserName       = email,
+            Email          = email,
+            EmailConfirmed = false,
+            Balance        = 0,
+            IsActive       = true,
+            CreatedAt      = DateTime.UtcNow,
+        };
+        // Random password — the user can request a password-reset link to gain
+        // access to their account and order history.
+        var password = "Guest_" + Guid.NewGuid().ToString("N")[..12] + "!A";
+        var create   = await _userManager.CreateAsync(user, password);
+        if (!create.Succeeded)
+        {
+            _logger.LogWarning("Guest user creation failed for {Email}: {Errors}",
+                email, string.Join("; ", create.Errors.Select(e => e.Description)));
+            return null;
+        }
+        await _userManager.AddToRoleAsync(user, "User");
+        _logger.LogInformation("Guest user auto-created: {Email} → {UserId}", email, user.Id);
+        return user.Id;
     }
 
     public async Task<IActionResult> Index(string? category = null, string? search = null, string? sort = null, int page = 1)

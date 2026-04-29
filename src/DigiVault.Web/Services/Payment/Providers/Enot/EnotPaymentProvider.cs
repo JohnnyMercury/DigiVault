@@ -120,10 +120,17 @@ public class EnotPaymentProvider : IPaymentProvider
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         http.DefaultRequestHeaders.Add("x-api-key", cfg.ApiKey);
 
+        var requestJson = JsonSerializer.Serialize(payload);
+        _log.LogInformation("Enot → POST /invoice/create order_id={OrderId} amount={Amount} method={Method} payload={Payload}",
+            ourTransactionId, request.Amount, request.Method, requestJson);
+
         try
         {
             using var resp = await http.PostAsJsonAsync($"{BaseUrl}/invoice/create", payload, ct);
             var responseText = await resp.Content.ReadAsStringAsync(ct);
+
+            _log.LogInformation("Enot ← /invoice/create http={Code} body={Body}",
+                (int)resp.StatusCode, responseText);
 
             if (!resp.IsSuccessStatusCode)
             {
@@ -141,6 +148,8 @@ public class EnotPaymentProvider : IPaymentProvider
 
             var invoiceId = data.GetProperty("id").GetString() ?? "";
             var url       = data.GetProperty("url").GetString() ?? "";
+
+            _log.LogInformation("Enot invoice created: invoice_id={InvoiceId} url={Url}", invoiceId, url);
 
             return PaymentResult.Successful(
                 transactionId: ourTransactionId,

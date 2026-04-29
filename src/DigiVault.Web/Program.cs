@@ -65,7 +65,10 @@ builder.Services.AddHostedService<DigiVault.Web.Services.Fulfilment.OrderFulfilm
 
 // Payment infrastructure
 builder.Services.AddHttpClient(); // for Enot/other providers' outbound HTTP
-builder.Services.AddScoped<IPaymentProvider, TestPaymentProvider>();
+// NOTE: TestPaymentProvider is NOT registered. It auto-approves payments and
+// would shadow Enot for Card / SBP since IPaymentProviderFactory.GetProviderForMethod
+// just returns the first match. Bring it back only inside `if (env.IsDevelopment())`
+// when you actually need the test fallback.
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Enot.EnotPaymentProvider>();
 // TODO: Add real providers here:
 // builder.Services.AddScoped<IPaymentProvider, YooKassaProvider>();

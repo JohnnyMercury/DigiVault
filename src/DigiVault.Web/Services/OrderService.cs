@@ -172,6 +172,9 @@ public class OrderService : IOrderService
             // 2. Resolve the provider that handles this method.
             var method = MapPaymentMethod(paymentMethod);
             var provider = _providerFactory.GetProviderForMethod(method);
+            _logger.LogInformation(
+                "External purchase: requested paymentMethod='{Raw}' → mapped to {Method}, picked provider '{Provider}' (enabled={Enabled})",
+                paymentMethod, method, provider?.Name ?? "(none)", provider?.IsEnabled);
             if (provider == null || !provider.IsEnabled)
                 return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
 

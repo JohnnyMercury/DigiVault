@@ -1215,6 +1215,7 @@
             if (method !== 'balance') {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+                window.lastSelectedPrice = selectedPrice;
                 window.openPaymentStep2(method);
                 return;
             }

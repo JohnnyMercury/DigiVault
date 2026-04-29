@@ -1141,6 +1141,7 @@
         if (selectedMethod !== 'balance') {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C';
+            window.lastSelectedPrice = selectedPrice;
             window.openPaymentStep2(selectedMethod);
             return;
         }

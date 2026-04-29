@@ -2096,6 +2096,7 @@
             // Open step 2 — let user pick the specific Enot service.
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+            window.lastSelectedPrice = selectedPrice;
             window.openPaymentStep2(method);
             return;
         }

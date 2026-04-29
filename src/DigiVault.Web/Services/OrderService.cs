@@ -298,13 +298,11 @@ public class OrderService : IOrderService
 
     private static DigiVault.Core.Enums.PaymentMethod MapPaymentMethod(string raw) => raw?.ToLowerInvariant() switch
     {
-        "card"   => DigiVault.Core.Enums.PaymentMethod.Card,
-        "sbp"    => DigiVault.Core.Enums.PaymentMethod.SBP,
-        "qr"     => DigiVault.Core.Enums.PaymentMethod.SBP,    // routing only — exact services come from MapPaymentMethodToEnotServices
-        "p2p"    => DigiVault.Core.Enums.PaymentMethod.Card,
-        "crypto" => DigiVault.Core.Enums.PaymentMethod.Crypto,
-        "wallet" => DigiVault.Core.Enums.PaymentMethod.YooMoney,
-        _        => DigiVault.Core.Enums.PaymentMethod.Card,
+        "card" => DigiVault.Core.Enums.PaymentMethod.Card,
+        "sbp"  => DigiVault.Core.Enums.PaymentMethod.SBP,
+        "qr"   => DigiVault.Core.Enums.PaymentMethod.SBP,    // routing only — exact services come from MapPaymentMethodToEnotServices
+        "p2p"  => DigiVault.Core.Enums.PaymentMethod.Card,
+        _      => DigiVault.Core.Enums.PaymentMethod.Card,
     };
 
     /// <summary>
@@ -316,12 +314,11 @@ public class OrderService : IOrderService
     /// </summary>
     private static string[] MapPaymentMethodToEnotServices(string raw) => raw?.ToLowerInvariant() switch
     {
-        "card"   => new[] { "card" },                         // Visa / MC / МИР через единый карточный тариф Enot
-        "sbp"    => new[] { "sbp" },                          // СБП по реквизитам
-        "qr"     => new[] { "sbp" },                          // QR-код Enot отрисовывает в рамках того же SBP-тарифа
-        "p2p"    => new[] { "card" },                         // P2P-перевод не имеет отдельного тарифа — направляем на карточный шлюз
-        "crypto" => new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin", "dash", "trx", "xmr", "doge" },
-        _        => Array.Empty<string>(),
+        "card" => new[] { "card" },                         // Visa / MC / МИР через единый карточный тариф Enot
+        "sbp"  => new[] { "sbp" },                          // СБП по реквизитам
+        "qr"   => new[] { "sbp" },                          // QR-код Enot отрисовывает в рамках того же SBP-тарифа
+        "p2p"  => new[] { "card" },                         // P2P-перевод не имеет отдельного тарифа — направляем на карточный шлюз
+        _      => Array.Empty<string>(),
     };
 
     public static string GenerateOrderNumber()

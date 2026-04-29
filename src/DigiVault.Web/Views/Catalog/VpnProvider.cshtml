@@ -873,20 +873,24 @@
                                 <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"><i class="bi bi-lightning-charge"></i></span>
                                 <div><div class="modal-pay-method-title">СБП</div><div class="modal-pay-method-desc">Система быстрых платежей</div></div>
                             </div>
+                        <div class="modal-pay-method" data-method="crypto" onclick="selectModalPayment(this)">
+                            <div class="modal-pay-method-left">
+                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f7931a, #e76b00);">
+                                    <i class="bi bi-currency-bitcoin"></i>
+                                </span>
+                                <div>
+                                    <div class="modal-pay-method-title">Криптовалюта</div>
+                                    <div class="modal-pay-method-desc">BTC, USDT, ETH и другие</div>
+                                </div>
+                            </div>
+                            <div class="modal-pay-method-right">
+                                <span class="modal-pay-radio"></span>
+                            </div>
+                        </div>
                             <div class="modal-pay-method-right"><span class="modal-pay-radio"></span></div>
                         </div>
-                        <div class="modal-pay-method" data-method="p2p" onclick="selectModalPayment(this)">
-                            <div class="modal-pay-method-left">
-                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #ec4899, #e11d48);"><i class="bi bi-people"></i></span>
-                                <div><div class="modal-pay-method-title">P2P перевод</div><div class="modal-pay-method-desc">Перевод на карту</div></div>
-                            </div>
                             <div class="modal-pay-method-right"><span class="modal-pay-radio"></span></div>
                         </div>
-                        <div class="modal-pay-method" data-method="qr" onclick="selectModalPayment(this)">
-                            <div class="modal-pay-method-left">
-                                <span class="modal-pay-method-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="bi bi-qr-code"></i></span>
-                                <div><div class="modal-pay-method-title">QR-код</div><div class="modal-pay-method-desc">Оплата по QR-коду</div></div>
-                            </div>
                             <div class="modal-pay-method-right"><span class="modal-pay-radio"></span></div>
                         </div>
                     </div>

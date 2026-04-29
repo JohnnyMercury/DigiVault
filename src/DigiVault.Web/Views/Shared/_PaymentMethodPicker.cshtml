@@ -171,35 +171,26 @@
      * apple_pay / etc.) are NOT exposed to the user — Enot's own checkout
      * page handles intra-method choice.
      */
+    // Only methods actually enabled in our Enot merchant cabinet are listed.
+    // Verified against /shops/{shopId}/payment-tariffs — re-check after any
+    // tariff change.
     const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
     const PROVIDERS_BY_METHOD = {
         card: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР, Apple Pay, Google Pay', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР',                    icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
         ],
         sbp: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Система быстрых платежей',                      icon: 'bi-lightning-charge',     color: ENOT_BADGE },
-        ],
-        qr: [
-            { code: 'enot', title: 'Enot Pay', desc: 'QR-код через СБП',                              icon: 'bi-qr-code',              color: ENOT_BADGE },
-        ],
-        p2p: [
-            { code: 'enot', title: 'Enot Pay', desc: 'P2P-перевод на карту или через СБП',           icon: 'bi-people',               color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'СБП (включая оплату по QR-коду)',          icon: 'bi-lightning-charge',     color: ENOT_BADGE },
         ],
         crypto: [
-            { code: 'enot', title: 'Enot Pay', desc: 'BTC, USDT (TRC20/ERC20), ETH, LTC, TON и др.', icon: 'bi-currency-bitcoin',     color: ENOT_BADGE },
-        ],
-        wallet: [
-            { code: 'enot', title: 'Enot Pay', desc: 'QIWI, ЮMoney, WebMoney, Advcash',              icon: 'bi-wallet2',              color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'BTC, USDT (TRC20/ERC20), ETH, LTC, DASH, TRX, XMR, DOGE', icon: 'bi-currency-bitcoin', color: ENOT_BADGE },
         ],
     };
 
     const METHOD_LABELS = {
         card:   'Банковская карта',
         sbp:    'СБП',
-        qr:     'QR-код',
-        p2p:    'P2P перевод',
         crypto: 'Криптовалюта',
-        wallet: 'Электронный кошелёк',
     };
 
     let currentMethod  = null;

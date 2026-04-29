@@ -308,20 +308,18 @@ public class OrderService : IOrderService
     };
 
     /// <summary>
-    /// Top-level UI category → list of Enot service codes to expose on the
-    /// gateway's hosted checkout. This keeps each tile in our modal mapped to
-    /// a tightly-scoped set of options (e.g. "QR" only shows SBP, not P2P SBP;
-    /// "P2P" shows just the two P2P services, not all card flavours).
+    /// Top-level UI category → list of Enot service codes actually enabled in
+    /// our merchant cabinet (verified against
+    /// <c>GET https://api.enot.io/shops/{shopId}/payment-tariffs</c>).
+    /// Only services with <c>status=enabled</c> here are exposed to users.
+    /// Re-check when tariffs change in the Enot cabinet.
     /// </summary>
     private static string[] MapPaymentMethodToEnotServices(string raw) => raw?.ToLowerInvariant() switch
     {
-        "card"   => new[] { "card", "mir_card", "apple_pay", "google_pay" },
-        "sbp"    => new[] { "sbp" },
-        "qr"     => new[] { "sbp" },          // SBP is the QR method in Russia — Enot renders it as a scannable QR
-        "p2p"    => new[] { "p2p_card", "p2p_sbp" },
-        "crypto" => new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin", "ton", "trx", "bitcoin_cash", "dash" },
-        "wallet" => new[] { "qiwi", "yoomoney", "webmoney", "advcash", "perfect_money" },
-        _        => Array.Empty<string>(),
+        "card"   => new[] { "card" },                         // includes Visa / MC / МИР inside this single Enot service
+        "sbp"    => new[] { "sbp" },                          // SBP also renders the payment as a scannable QR
+        "crypto" => new[] { "bitcoin", "usdt_trc20", "usdt_erc20", "ethereum", "litecoin", "dash", "trx", "xmr", "doge" },
+        _        => Array.Empty<string>(),                    // qr / p2p / wallet etc. — not enabled in cabinet
     };
 
     public static string GenerateOrderNumber()

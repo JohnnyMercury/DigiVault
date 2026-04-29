@@ -180,7 +180,13 @@
             { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР',                    icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
         ],
         sbp: [
-            { code: 'enot', title: 'Enot Pay', desc: 'СБП (включая оплату по QR-коду)',          icon: 'bi-lightning-charge',     color: ENOT_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'СБП — оплата по реквизитам',               icon: 'bi-lightning-charge',     color: ENOT_BADGE },
+        ],
+        qr: [
+            { code: 'enot', title: 'Enot Pay', desc: 'СБП — оплата сканированием QR-кода',       icon: 'bi-qr-code',              color: ENOT_BADGE },
+        ],
+        p2p: [
+            { code: 'enot', title: 'Enot Pay', desc: 'Перевод по номеру карты (Visa / МИР)',     icon: 'bi-people-fill',          color: ENOT_BADGE },
         ],
         crypto: [
             { code: 'enot', title: 'Enot Pay', desc: 'BTC, USDT (TRC20/ERC20), ETH, LTC, DASH, TRX, XMR, DOGE', icon: 'bi-currency-bitcoin', color: ENOT_BADGE },
@@ -190,6 +196,8 @@
     const METHOD_LABELS = {
         card:   'Банковская карта',
         sbp:    'СБП',
+        qr:     'QR-код',
+        p2p:    'P2P перевод',
         crypto: 'Криптовалюта',
     };
 

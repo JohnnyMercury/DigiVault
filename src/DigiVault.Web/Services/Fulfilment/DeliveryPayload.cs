@@ -15,6 +15,7 @@ namespace DigiVault.Web.Services.Fulfilment;
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(CodeCredential), "code")]
 [JsonDerivedType(typeof(ConfirmationCredential), "confirmation")]
+[JsonDerivedType(typeof(ContactSupportCredential), "support")]
 public abstract class DeliveryPayload
 {
     public static readonly JsonSerializerOptions JsonOptions = new()
@@ -51,6 +52,38 @@ public class CodeCredential : DeliveryPayload
 
     /// <summary>Optional code expiration date (ISO date or null).</summary>
     public string? ExpiresAt { get; set; }
+}
+
+/// <summary>
+/// Order requires manual processing. Payment went through, but the actual
+/// product (Steam Wallet top-up, in-game currency, VPN access, Telegram
+/// Premium activation) is fulfilled by an operator on the support side after
+/// the customer reaches out. Renders as a «security check» banner with a
+/// Telegram contact button on the order page and in the email receipt.
+/// </summary>
+public class ContactSupportCredential : DeliveryPayload
+{
+    /// <summary>Headline shown to the customer (e.g. «Платёж на проверке безопасности»).</summary>
+    public string Title { get; set; } = "Платёж на проверке Системой безопасности";
+
+    /// <summary>Long-form explanation, can include product-specific notes.</summary>
+    public string Message { get; set; } =
+        "Ваш платёж попал на проверку Системой безопасности. Пожалуйста, свяжитесь с нами в Telegram — менеджер закроет заказ за пару минут.";
+
+    /// <summary>Telegram username without the leading «@» (e.g. <c>digivault_support</c>).</summary>
+    public string SupportUsername { get; set; } = "digivault_support";
+
+    /// <summary>Reference number the customer should mention to the operator.</summary>
+    public string OrderRef { get; set; } = "";
+
+    /// <summary>UTC timestamp when delivery was logged.</summary>
+    public DateTime CompletedAt { get; set; }
+
+    /// <summary>Optional recipient identifier (Steam login, email, UID …) — handy for the operator.</summary>
+    public string? Recipient { get; set; }
+
+    /// <summary>What was paid for (Steam Wallet 1000₽, V-Bucks 13500, Surfshark 12 мес.).</summary>
+    public string? ProductName { get; set; }
 }
 
 /// <summary>

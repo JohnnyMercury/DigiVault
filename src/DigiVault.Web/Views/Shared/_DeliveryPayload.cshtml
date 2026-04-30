@@ -73,6 +73,49 @@ else if (Model.Delivery is CodeCredential code)
         }
     </div>
 }
+else if (Model.Delivery is ContactSupportCredential support)
+{
+    var supportUser = (support.SupportUsername ?? "digivault_support").TrimStart('@');
+    <div class="dpayload delivered support">
+        <div class="dpayload-header">
+            <i class="bi bi-shield-lock-fill"></i>
+            <strong>@support.Title</strong>
+        </div>
+        <p class="dpayload-text">@support.Message</p>
+        <div class="support-grid">
+            @if (!string.IsNullOrEmpty(support.ProductName))
+            {
+                <div class="support-row">
+                    <span class="support-label">Товар</span>
+                    <span class="support-value">@support.ProductName</span>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(support.Recipient))
+            {
+                <div class="support-row">
+                    <span class="support-label">Получатель</span>
+                    <span class="support-value">@support.Recipient</span>
+                </div>
+            }
+            <div class="support-row">
+                <span class="support-label">Номер заказа</span>
+                <span class="support-value mono">@support.OrderRef</span>
+            </div>
+            <div class="support-row">
+                <span class="support-label">Дата</span>
+                <span class="support-value">@FormatDate(support.CompletedAt)</span>
+            </div>
+        </div>
+        <a class="support-cta" href="https://t.me/@supportUser" target="_blank" rel="noopener">
+            <i class="bi bi-telegram"></i>
+            <span>Написать в Telegram (@@@supportUser)</span>
+        </a>
+        <div class="dpayload-instructions">
+            <i class="bi bi-info-circle"></i>
+            <span>Скопируйте номер заказа выше — оператор спросит его в первом сообщении.</span>
+        </div>
+    </div>
+}
 else if (Model.Delivery is ConfirmationCredential conf)
 {
     <div class="dpayload delivered confirmation">
@@ -141,6 +184,7 @@ else if (Model.ProductKeys.Any())
     .dpayload.failed { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
     .dpayload.delivered.code { border-color: rgba(102, 126, 234, 0.35); background: rgba(102, 126, 234, 0.05); }
     .dpayload.delivered.confirmation { border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.05); }
+    .dpayload.delivered.support { border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.06); }
 
     .dpayload-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.65rem; font-size: 0.95rem; }
     .dpayload-header i { font-size: 1.15rem; }
@@ -148,6 +192,7 @@ else if (Model.ProductKeys.Any())
     .dpayload.failed .dpayload-header i { color: #ef4444; }
     .dpayload.delivered.code .dpayload-header i { color: #667eea; }
     .dpayload.delivered.confirmation .dpayload-header i { color: #22c55e; }
+    .dpayload.delivered.support .dpayload-header i { color: #38bdf8; }
     .dpayload-region { margin-left: auto; font-size: 0.75rem; padding: 2px 10px; border-radius: 6px;
                        background: rgba(102,126,234,0.15); color: #a5b4fc; font-weight: 600; }
 
@@ -180,6 +225,24 @@ else if (Model.ProductKeys.Any())
     .conf-label { color: rgba(255,255,255,0.5); }
     .conf-value { color: #fff; font-weight: 500; text-align: right; }
     .conf-value.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #a5b4fc; }
+
+    /* Contact-support variant */
+    .support-grid { display: grid; gap: 0.4rem; margin: 0.75rem 0 1rem; padding: 0.85rem 1rem;
+                    background: rgba(0,0,0,0.18); border-radius: 10px; }
+    .support-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.85rem; }
+    .support-label { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+    .support-value { color: #fff; font-weight: 500; text-align: right; word-break: break-word; }
+    .support-value.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #7dd3fc; }
+    .support-cta {
+        display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+        width: 100%; padding: 0.85rem 1rem;
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        color: #fff; font-weight: 600; font-size: 0.95rem;
+        border: none; border-radius: 12px; text-decoration: none;
+        transition: transform .15s ease, box-shadow .2s ease;
+    }
+    .support-cta:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 12px 28px rgba(56,189,248,0.35); }
+    .support-cta i { font-size: 1.15rem; }
 
     @@keyframes dp-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
     .dpayload .spin { animation: dp-spin 1.5s linear infinite; }

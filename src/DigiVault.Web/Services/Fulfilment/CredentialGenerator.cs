@@ -1,13 +1,22 @@
 using DigiVault.Core.Entities;
+using Microsoft.Extensions.Configuration;
 
 namespace DigiVault.Web.Services.Fulfilment;
 
 /// <summary>
-/// Produces a realistic-looking <see cref="DeliveryPayload"/> for a single
-/// purchased <see cref="OrderItem"/>. Picks the variant (code vs confirmation)
-/// based on the parent product type:
-///   - Game (currency) / Telegram Premium → ConfirmationCredential
-///   - GiftCard / VpnProvider             → CodeCredential
+/// Produces a <see cref="DeliveryPayload"/> for a single purchased
+/// <see cref="OrderItem"/>. Two delivery modes:
+///   - <see cref="CodeCredential"/>: realistic-looking activation code
+///     (Steam-style game keys, gift-card codes for PSN/Xbox/Nintendo/Apple,
+///     subscription codes). Customer redeems it on the issuer's platform.
+///   - <see cref="ContactSupportCredential"/>: «security check» banner with a
+///     Telegram contact CTA. Used wherever the product needs an operator
+///     in the loop — Steam Wallet top-ups, in-game currency (operator must
+///     enter the player ID), VPN account access, Telegram Premium activation.
+///
+/// To change the policy for a category, edit the dispatch in
+/// <see cref="Generate"/>. Routing is intentionally explicit so a glance at
+/// this file tells you exactly what every product type does after payment.
 /// </summary>
 public interface ICredentialGenerator
 {
@@ -19,72 +28,142 @@ public class CredentialGenerator : ICredentialGenerator
     // Single Random instance is fine — fulfilment runs serialised in BG service
     // and order purchases are infrequent. Lock not needed.
     private readonly Random _rnd = new();
+    private readonly string _supportUsername;
+
+    public CredentialGenerator(IConfiguration cfg)
+    {
+        // Single source of truth for the Telegram support handle. Change in
+        // appsettings.json (Support:TelegramUsername) — every new payload
+        // picks it up immediately. Stored on each payload as a snapshot, so
+        // historical orders keep showing the contact they were issued with.
+        _supportUsername = (cfg["Support:TelegramUsername"] ?? "digivault_support")
+            .TrimStart('@')
+            .Trim();
+    }
 
     public DeliveryPayload Generate(OrderItem item)
     {
         var p = item.GameProduct
             ?? throw new InvalidOperationException("OrderItem.GameProduct must be eager-loaded before fulfilment.");
 
-        // 1. In-game currency / Telegram Premium → confirmation receipt
+        // ── Operator-handled flows ────────────────────────────────────────
+        // In-game currency: operator must enter the player ID after payment.
         if (p.Game != null)
-            return BuildGameCurrencyConfirmation(p, item);
+            return BuildGameCurrencySupport(p, item);
 
+        // Telegram Premium: activation requires Telegram-side action.
         if (p.GiftCard != null && p.GiftCard.Slug == "telegram-premium")
-            return BuildTelegramPremiumConfirmation(p, item);
+            return BuildTelegramPremiumSupport(p, item);
 
-        // 2. Gift cards → activation code
+        // VPN providers: subscription credentials are tied to operator's pool
+        // accounts — handed out by support after a quick verification.
+        if (p.VpnProvider != null)
+            return BuildVpnSupport(p, item);
+
+        // Steam Wallet top-up: payment goes on a security-check hold.
+        if (p.GiftCard != null && p.GiftCard.Slug == "steam-wallet")
+            return BuildSteamWalletSupport(p, item);
+
+        // ── Auto-issued codes ─────────────────────────────────────────────
+        // Other gift cards (PSN / Xbox / Nintendo / Apple / Spotify / …):
+        // realistic-looking code generated on the fly.
         if (p.GiftCard != null)
             return BuildGiftCardCode(p);
 
-        // 3. VPN providers → activation code
-        if (p.VpnProvider != null)
-            return BuildVpnCode(p);
-
-        // 4. Fallback — opaque code
+        // Fallback — opaque code with a support pointer.
         return new CodeCredential
         {
             Code = RandomCode("KEY", 4, 4),
-            Instructions = "Свяжитесь с поддержкой для активации.",
+            Instructions = $"Свяжитесь с поддержкой @{_supportUsername} для активации.",
         };
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // Game currency
+    // Operator-handled (ContactSupportCredential)
     // ────────────────────────────────────────────────────────────────────
 
-    private DeliveryPayload BuildGameCurrencyConfirmation(GameProduct p, OrderItem item)
+    private ContactSupportCredential BuildGameCurrencySupport(GameProduct p, OrderItem item)
     {
-        var recipient = ResolveRecipient(item) ?? "ваш аккаунт";
-        return new ConfirmationCredential
+        var recipient = ResolveRecipient(item);
+        var product   = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : p.Name;
+        return new ContactSupportCredential
         {
-            Recipient = recipient,
-            Amount = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : p.Name,
-            TransactionId = RandomCode("TXN", 4, 6),
-            CompletedAt = item.DeliveredAt ?? DateTime.UtcNow,
+            Title = "Заказ ожидает зачисления",
+            Message =
+                "Платёж получен. Чтобы зачислить игровую валюту на ваш аккаунт, " +
+                "оператору нужен ваш игровой ID. Напишите нам в Telegram — закроем заказ за пару минут.",
+            SupportUsername = _supportUsername,
+            OrderRef        = OrderRef(item),
+            CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
+            Recipient       = recipient,
+            ProductName     = product,
         };
     }
 
-    private DeliveryPayload BuildTelegramPremiumConfirmation(GameProduct p, OrderItem item)
+    private ContactSupportCredential BuildTelegramPremiumSupport(GameProduct p, OrderItem item)
     {
-        var recipient = ResolveRecipient(item) ?? "@username";
-        if (!recipient.StartsWith("@")) recipient = "@" + recipient.TrimStart('@');
+        var recipient = ResolveRecipient(item);
+        if (!string.IsNullOrEmpty(recipient) && !recipient.StartsWith("@"))
+            recipient = "@" + recipient.TrimStart('@');
 
-        // Try to infer subscription length from Amount ("3 мес", "6 мес", "12 мес")
         var months = 3;
         if (!string.IsNullOrEmpty(p.Amount))
         {
             var digits = new string(p.Amount.Where(char.IsDigit).ToArray());
             if (int.TryParse(digits, out var m) && m is >= 1 and <= 24) months = m;
         }
-        var completed = item.DeliveredAt ?? DateTime.UtcNow;
 
-        return new ConfirmationCredential
+        return new ContactSupportCredential
         {
-            Recipient = recipient,
-            Amount = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : $"Telegram Premium, {months} мес.",
-            TransactionId = RandomCode("TGP", 4, 6),
-            CompletedAt = completed,
-            ValidUntil = completed.AddMonths(months).ToString("yyyy-MM-dd"),
+            Title = "Активация Telegram Premium",
+            Message =
+                "Платёж получен. Для активации Premium на вашем аккаунте напишите нам в Telegram — " +
+                "оператор подтвердит ник и активирует подписку.",
+            SupportUsername = _supportUsername,
+            OrderRef        = OrderRef(item),
+            CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
+            Recipient       = recipient,
+            ProductName     = !string.IsNullOrWhiteSpace(p.TotalDisplay)
+                ? p.TotalDisplay!
+                : $"Telegram Premium, {months} мес.",
+        };
+    }
+
+    private ContactSupportCredential BuildVpnSupport(GameProduct p, OrderItem item)
+    {
+        var slug    = p.VpnProvider!.Slug;
+        var name    = p.VpnProvider.Name ?? slug;
+        var product = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : $"{name} — подписка";
+
+        return new ContactSupportCredential
+        {
+            Title = "Выдача доступа к VPN",
+            Message =
+                $"Платёж получен. {name} выдаём вручную из проверенного пула аккаунтов — " +
+                "напишите нам в Telegram, оператор пришлёт логин, пароль и инструкцию по входу.",
+            SupportUsername = _supportUsername,
+            OrderRef        = OrderRef(item),
+            CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
+            Recipient       = ResolveRecipient(item),
+            ProductName     = product,
+        };
+    }
+
+    private ContactSupportCredential BuildSteamWalletSupport(GameProduct p, OrderItem item)
+    {
+        var product = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : p.Name;
+        return new ContactSupportCredential
+        {
+            Title = "Платёж попал на проверку Системой безопасности",
+            Message =
+                "Steam усилил защиту аккаунтов от автоматических пополнений — поэтому каждое " +
+                "пополнение мы зачисляем после короткой ручной проверки. Напишите нам в Telegram " +
+                "— оператор подтвердит ваш Steam-логин и начислит средства за 5–10 минут.",
+            SupportUsername = _supportUsername,
+            OrderRef        = OrderRef(item),
+            CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
+            Recipient       = ResolveRecipient(item),
+            ProductName     = product,
         };
     }
 
@@ -119,35 +198,6 @@ public class CredentialGenerator : ICredentialGenerator
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // VPN providers
-    // ────────────────────────────────────────────────────────────────────
-
-    private DeliveryPayload BuildVpnCode(GameProduct p)
-    {
-        var slug = p.VpnProvider!.Slug;
-        var prefix = slug switch
-        {
-            "nordvpn"    => "NORD",
-            "expressvpn" => "EXPR",
-            "surfshark"  => "SURF",
-            _ => "VPN",
-        };
-        var domain = slug switch
-        {
-            "nordvpn"    => "nordvpn.com",
-            "expressvpn" => "expressvpn.com",
-            "surfshark"  => "surfshark.com",
-            _ => "vpn.com",
-        };
-
-        return new CodeCredential
-        {
-            Code = prefix + "-" + Group(_rnd, 4, 4, 4, 4, 4),
-            Instructions = $"Войдите в свой аккаунт на {domain} → раздел «Активация» → введите код.",
-        };
-    }
-
-    // ────────────────────────────────────────────────────────────────────
     // Helpers
     // ────────────────────────────────────────────────────────────────────
 
@@ -156,6 +206,13 @@ public class CredentialGenerator : ICredentialGenerator
     {
         var info = item.Order?.DeliveryInfo;
         return string.IsNullOrWhiteSpace(info) ? null : info.Trim();
+    }
+
+    /// <summary>Order reference shown to the operator (Order number + item id).</summary>
+    private static string OrderRef(OrderItem item)
+    {
+        var num = item.Order?.OrderNumber ?? $"DV-{item.OrderId}";
+        return $"{num} / item {item.Id}";
     }
 
     /// <summary>Generates an opaque-looking code prefix-XXXX-XXXXXX (custom group sizes).</summary>

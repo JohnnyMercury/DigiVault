@@ -3,12 +3,20 @@
 @model DigiVault.Web.ViewModels.OrderItemViewModel
 
 @{
+    // ToLocalTime here uses the server timezone (Docker container = UTC), so
+    // it's actually a no-op. We render the date as ISO 8601 with explicit Z
+    // and let the browser format it in the user's locale via the global
+    // `data-utc` JS handler in _Layout. The fallback content shown before JS
+    // runs is the UTC value formatted with Russian month names so it stays
+    // readable even with JS disabled.
+    string Iso(DateTime utc)
+        => DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToString("o");
+
     string FormatDate(DateTime utc)
     {
-        var local = utc.ToLocalTime();
         var months = new[] { "января", "февраля", "марта", "апреля", "мая", "июня",
                              "июля", "августа", "сентября", "октября", "ноября", "декабря" };
-        return $"{local.Day} {months[local.Month - 1]} {local.Year}, {local:HH:mm}";
+        return $"{utc.Day} {months[utc.Month - 1]} {utc.Year}, {utc:HH:mm}";
     }
     string FormatDateOnly(string? iso)
     {
@@ -103,7 +111,7 @@ else if (Model.Delivery is ContactSupportCredential support)
             </div>
             <div class="support-row">
                 <span class="support-label">Дата</span>
-                <span class="support-value">@FormatDate(support.CompletedAt)</span>
+                <span class="support-value"><time data-utc="@Iso(support.CompletedAt)" data-fmt="datetime-long">@FormatDate(support.CompletedAt)</time></span>
             </div>
         </div>
         <a class="support-cta" href="https://t.me/@supportUser" target="_blank" rel="noopener">
@@ -138,7 +146,7 @@ else if (Model.Delivery is ConfirmationCredential conf)
             </div>
             <div class="conf-row">
                 <span class="conf-label">Дата</span>
-                <span class="conf-value">@FormatDate(conf.CompletedAt)</span>
+                <span class="conf-value"><time data-utc="@Iso(conf.CompletedAt)" data-fmt="datetime-long">@FormatDate(conf.CompletedAt)</time></span>
             </div>
             @if (!string.IsNullOrEmpty(conf.ValidUntil))
             {

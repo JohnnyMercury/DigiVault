@@ -66,15 +66,18 @@
                         <div class="text-muted small">Номер заказа</div>
                         <code>@Model.OrderNumber</code>
                     </div>
+                    @{
+                        string IsoUtc(DateTime dt) => DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToString("o");
+                    }
                     <div class="mb-3">
                         <div class="text-muted small">Дата заказа</div>
-                        <div>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                        <div><time data-utc="@IsoUtc(Model.CreatedAt)" data-fmt="datetime-short">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</time></div>
                     </div>
                     @if (Model.CompletedAt.HasValue)
                     {
                         <div class="mb-3">
                             <div class="text-muted small">Выполнен</div>
-                            <div>@Model.CompletedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                            <div><time data-utc="@IsoUtc(Model.CompletedAt.Value)" data-fmt="datetime-short">@Model.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm")</time></div>
                         </div>
                     }
                     <hr class="border-secondary">

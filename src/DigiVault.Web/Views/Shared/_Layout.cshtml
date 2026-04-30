@@ -1014,6 +1014,45 @@
             style.textContent = '.container, .container-fluid, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl, .container-wide { max-width: 1600px !important; width: 100% !important; padding-left: 30px !important; padding-right: 30px !important; margin-left: auto !important; margin-right: auto !important; }';
             document.head.appendChild(style);
         });
+
+        // Localise all <time data-utc="..."> elements to the user's timezone.
+        // Server stores DateTime.UtcNow and renders the ISO 8601 string with
+        // explicit Z suffix; the browser is the only place that knows the
+        // user's actual locale and offset. Two formats are supported via
+        // data-fmt: "datetime-short" (30.04.2026 13:37) and
+        // "datetime-long" (30 апреля 2026, 13:37).
+        (function () {
+            const monthsLong = ['января','февраля','марта','апреля','мая','июня',
+                                'июля','августа','сентября','октября','ноября','декабря'];
+            function pad(n) { return n < 10 ? '0' + n : '' + n; }
+            function fmtShort(d) {
+                return pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear()
+                       + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+            function fmtLong(d) {
+                return d.getDate() + ' ' + monthsLong[d.getMonth()] + ' ' + d.getFullYear()
+                       + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+            }
+            function localise() {
+                document.querySelectorAll('time[data-utc]').forEach(function (el) {
+                    if (el.dataset.localised === '1') return;
+                    var iso = el.getAttribute('data-utc');
+                    if (!iso) return;
+                    var d = new Date(iso);
+                    if (isNaN(d.getTime())) return;
+                    el.textContent = el.getAttribute('data-fmt') === 'datetime-long'
+                        ? fmtLong(d) : fmtShort(d);
+                    el.dataset.localised = '1';
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', localise);
+            } else {
+                localise();
+            }
+            // Re-run after dynamic content (modal opens, ajax injects HTML, etc.)
+            window.localiseTimes = localise;
+        })();
     </script>
 </body>
 </html>

@@ -147,10 +147,24 @@ public static class DbSeeder
                 Gradient = "linear-gradient(135deg, #1b2838, #66c0f4)",
                 Category = GiftCardCategory.Gaming,
                 SortOrder = 0,
-                IsActive = false   // hidden from generic GiftCards listing — this product
-                                   // is reachable only via the dedicated /Catalog/Steam page
+                IsActive = true   // visible in /Catalog and /Admin; the tile in
+                                  // CatalogController.Index links to the dedicated
+                                  // /Catalog/Steam page (slider) instead of the
+                                  // generic GiftCard product grid.
             });
             await context.SaveChangesAsync();
+        }
+        else
+        {
+            // Upgrade path: earlier seed left IsActive=false, which hid the tile
+            // from /Catalog. Re-enable it so existing prod DBs pick up the
+            // homepage / catalog tile without manual SQL.
+            var existing = await context.GiftCards.FirstAsync(g => g.Slug == "steam-wallet");
+            if (!existing.IsActive)
+            {
+                existing.IsActive = true;
+                await context.SaveChangesAsync();
+            }
         }
         var steamWalletCard = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "steam-wallet");
         if (steamWalletCard != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == steamWalletCard.Id))

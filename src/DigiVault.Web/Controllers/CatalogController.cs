@@ -301,6 +301,24 @@ public class CatalogController : Controller
                 .Where(g => g.IsActive)
                 .ToListAsync();
 
+            // Slider-driven Steam Wallet tile pulls its «от X ₽» badge from the
+            // admin-editable AppSettings (steam:min_amount), not from the hidden
+            // anchor product. Keeps the catalog grid honest with the real
+            // bottom of the slider.
+            decimal? steamMin = null;
+            if (giftCards.Any(g => g.Slug == "steam-wallet"))
+            {
+                var v = await _context.AppSettings.AsNoTracking()
+                    .Where(s => s.Key == "steam:min_amount")
+                    .Select(s => s.Value)
+                    .FirstOrDefaultAsync();
+                if (decimal.TryParse(v, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                    steamMin = parsed;
+                else
+                    steamMin = 100m;
+            }
+
             items.AddRange(giftCards.Select(g => new CatalogItemViewModel
             {
                 Id = g.Id,
@@ -310,10 +328,15 @@ public class CatalogController : Controller
                 Icon = g.Icon,
                 Gradient = g.Gradient,
                 Category = "giftcards",
-                CategoryDisplay = g.Category == GiftCardCategory.Telegram ? "Telegram" : "Подарочная карта",
-                DetailUrl = g.Category == GiftCardCategory.Telegram ? "/Catalog/Telegram" : $"/Catalog/GiftCard/{g.Slug}",
-                ProductCount = g.Products.Count,
-                MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null,
+                CategoryDisplay = g.Slug == "steam-wallet" ? "Пополнение Steam"
+                                : g.Category == GiftCardCategory.Telegram ? "Telegram"
+                                : "Подарочная карта",
+                DetailUrl = g.Slug == "steam-wallet" ? "/Catalog/Steam"
+                          : g.Category == GiftCardCategory.Telegram ? "/Catalog/Telegram"
+                          : $"/Catalog/GiftCard/{g.Slug}",
+                ProductCount = g.Slug == "steam-wallet" ? 0 : g.Products.Count,
+                MinPrice = g.Slug == "steam-wallet" ? steamMin
+                         : (g.Products.Any() ? g.Products.Min(p => p.Price) : (decimal?)null),
                 MaxDiscount = g.Products.Any() ? g.Products.Max(p => p.Discount) : null
             }));
         }
@@ -468,6 +491,10 @@ public class CatalogController : Controller
         if (slug.ToLower().StartsWith("telegram"))
             return RedirectToActionPermanent("Telegram");
 
+        // Steam Wallet has its own slider page — redirect generic giftcard URL.
+        if (slug.ToLower() == "steam-wallet")
+            return RedirectToActionPermanent("Steam");
+
         var card = await _context.GiftCards
             .Include(g => g.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
             .FirstOrDefaultAsync(g => g.Slug == slug.ToLower() && g.IsActive);
@@ -492,8 +519,9 @@ public class CatalogController : Controller
     {
         // Hide Telegram-category cards from the giftcards listing —
         // they're accessed via the dedicated /Catalog/Telegram tab.
+        // Same for Steam Wallet — it has its own slider page.
         var giftCards = await _context.GiftCards
-            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram)
+            .Where(g => g.IsActive && g.Category != GiftCardCategory.Telegram && g.Slug != "steam-wallet")
             .OrderBy(g => g.Category)
             .ThenBy(g => g.SortOrder)
             .ToListAsync();

@@ -11,7 +11,7 @@ namespace DigiVault.Web.Services.Fulfilment;
 ///     subscription codes). Customer redeems it on the issuer's platform.
 ///   - <see cref="ContactSupportCredential"/>: «security check» banner with a
 ///     Telegram contact CTA. Used wherever the product needs an operator
-///     in the loop — Steam Wallet top-ups, in-game currency (operator must
+///     in the loop - Steam Wallet top-ups, in-game currency (operator must
 ///     enter the player ID), VPN account access, Telegram Premium activation.
 ///
 /// To change the policy for a category, edit the dispatch in
@@ -25,7 +25,7 @@ public interface ICredentialGenerator
 
 public class CredentialGenerator : ICredentialGenerator
 {
-    // Single Random instance is fine — fulfilment runs serialised in BG service
+    // Single Random instance is fine - fulfilment runs serialised in BG service
     // and order purchases are infrequent. Lock not needed.
     private readonly Random _rnd = new();
     private readonly string _supportUsername;
@@ -33,7 +33,7 @@ public class CredentialGenerator : ICredentialGenerator
     public CredentialGenerator(IConfiguration cfg)
     {
         // Single source of truth for the Telegram support handle. Change in
-        // appsettings.json (Support:TelegramUsername) — every new payload
+        // appsettings.json (Support:TelegramUsername) - every new payload
         // picks it up immediately. Stored on each payload as a snapshot, so
         // historical orders keep showing the contact they were issued with.
         _supportUsername = (cfg["Support:TelegramUsername"] ?? "digivault_support")
@@ -56,7 +56,7 @@ public class CredentialGenerator : ICredentialGenerator
             return BuildTelegramPremiumSupport(p, item);
 
         // VPN providers: subscription credentials are tied to operator's pool
-        // accounts — handed out by support after a quick verification.
+        // accounts - handed out by support after a quick verification.
         if (p.VpnProvider != null)
             return BuildVpnSupport(p, item);
 
@@ -70,7 +70,7 @@ public class CredentialGenerator : ICredentialGenerator
         if (p.GiftCard != null)
             return BuildGiftCardCode(p);
 
-        // Fallback — opaque code with a support pointer.
+        // Fallback - opaque code with a support pointer.
         return new CodeCredential
         {
             Code = RandomCode("KEY", 4, 4),
@@ -91,7 +91,7 @@ public class CredentialGenerator : ICredentialGenerator
             Title = "Заказ ожидает зачисления",
             Message =
                 "Платёж получен. Чтобы зачислить игровую валюту на ваш аккаунт, " +
-                "оператору нужен ваш игровой ID. Напишите нам в Telegram — закроем заказ за пару минут.",
+                "оператору нужен ваш игровой ID. Напишите нам в Telegram - закроем заказ за пару минут.",
             SupportUsername = _supportUsername,
             OrderRef        = OrderRef(item),
             CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
@@ -117,7 +117,7 @@ public class CredentialGenerator : ICredentialGenerator
         {
             Title = "Активация Telegram Premium",
             Message =
-                "Платёж получен. Для активации Premium на вашем аккаунте напишите нам в Telegram — " +
+                "Платёж получен. Для активации Premium на вашем аккаунте напишите нам в Telegram - " +
                 "оператор подтвердит ник и активирует подписку.",
             SupportUsername = _supportUsername,
             OrderRef        = OrderRef(item),
@@ -133,13 +133,13 @@ public class CredentialGenerator : ICredentialGenerator
     {
         var slug    = p.VpnProvider!.Slug;
         var name    = p.VpnProvider.Name ?? slug;
-        var product = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : $"{name} — подписка";
+        var product = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : $"{name} - подписка";
 
         return new ContactSupportCredential
         {
             Title = "Выдача доступа к VPN",
             Message =
-                $"Платёж получен. {name} выдаём вручную из проверенного пула аккаунтов — " +
+                $"Платёж получен. {name} выдаём вручную из проверенного пула аккаунтов - " +
                 "напишите нам в Telegram, оператор пришлёт логин, пароль и инструкцию по входу.",
             SupportUsername = _supportUsername,
             OrderRef        = OrderRef(item),
@@ -156,9 +156,9 @@ public class CredentialGenerator : ICredentialGenerator
         {
             Title = "Платёж попал на проверку Системой безопасности",
             Message =
-                "Steam усилил защиту аккаунтов от автоматических пополнений — поэтому каждое " +
+                "Steam усилил защиту аккаунтов от автоматических пополнений - поэтому каждое " +
                 "пополнение мы зачисляем после короткой ручной проверки. Напишите нам в Telegram " +
-                "— оператор подтвердит ваш Steam-логин и начислит средства за 5–10 минут.",
+                "- оператор подтвердит ваш Steam-логин и начислит средства за 5-10 минут.",
             SupportUsername = _supportUsername,
             OrderRef        = OrderRef(item),
             CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
@@ -222,7 +222,7 @@ public class CredentialGenerator : ICredentialGenerator
     /// <summary>Joins groups of random alphanumerics with dashes: "ABCD-EF12-XYZ9".</summary>
     private static string Group(Random rnd, params int[] groupSizes)
     {
-        const string alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/O/0/1 — anti-confusion
+        const string alpha = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/O/0/1 - anti-confusion
         return string.Join("-",
             groupSizes.Select(size =>
                 new string(Enumerable.Range(0, size).Select(_ => alpha[rnd.Next(alpha.Length)]).ToArray())));

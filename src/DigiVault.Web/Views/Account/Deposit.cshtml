@@ -371,7 +371,7 @@
             var adminTile = document.querySelector('.pmtile[data-method="admin"]');
             if (!adminTile) return;
             if (code === 'admin') {
-                // partial cleared its own selection — also pull all .pmtile.selected
+                // partial cleared its own selection - also pull all .pmtile.selected
                 // outside the partial's container so only admin stays selected.
                 var partialContainer = tile.closest('.pmtiles');
                 document.querySelectorAll('.pmtile.selected').forEach(function (t) {
@@ -380,7 +380,7 @@
                     }
                 });
             } else {
-                // Method picked from the partial — drop admin's selected state.
+                // Method picked from the partial - drop admin's selected state.
                 adminTile.classList.remove('selected');
                 var r = adminTile.querySelector('.pmtile-radio');
                 if (r) r.classList.remove('active');
@@ -389,7 +389,7 @@
 
         // When the user clicks a disabled (Скоро) tile.
         window.onPayMethodUnavailable = function (code) {
-            // Could surface inline notice; for now we just no-op — server-side
+            // Could surface inline notice; for now we just no-op - server-side
             // rejects qr/p2p with a friendly TempData banner if it ever submits.
             console.info('Метод', code, 'пока не подключён');
         };

@@ -18,7 +18,7 @@ public class PaymentTilesViewModel
     /// <summary>
     /// Name of a global JS function called as <c>onclick="<i>fn</i>(this)"</c>.
     /// Default <c>selectPayMethod</c> is provided by the partial itself
-    /// — pages can override (e.g. <c>selectModalPayment</c> for the
+    /// - pages can override (e.g. <c>selectModalPayment</c> for the
     /// catalog modals that already have such a function).
     /// </summary>
     public string OnSelectJs { get; set; } = "selectPayMethod";

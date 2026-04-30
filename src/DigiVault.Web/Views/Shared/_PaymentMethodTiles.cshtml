@@ -5,14 +5,14 @@
         - any future cart-checkout / subscription page
 
     Tiles come from a single C# registry: DigiVault.Web.Services.Payment
-    .PaymentMethodCatalog.All. To add / remove / rename a method — edit
+    .PaymentMethodCatalog.All. To add / remove / rename a method - edit
     that one file.
 
     Render with:
         <partial name="_PaymentMethodTiles" model='new PaymentTilesViewModel { ... }' />
 
     The partial renders both the new `.pmtile*` class set (canonical) and
-    the legacy `.modal-pay-method*` aliases — so existing JS in the catalog
+    the legacy `.modal-pay-method*` aliases - so existing JS in the catalog
     modals that queries `.modal-pay-method.selected` keeps working without
     edits.
 
@@ -155,7 +155,7 @@
         window.__pmtilesInit = true;
 
         // Default selector handler. Pages can override Model.OnSelectJs
-        // (catalog modals use selectModalPayment) — those functions stay
+        // (catalog modals use selectModalPayment) - those functions stay
         // responsible for any page-specific side-effects (Buy button text,
         // step-2 picker, etc.). This default just maintains the visual
         // selected state and the hidden input.

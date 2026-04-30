@@ -5,7 +5,7 @@ namespace DigiVault.Web.Services.Fulfilment;
 /// Order whose items are still <see cref="DigiVault.Core.Enums.DeliveryStatus.Pending"/>
 /// and tries to deliver them. Handles:
 ///   - App restarts mid-fulfilment
-///   - Transient failures inside the in-line fulfilment call (rare — generator
+///   - Transient failures inside the in-line fulfilment call (rare - generator
 ///     is pure CPU; but if a future generator hits an external API and times
 ///     out, this will retry)
 ///   - Webhook-driven orders that haven't been wired to call FulfilmentService

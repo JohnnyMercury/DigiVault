@@ -6,8 +6,8 @@ namespace DigiVault.Web.Services.Fulfilment;
 /// <summary>
 /// Polymorphic JSON payload describing the actual delivered credential for an
 /// <see cref="DigiVault.Core.Entities.OrderItem"/>. Two variants:
-///   - <see cref="CodeCredential"/> — activation code (gift cards, PSN/Xbox/Nintendo, VPN)
-///   - <see cref="ConfirmationCredential"/> — top-up receipt (game currency, Telegram Premium)
+///   - <see cref="CodeCredential"/> - activation code (gift cards, PSN/Xbox/Nintendo, VPN)
+///   - <see cref="ConfirmationCredential"/> - top-up receipt (game currency, Telegram Premium)
 ///
 /// Discriminator field <c>kind</c> is "code" or "confirmation".
 /// Stored as <c>jsonb</c> in <see cref="DigiVault.Core.Entities.OrderItem.DeliveryPayloadJson"/>.
@@ -44,7 +44,7 @@ public class CodeCredential : DeliveryPayload
 {
     public string Code { get; set; } = "";
 
-    /// <summary>"USA" / "EU" / "TR" / "RU" — where the code is valid.</summary>
+    /// <summary>"USA" / "EU" / "TR" / "RU" - where the code is valid.</summary>
     public string? Region { get; set; }
 
     /// <summary>Where to redeem the code (free-text instructions).</summary>
@@ -68,7 +68,7 @@ public class ContactSupportCredential : DeliveryPayload
 
     /// <summary>Long-form explanation, can include product-specific notes.</summary>
     public string Message { get; set; } =
-        "Ваш платёж попал на проверку Системой безопасности. Пожалуйста, свяжитесь с нами в Telegram — менеджер закроет заказ за пару минут.";
+        "Ваш платёж попал на проверку Системой безопасности. Пожалуйста, свяжитесь с нами в Telegram - менеджер закроет заказ за пару минут.";
 
     /// <summary>Telegram username without the leading «@» (e.g. <c>digivault_support</c>).</summary>
     public string SupportUsername { get; set; } = "digivault_support";
@@ -79,7 +79,7 @@ public class ContactSupportCredential : DeliveryPayload
     /// <summary>UTC timestamp when delivery was logged.</summary>
     public DateTime CompletedAt { get; set; }
 
-    /// <summary>Optional recipient identifier (Steam login, email, UID …) — handy for the operator.</summary>
+    /// <summary>Optional recipient identifier (Steam login, email, UID …) - handy for the operator.</summary>
     public string? Recipient { get; set; }
 
     /// <summary>What was paid for (Steam Wallet 1000₽, V-Bucks 13500, Surfshark 12 мес.).</summary>
@@ -87,13 +87,13 @@ public class ContactSupportCredential : DeliveryPayload
 }
 
 /// <summary>
-/// Receipt-style payload — the actual product (in-game currency, Telegram
+/// Receipt-style payload - the actual product (in-game currency, Telegram
 /// Premium subscription, etc.) was delivered out-of-band to the recipient's
 /// account. There is no code to redeem; the customer just sees confirmation.
 /// </summary>
 public class ConfirmationCredential : DeliveryPayload
 {
-    /// <summary>Recipient identifier — username, UID, email, etc. (from Order.DeliveryInfo).</summary>
+    /// <summary>Recipient identifier - username, UID, email, etc. (from Order.DeliveryInfo).</summary>
     public string Recipient { get; set; } = "";
 
     /// <summary>Human-readable amount: "1000 V-Bucks", "Premium 6 месяцев", etc.</summary>
@@ -105,6 +105,6 @@ public class ConfirmationCredential : DeliveryPayload
     /// <summary>UTC timestamp when delivery was completed.</summary>
     public DateTime CompletedAt { get; set; }
 
-    /// <summary>Optional subscription expiry (ISO date or null) — for time-limited products.</summary>
+    /// <summary>Optional subscription expiry (ISO date or null) - for time-limited products.</summary>
     public string? ValidUntil { get; set; }
 }

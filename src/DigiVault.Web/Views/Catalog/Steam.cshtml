@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Пополнение Steam — Key Zona";
+    ViewData["Title"] = "Пополнение Steam - Key Zona";
 
     const decimal MinAmount = 100m;
     const decimal MaxAmount = 15000m;
@@ -12,7 +12,7 @@
 
 <style>
     /* ────────────────────────────────────────────────────────────────────
-       Layout — копия Telegram-страницы, чтобы каркас был одинаковый
+       Layout - копия Telegram-страницы, чтобы каркас был одинаковый
        ──────────────────────────────────────────────────────────────────── */
     .game-page { display: flex; gap: 1.5rem; padding: 1rem 0; }
     .game-sidebar-spacer { width: 280px; flex-shrink: 0; }
@@ -22,7 +22,7 @@
 
     .game-main { flex-grow: 1; min-width: 0; }
 
-    /* Steam-логин — точно как .uid-section у Telegram, только цвет другой */
+    /* Steam-логин - точно как .uid-section у Telegram, только цвет другой */
     .uid-section {
         background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -54,7 +54,7 @@
         color: #ffffff; letter-spacing: 0.01em;
     }
 
-    /* Slider card — основной выбор суммы */
+    /* Slider card - основной выбор суммы */
     .amount-card {
         background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -136,7 +136,7 @@
     }
     .amount-error.visible { display: block; }
 
-    /* Payment Sidebar — точная копия Telegram */
+    /* Payment Sidebar - точная копия Telegram */
     .payment-sidebar {
         width: 300px; flex-shrink: 0;
         position: sticky; top: 100px; height: fit-content;
@@ -233,7 +233,7 @@
         margin-bottom: 0.25rem; line-height: 1.2;
     }
 
-    /* FAQ — точная копия */
+    /* FAQ - точная копия */
     .faq-section { padding: 2.5rem 0 1rem; }
     .faq-title { font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem; }
     .faq-item {
@@ -445,7 +445,7 @@
                     </div>
                     <div class="payment-delivery-row">
                         <span class="payment-delivery-label">Срок зачисления</span>
-                        <span class="payment-delivery-value">5–10 минут</span>
+                        <span class="payment-delivery-value">5-10 минут</span>
                     </div>
                 </div>
             </div>
@@ -476,7 +476,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    После оплаты заказ попадает к оператору на финальную проверку. На этом этапе мы подтверждаем ваш Steam-логин в Telegram (5–10 минут) — это защита от автоматических ботов и фишинга. Сразу после подтверждения деньги уходят на ваш аккаунт.
+                    После оплаты заказ попадает к оператору на финальную проверку. На этом этапе мы подтверждаем ваш Steam-логин в Telegram (5-10 минут) - это защита от автоматических ботов и фишинга. Сразу после подтверждения деньги уходят на ваш аккаунт.
                 </div></div>
             </div>
 
@@ -486,7 +486,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    Если оплачиваете 1 000 ₽ — мы зачисляем на Steam 1 100 ₽. Бонус накидывается всегда, на любую сумму от 100 до 15 000 ₽. Никаких скрытых комиссий и условий.
+                    Если оплачиваете 1 000 ₽ - мы зачисляем на Steam 1 100 ₽. Бонус накидывается всегда, на любую сумму от 100 до 15 000 ₽. Никаких скрытых комиссий и условий.
                 </div></div>
             </div>
 
@@ -496,7 +496,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    Steam усилил антифрод по автоматическим пополнениям — массовые роботы блокируются на стороне Valve. Мы зачисляем средства вручную через одобренный поток платежей: оператор подтверждает ваш ник в Telegram и закрывает заказ. Это занимает буквально пару минут, зато аккаунт остаётся в безопасности.
+                    Steam усилил антифрод по автоматическим пополнениям - массовые роботы блокируются на стороне Valve. Мы зачисляем средства вручную через одобренный поток платежей: оператор подтверждает ваш ник в Telegram и закрывает заказ. Это занимает буквально пару минут, зато аккаунт остаётся в безопасности.
                 </div></div>
             </div>
 
@@ -506,7 +506,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    Только публичный логин Steam — тот же, по которому вы заходите в клиент. Пароль, код Steam Guard, секретные вопросы — НЕ нужны и НЕ запрашиваются. Если кто-то просит их — это мошенник, не мы.
+                    Только публичный логин Steam - тот же, по которому вы заходите в клиент. Пароль, код Steam Guard, секретные вопросы - НЕ нужны и НЕ запрашиваются. Если кто-то просит их - это мошенник, не мы.
                 </div></div>
             </div>
 
@@ -516,7 +516,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    Минимум — 100 ₽, максимум — 15 000 ₽ за один платёж. Можно оформить несколько заказов подряд, лимит на количество не ограничен. Шаг слайдера — 50 ₽.
+                    Минимум - 100 ₽, максимум - 15 000 ₽ за один платёж. Можно оформить несколько заказов подряд, лимит на количество не ограничен. Шаг слайдера - 50 ₽.
                 </div></div>
             </div>
 
@@ -526,7 +526,7 @@
                     <i class="bi bi-plus-lg"></i>
                 </div>
                 <div class="faq-answer"><div class="faq-answer-inner">
-                    Пишите в Telegram-поддержку — мы оперативно либо зачислим, либо вернём средства. У каждого заказа уникальный номер; назовите его оператору, и мы найдём вашу транзакцию за секунду.
+                    Пишите в Telegram-поддержку - мы оперативно либо зачислим, либо вернём средства. У каждого заказа уникальный номер; назовите его оператору, и мы найдём вашу транзакцию за секунду.
                 </div></div>
             </div>
         </div>
@@ -706,8 +706,8 @@
         if (!login) return showModalError('Введите ваш Steam-логин');
         if (login.length < 3) return showModalError('Логин слишком короткий');
         if (!agree.checked) return showModalError('Примите условия пользовательского соглашения');
-        if (currentAmount < STEAM_MIN) return showModalError('Минимум — ' + STEAM_MIN + ' ₽');
-        if (currentAmount > STEAM_MAX) return showModalError('Максимум — ' + STEAM_MAX + ' ₽');
+        if (currentAmount < STEAM_MIN) return showModalError('Минимум - ' + STEAM_MIN + ' ₽');
+        if (currentAmount > STEAM_MAX) return showModalError('Максимум - ' + STEAM_MAX + ' ₽');
 
         let email = null;
         if (!isAuth) {
@@ -724,7 +724,7 @@
         if (selectedMethod === 'balance')
             return showModalError('Пополнение Steam доступно только через карту или СБП');
 
-        // For card / sbp — proceed straight (single PSP). qr / p2p — open step 2
+        // For card / sbp - proceed straight (single PSP). qr / p2p - open step 2
         // which will surface the «Скоро» empty-state.
         if (selectedMethod === 'qr' || selectedMethod === 'p2p') {
             window.lastSelectedPrice = currentAmount;

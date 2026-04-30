@@ -14,7 +14,7 @@ namespace DigiVault.Web.Services.Payment;
 /// <see cref="ToEnum"/>.
 ///
 /// `Available = false` means the method is shown to the user with a «Скоро»
-/// pill — the click is intercepted with an inline notice. Flip it to true
+/// pill - the click is intercepted with an inline notice. Flip it to true
 /// when a PSP that supports the method is registered in DI.
 /// </summary>
 public sealed record PaymentMethodOption(

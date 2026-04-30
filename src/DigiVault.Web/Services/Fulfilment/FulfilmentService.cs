@@ -10,7 +10,7 @@ namespace DigiVault.Web.Services.Fulfilment;
 /// undelivered items in an order, then transitions the Order to
 /// <see cref="OrderStatus.Completed"/> once every item is delivered.
 ///
-/// Idempotent — calling <see cref="DeliverOrderAsync"/> repeatedly is safe and
+/// Idempotent - calling <see cref="DeliverOrderAsync"/> repeatedly is safe and
 /// only operates on items still in <see cref="DeliveryStatus.Pending"/>.
 ///
 /// Wiring:
@@ -69,7 +69,7 @@ public class FulfilmentService : IFulfilmentService
         var pendingItems = order.OrderItems.Where(oi => oi.DeliveryStatus == DeliveryStatus.Pending).ToList();
         if (pendingItems.Count == 0)
         {
-            // Already fully delivered — just make sure Order.Status reflects it.
+            // Already fully delivered - just make sure Order.Status reflects it.
             EnsureOrderCompleted(order);
             await _db.SaveChangesAsync(ct);
             return true;
@@ -143,7 +143,7 @@ public class FulfilmentService : IFulfilmentService
         else if (order.Status == OrderStatus.Pending)
         {
             // Payment confirmed (caller knows this) but we have at least some Pending or
-            // Failed items left — bump to Processing so the next sweep picks it up.
+            // Failed items left - bump to Processing so the next sweep picks it up.
             order.Status = OrderStatus.Processing;
         }
     }

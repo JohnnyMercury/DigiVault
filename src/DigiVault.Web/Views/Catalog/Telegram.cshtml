@@ -1181,7 +1181,7 @@
         .then(data => {
             if (data.success) {
                 if (data.redirectUrl) { window.location.href = data.redirectUrl; return; }
-                showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+                window.location.href = "/Account/OrderDetails?orderNumber=" + encodeURIComponent(data.orderNumber); return;
             } else {
                 showModalError(data.errorMessage || '\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043A\u0443\u043F\u043A\u0435');
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> \u041E\u043F\u043B\u0430\u0442\u0438\u0442\u044C'; }

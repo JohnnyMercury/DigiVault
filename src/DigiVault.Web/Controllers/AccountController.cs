@@ -18,19 +18,22 @@ public class AccountController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IPaymentService _paymentService;
     private readonly IOrderService _orderService;
+    private readonly IConfiguration _config;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ApplicationDbContext context,
         IPaymentService paymentService,
-        IOrderService orderService)
+        IOrderService orderService,
+        IConfiguration config)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _context = context;
         _paymentService = paymentService;
         _orderService = orderService;
+        _config = config;
     }
 
     [HttpGet]
@@ -430,6 +433,11 @@ public class AccountController : Controller
 
         var model = await _orderService.GetOrderByNumberAsync(user.Id, orderNumber);
         if (model == null) return NotFound();
+
+        // Used by _DeliveryPayload partial in the «delivered but no payload»
+        // fallback branch (legacy orders, deserialisation failures).
+        ViewBag.SupportTelegramUsername = (_config["Support:TelegramUsername"] ?? "digivault_support")
+            .TrimStart('@').Trim();
 
         return View(model);
     }

@@ -2115,7 +2115,7 @@
                     window.location.href = data.redirectUrl;
                     return;
                 }
-                showPurchaseSuccess(data.orderNumber, data.productKey, data.newBalance);
+                window.location.href = "/Account/OrderDetails?orderNumber=" + encodeURIComponent(data.orderNumber); return;
             } else {
                 showModalError(data.errorMessage || 'Ошибка при покупке');
                 if (btn) {

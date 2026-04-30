@@ -170,6 +170,34 @@ else if (Model.ProductKeys.Any())
         }
     </div>
 }
+else if (Model.DeliveryStatus == DeliveryStatus.Delivered)
+{
+    @* Generic fallback: order is marked Delivered but the payload is null
+       (legacy order from before the ContactSupport flow, or a payload that
+       failed to deserialise). Show a safe «contact support» banner so the
+       user always has a path forward. Telegram username comes from the same
+       Support:TelegramUsername config the generator uses. *@
+    var fallbackUser = (ViewBag.SupportTelegramUsername as string ?? "digivault_support").TrimStart('@');
+    <div class="dpayload delivered support">
+        <div class="dpayload-header">
+            <i class="bi bi-shield-lock-fill"></i>
+            <strong>Заказ ожидает зачисления</strong>
+        </div>
+        <p class="dpayload-text">
+            Платёж получен. Чтобы оператор закрыл заказ и зачислил товар, напишите
+            нам в Telegram - мы найдём вашу транзакцию по номеру заказа и закроем
+            его в течение нескольких минут.
+        </p>
+        <a class="support-cta" href="https://t.me/@fallbackUser" target="_blank" rel="noopener">
+            <i class="bi bi-telegram"></i>
+            <span>Написать в Telegram (@@@fallbackUser)</span>
+        </a>
+        <div class="dpayload-instructions">
+            <i class="bi bi-info-circle"></i>
+            <span>Скопируйте номер заказа из правой колонки - оператор спросит его в первом сообщении.</span>
+        </div>
+    </div>
+}
 
 <style>
     .dpayload {

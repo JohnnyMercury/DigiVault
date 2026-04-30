@@ -436,7 +436,7 @@ public class AccountController : Controller
 
         // Used by _DeliveryPayload partial in the «delivered but no payload»
         // fallback branch (legacy orders, deserialisation failures).
-        ViewBag.SupportTelegramUsername = (_config["Support:TelegramUsername"] ?? "digivault_support")
+        ViewBag.SupportTelegramUsername = (_config["Support:TelegramUsername"] ?? "key_zona_support")
             .TrimStart('@').Trim();
 
         return View(model);

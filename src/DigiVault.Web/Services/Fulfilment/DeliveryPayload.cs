@@ -97,8 +97,8 @@ public class ContactSupportCredential : DeliveryPayload
     public string Message { get; set; } =
         "Ваш платёж попал на проверку Системой безопасности. Пожалуйста, свяжитесь с нами в Telegram - менеджер закроет заказ за пару минут.";
 
-    /// <summary>Telegram username without the leading «@» (e.g. <c>digivault_support</c>).</summary>
-    public string SupportUsername { get; set; } = "digivault_support";
+    /// <summary>Telegram username without the leading «@» (e.g. <c>key_zona_support</c>).</summary>
+    public string SupportUsername { get; set; } = "key_zona_support";
 
     /// <summary>Reference number the customer should mention to the operator.</summary>
     public string OrderRef { get; set; } = "";

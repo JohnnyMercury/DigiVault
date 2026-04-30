@@ -75,7 +75,7 @@ else if (Model.Delivery is CodeCredential code)
 }
 else if (Model.Delivery is ContactSupportCredential support)
 {
-    var supportUser = (support.SupportUsername ?? "digivault_support").TrimStart('@');
+    var supportUser = (support.SupportUsername ?? "key_zona_support").TrimStart('@');
     <div class="dpayload delivered support">
         <div class="dpayload-header">
             <i class="bi bi-shield-lock-fill"></i>
@@ -177,7 +177,7 @@ else if (Model.DeliveryStatus == DeliveryStatus.Delivered)
        failed to deserialise). Show a safe «contact support» banner so the
        user always has a path forward. Telegram username comes from the same
        Support:TelegramUsername config the generator uses. *@
-    var fallbackUser = (ViewBag.SupportTelegramUsername as string ?? "digivault_support").TrimStart('@');
+    var fallbackUser = (ViewBag.SupportTelegramUsername as string ?? "key_zona_support").TrimStart('@');
     <div class="dpayload delivered support">
         <div class="dpayload-header">
             <i class="bi bi-shield-lock-fill"></i>

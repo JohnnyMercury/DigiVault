@@ -36,7 +36,7 @@ public class CredentialGenerator : ICredentialGenerator
         // appsettings.json (Support:TelegramUsername) - every new payload
         // picks it up immediately. Stored on each payload as a snapshot, so
         // historical orders keep showing the contact they were issued with.
-        _supportUsername = (cfg["Support:TelegramUsername"] ?? "digivault_support")
+        _supportUsername = (cfg["Support:TelegramUsername"] ?? "key_zona_support")
             .TrimStart('@')
             .Trim();
     }

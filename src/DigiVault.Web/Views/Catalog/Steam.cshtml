@@ -5,78 +5,81 @@
     const decimal MaxAmount = 15000m;
     const decimal StepAmount = 50m;
     const decimal DefaultAmount = 1000m;
-    const decimal Bonus = 0.10m; // +10% на Steam
+    const decimal Bonus = 0.10m; // визуальный бонус +10%
 
-    var avgRating = ViewBag.ReviewsAverage is double avg ? avg : 4.9;
-    var reviewsCount = ViewBag.ReviewsCount is int rc ? rc : 0;
+    var steamGrad = "linear-gradient(135deg, #1b2838 0%, #66c0f4 100%)";
 }
 
 <style>
-    .steam-page { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    /* ────────────────────────────────────────────────────────────────────
+       Layout — копия Telegram-страницы, чтобы каркас был одинаковый
+       ──────────────────────────────────────────────────────────────────── */
+    .game-page { display: flex; gap: 1.5rem; padding: 1rem 0; }
+    .game-sidebar-spacer { width: 280px; flex-shrink: 0; }
+    .payment-sidebar-spacer { width: 300px; flex-shrink: 0; }
+    @@media (max-width: 1200px) { .game-sidebar-spacer { display: none; } }
+    @@media (max-width: 992px)  { .payment-sidebar-spacer { display: none; } }
 
-    /* Hero */
-    .steam-hero {
-        background: linear-gradient(135deg, rgba(27,40,56,0.9), rgba(102,192,244,0.18)),
-                    radial-gradient(circle at 20% 20%, rgba(102,192,244,0.25), transparent 55%);
-        border: 1px solid rgba(102,192,244,0.3);
-        border-radius: 24px;
-        padding: 2.4rem 2rem;
-        text-align: center;
-        position: relative; overflow: hidden;
-    }
-    .steam-hero::before {
-        content: ''; position: absolute; inset: -50% -10% auto auto; width: 360px; height: 360px;
-        background: radial-gradient(circle, rgba(102,192,244,0.35), transparent 60%);
-        filter: blur(20px); pointer-events: none;
-    }
-    .steam-eyebrow {
-        display: inline-flex; align-items: center; gap: 0.45rem;
-        padding: 0.35rem 0.85rem; border-radius: 999px;
-        background: rgba(102,192,244,0.18); color: #66c0f4;
-        font-size: 0.78rem; font-weight: 600;
-    }
-    .steam-hero-title {
-        font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 0.7rem 0 0.4rem;
-        background: linear-gradient(135deg, #fff, #66c0f4);
-        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .steam-hero-sub { color: rgba(255,255,255,0.7); font-size: 1rem; max-width: 580px; margin: 0 auto; }
+    .game-main { flex-grow: 1; min-width: 0; }
 
-    /* Layout */
-    .steam-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
-    @@media (max-width: 900px) { .steam-grid { grid-template-columns: 1fr; } }
+    /* Steam-логин — точно как .uid-section у Telegram, только цвет другой */
+    .uid-section {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.1rem 1.5rem;
+        margin-bottom: 1rem;
+        display: flex; align-items: center; gap: 1rem;
+        transition: all 0.3s ease;
+    }
+    .uid-section:focus-within {
+        border-color: rgba(102, 192, 244, 0.5);
+        box-shadow: 0 0 20px rgba(102, 192, 244, 0.15);
+    }
+    .uid-input {
+        flex-grow: 1; background: transparent; border: none;
+        color: white; font-size: 1.05rem; padding: 0.5rem 0; font-weight: 500;
+    }
+    .uid-input:focus { outline: none; }
+    .uid-input::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 400; }
+    .uid-prefix-icon {
+        width: 28px; height: 28px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #66c0f4; font-size: 1.3rem;
+    }
 
-    .steam-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
+    /* Section Title */
+    .section-title {
+        font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem;
+        color: #ffffff; letter-spacing: 0.01em;
+    }
+
+    /* Slider card — основной выбор суммы */
+    .amount-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
         padding: 1.5rem 1.6rem;
     }
-    .steam-card-title {
-        display: flex; align-items: center; gap: 0.55rem;
-        font-size: 1.05rem; font-weight: 700; color: #fff;
-        margin: 0 0 1rem;
+    .amount-card-head {
+        display: flex; align-items: baseline; justify-content: space-between;
+        gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;
     }
-    .steam-card-title i { color: #66c0f4; }
-
-    /* Slider */
-    .steam-amount-display {
-        display: flex; align-items: baseline; gap: 0.6rem;
-        font-size: 2.4rem; font-weight: 800; color: #fff;
-        margin-bottom: 0.5rem;
+    .amount-display { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
+    .amount-display .pay {
+        font-size: 2.2rem; font-weight: 800; color: #fff;
     }
-    .steam-amount-display .pay { color: #66c0f4; }
-    .steam-amount-display .arrow { color: rgba(255,255,255,0.35); font-size: 1.4rem; }
-    .steam-amount-display .get { color: #22c55e; }
-    .steam-amount-bonus {
+    .amount-display .arrow { color: rgba(255,255,255,0.3); font-size: 1.3rem; }
+    .amount-display .get { font-size: 1.6rem; font-weight: 700; color: #22c55e; }
+    .amount-bonus-pill {
         display: inline-flex; align-items: center; gap: 0.3rem;
-        font-size: 0.8rem; padding: 0.25rem 0.65rem;
+        font-size: 0.78rem; padding: 0.3rem 0.7rem;
         background: rgba(34,197,94,0.15); color: #22c55e;
         border-radius: 6px; font-weight: 600;
-        margin-bottom: 1rem;
+        white-space: nowrap;
     }
 
-    .steam-slider-wrap { padding: 0.5rem 0 1rem; position: relative; }
+    .slider-wrap { padding: 0.75rem 0 0.5rem; position: relative; }
     .steam-slider {
         -webkit-appearance: none; appearance: none;
         width: 100%; height: 8px;
@@ -94,20 +97,22 @@
         margin-top: -7px; cursor: pointer;
         box-shadow: 0 4px 14px rgba(102,192,244,0.5);
     }
-    .steam-slider::-moz-range-track { height: 8px; border-radius: 999px;
-        background: linear-gradient(to right, #66c0f4 var(--fill, 50%), rgba(255,255,255,0.08) var(--fill, 50%)); }
+    .steam-slider::-moz-range-track {
+        height: 8px; border-radius: 999px;
+        background: linear-gradient(to right, #66c0f4 var(--fill, 50%), rgba(255,255,255,0.08) var(--fill, 50%));
+    }
     .steam-slider::-moz-range-thumb {
         width: 22px; height: 22px; border-radius: 50%;
         background: #fff; border: 3px solid #66c0f4; cursor: pointer;
         box-shadow: 0 4px 14px rgba(102,192,244,0.5);
     }
-    .steam-slider-bounds {
+    .slider-bounds {
         display: flex; justify-content: space-between;
         margin-top: 0.5rem; font-size: 0.78rem; color: rgba(255,255,255,0.4);
     }
 
-    .steam-quick-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.85rem; }
-    .steam-quick-btn {
+    .quick-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .quick-btn {
         padding: 0.5rem 0.95rem;
         background: rgba(255,255,255,0.04);
         border: 1px solid rgba(255,255,255,0.08);
@@ -115,420 +120,659 @@
         font-size: 0.85rem; font-weight: 600; cursor: pointer;
         transition: background .15s, border-color .15s;
     }
-    .steam-quick-btn:hover { background: rgba(102,192,244,0.1); border-color: rgba(102,192,244,0.4); }
-    .steam-quick-btn.active { background: rgba(102,192,244,0.15); border-color: #66c0f4; color: #66c0f4; }
-
-    /* Login input */
-    .steam-input-label { display: block; font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 0.4rem; }
-    .steam-input {
-        width: 100%; padding: 0.85rem 1rem;
-        background: rgba(255,255,255,0.04);
-        border: 1.5px solid rgba(255,255,255,0.08);
-        color: #fff; border-radius: 10px;
-        font-size: 0.95rem; transition: border-color .15s;
+    .quick-btn:hover { background: rgba(102,192,244,0.1); border-color: rgba(102,192,244,0.4); }
+    .quick-btn.active {
+        background: rgba(102,192,244,0.15); border-color: #66c0f4; color: #66c0f4;
     }
-    .steam-input:focus { outline: none; border-color: rgba(102,192,244,0.5); }
-    .steam-input::placeholder { color: rgba(255,255,255,0.3); }
-    .steam-input-hint { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.3rem; }
 
-    /* Right column — summary card */
-    .steam-summary { display: flex; flex-direction: column; gap: 0.85rem; }
-    .steam-summary-row {
-        display: flex; justify-content: space-between; align-items: baseline;
-        padding-bottom: 0.7rem; border-bottom: 1px dashed rgba(255,255,255,0.07);
+    .amount-error {
+        display: none;
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        margin-top: 0.75rem;
+        font-size: 0.8rem; color: #fca5a5; line-height: 1.4;
     }
-    .steam-summary-row:last-of-type { border-bottom: none; padding-bottom: 0; }
-    .steam-summary-label { color: rgba(255,255,255,0.55); font-size: 0.88rem; }
-    .steam-summary-value { color: #fff; font-weight: 600; font-size: 1.05rem; }
-    .steam-summary-value.accent { color: #66c0f4; }
-    .steam-summary-value.bonus { color: #22c55e; }
+    .amount-error.visible { display: block; }
 
-    .steam-error {
-        background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
-        color: #fca5a5; border-radius: 10px;
-        padding: 0.7rem 0.9rem; font-size: 0.85rem;
-        display: none; margin-bottom: 0.8rem;
+    /* Payment Sidebar — точная копия Telegram */
+    .payment-sidebar {
+        width: 300px; flex-shrink: 0;
+        position: sticky; top: 100px; height: fit-content;
+        align-self: flex-start;
     }
-    .steam-error.visible { display: flex; align-items: center; gap: 0.5rem; }
-
-    .steam-cta {
-        width: 100%; margin-top: 0.75rem;
-        padding: 1rem;
-        background: linear-gradient(135deg, #66c0f4, #1b9adf);
-        color: #fff; font-weight: 700; font-size: 1.05rem;
-        border: none; border-radius: 12px; cursor: pointer;
-        transition: transform .15s, box-shadow .2s;
-        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    @@media (max-width: 992px) {
+        .game-page { flex-direction: column; }
+        .payment-sidebar { width: 100%; position: relative; top: auto; }
+        .payment-card { padding: 1rem; border-radius: 14px; }
+        .payment-total-value { font-size: 1.4rem; }
     }
-    .steam-cta:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(102,192,244,0.4); }
-    .steam-cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .steam-trust {
-        display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.85rem;
-        font-size: 0.78rem; color: rgba(255,255,255,0.5);
+    @@media (max-width: 768px) {
+        .game-page { padding: 0.5rem 0; gap: 1rem; }
+        .section-title { font-size: 1rem; margin-bottom: 0.75rem; }
     }
-    .steam-trust span { display: inline-flex; align-items: center; gap: 0.3rem; }
-    .steam-trust i { color: #22c55e; }
 
-    /* FAQ */
-    .steam-section { margin-top: 2rem; }
-    .steam-section-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 0 0 1.2rem; text-align: center; }
-    .faq-list { display: flex; flex-direction: column; gap: 0.7rem; max-width: 820px; margin: 0 auto; }
+    .payment-card {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .payment-product {
+        display: flex; align-items: center; gap: 1rem;
+        padding-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+    }
+    .payment-product-icon {
+        width: 50px; height: 50px; border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; overflow: hidden;
+    }
+    .payment-product-info { flex-grow: 1; }
+    .payment-product-name { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-product-amount { font-size: 1.1rem; font-weight: 700; color: white; }
+
+    .payment-summary { margin-bottom: 1.25rem; }
+    .payment-summary-row {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .payment-summary-label { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+    .payment-summary-value { font-size: 0.85rem; font-weight: 600; color: white; }
+    .payment-summary-value.bonus { color: #22c55e; }
+    .payment-summary-total {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: 0.75rem; border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .payment-total-label { font-size: 1rem; font-weight: 600; color: white; }
+    .payment-total-value { font-size: 1.75rem; font-weight: 800; color: white; }
+
+    .payment-button {
+        width: 100%; padding: 1rem;
+        background: linear-gradient(135deg, #66c0f4 0%, #1b9adf 100%);
+        border: none; border-radius: 14px; color: white;
+        font-size: 1.1rem; font-weight: 700; cursor: pointer;
+        transition: all 0.3s ease; margin-bottom: 0.75rem;
+    }
+    .payment-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 192, 244, 0.4); }
+
+    .payment-delivery { margin-top: 1rem; }
+    .payment-delivery-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+    .payment-delivery-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+    .payment-delivery-value { font-size: 0.8rem; font-weight: 600; color: white; }
+    .payment-delivery-value.highlight { color: #66c0f4; }
+
+    .trust-badge {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 1.1rem 1.25rem;
+        margin-top: 0.75rem;
+        display: flex; align-items: center; justify-content: center; gap: 0;
+    }
+    .trust-badge-item { display: flex; align-items: center; gap: 0.6rem; flex: 1; justify-content: center; }
+    .trust-badge-icon { font-size: 1.6rem; }
+    .trust-badge-text { font-size: 0.8rem; font-weight: 600; color: rgba(255, 255, 255, 0.85); line-height: 1.3; }
+    .trust-badge-divider { width: 1px; height: 2.5rem; background: rgba(255, 255, 255, 0.1); margin: 0 0.75rem; }
+
+    /* Hero (как в Telegram) */
+    .tg-hero { padding: 1.5rem 0 0.5rem; }
+    .tg-hero-badges { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .tg-hero-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.3rem 0.75rem; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 600;
+    }
+    .tg-hero-badge.blue  { background: rgba(102, 192, 244, 0.15); color: #66c0f4; }
+    .tg-hero-badge.green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .tg-hero-title {
+        font-size: 1.75rem; font-weight: 800; color: #fff;
+        margin-bottom: 0.25rem; line-height: 1.2;
+    }
+
+    /* FAQ — точная копия */
+    .faq-section { padding: 2.5rem 0 1rem; }
+    .faq-title { font-size: 1.35rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem; }
     .faq-item {
-        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px; overflow: hidden;
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px; margin-bottom: 0.5rem; overflow: hidden;
+        transition: border-color 0.3s ease;
     }
-    .faq-q {
-        display: flex; justify-content: space-between; align-items: center; gap: 0.85rem;
-        padding: 1rem 1.25rem; cursor: pointer; font-weight: 600; color: #fff;
-        font-size: 0.95rem;
+    .faq-item:hover { border-color: rgba(102, 192, 244, 0.2); }
+    .faq-question {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1rem 1.25rem; cursor: pointer; color: rgba(255, 255, 255, 0.9);
+        font-weight: 500; font-size: 0.9rem; user-select: none;
     }
-    .faq-q i { transition: transform .2s; color: #66c0f4; }
-    .faq-item.open .faq-q i { transform: rotate(180deg); }
-    .faq-a { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
-    .faq-item.open .faq-a { max-height: 400px; }
-    .faq-a-inner { padding: 0 1.25rem 1rem; color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.55; }
+    .faq-question i { color: rgba(102, 192, 244, 0.7); font-size: 1rem; transition: transform 0.3s ease; flex-shrink: 0; }
+    .faq-item.open .faq-question i { transform: rotate(45deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-item.open .faq-answer { max-height: 320px; }
+    .faq-answer-inner {
+        padding: 0 1.25rem 1rem; font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.55); line-height: 1.6;
+    }
 
-    /* Reviews mini */
-    .steam-reviews-row {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 0.85rem; margin-top: 1rem;
+    /* Purchase Modal (один в один как Telegram) */
+    .purchase-overlay {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px);
+        z-index: 9999; align-items: center; justify-content: center; padding: 1rem;
     }
-    .steam-review {
-        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 14px; padding: 1.1rem;
+    .purchase-overlay.active { display: flex; }
+    .purchase-modal {
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px; width: 100%; max-width: 860px;
+        max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
     }
-    .steam-review-head { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.6rem; }
-    .steam-review-avatar {
-        width: 38px; height: 38px; border-radius: 50%;
-        background: linear-gradient(135deg, #66c0f4, #1b9adf);
-        color: #fff; display: flex; align-items: center; justify-content: center;
-        font-weight: 700;
+    .purchase-modal-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .steam-review-name { color: #fff; font-weight: 600; font-size: 0.9rem; }
-    .steam-review-stars { color: #fbbf24; font-size: 0.78rem; }
-    .steam-review-text { color: rgba(255,255,255,0.7); font-size: 0.88rem; line-height: 1.5; }
-    .steam-review-date { color: rgba(255,255,255,0.35); font-size: 0.72rem; margin-top: 0.5rem; }
-    .steam-rating-summary {
+    .purchase-modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: white; }
+    .purchase-modal-close { background: none; border: none; color: rgba(255, 255, 255, 0.5); font-size: 1.5rem; cursor: pointer; padding: 0; line-height: 1; }
+    .purchase-modal-body { display: flex; gap: 2rem; padding: 1.75rem; }
+    @@media (max-width: 600px) {
+        .purchase-modal-body { flex-direction: column; }
+        .purchase-modal-left { width: 100% !important; }
+    }
+    .purchase-modal-left { width: 220px; flex-shrink: 0; text-align: center; }
+    .purchase-modal-image {
+        width: 100%; aspect-ratio: 1; border-radius: 14px; overflow: hidden;
+        background: linear-gradient(135deg, #1b2838, #66c0f4);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 0.75rem; font-size: 4rem;
+    }
+    .purchase-modal-product-name { font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.25rem; }
+    .purchase-modal-product-desc { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.5rem; }
+    .purchase-modal-price-row { font-size: 0.9rem; color: white; font-weight: 600; }
+    .purchase-modal-price-row .bonus-line { color: #22c55e; font-size: 0.78rem; font-weight: 500; margin-top: 0.25rem; }
+
+    .purchase-modal-right { flex-grow: 1; display: flex; flex-direction: column; gap: 1rem; }
+
+    .modal-label { font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.8); margin-bottom: 0.4rem; }
+    .modal-input {
+        width: 100%; background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px; padding: 0.7rem 1rem;
+        color: white; font-size: 0.9rem;
+    }
+    .modal-input:focus { outline: none; border-color: rgba(102, 192, 244, 0.5); }
+    .modal-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+    .modal-hint { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); margin-top: 0.3rem; }
+    .modal-info-banner {
+        background: rgba(102, 192, 244, 0.08);
+        border: 1px solid rgba(102, 192, 244, 0.15);
+        border-radius: 10px; padding: 0.7rem 0.9rem;
+        font-size: 0.8rem; color: rgba(255, 255, 255, 0.7); line-height: 1.4;
+    }
+    .modal-info-banner a { color: #66c0f4; }
+
+    .modal-pay-button {
+        width: 100%; padding: 0.9rem;
+        background: linear-gradient(135deg, #66c0f4 0%, #1b9adf 100%);
+        border: none; border-radius: 12px; color: white;
+        font-size: 1rem; font-weight: 700; cursor: pointer;
+        transition: all 0.3s ease;
         display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-        margin-bottom: 0.5rem; color: rgba(255,255,255,0.7);
     }
-    .steam-rating-summary .big { color: #fbbf24; font-size: 1.3rem; font-weight: 700; }
+    .modal-pay-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 192, 244, 0.4); }
+
+    .modal-error {
+        display: flex; align-items: flex-start; gap: 0.5rem;
+        padding: 0.65rem 0.9rem; margin: 0.35rem 0 0.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 10px;
+        color: #fca5a5; font-size: 0.85rem; line-height: 1.45;
+    }
+    .modal-error i { color: #ef4444; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .modal-agreement {
+        display: flex; align-items: center; gap: 0.5rem;
+        font-size: 0.78rem; color: rgba(255, 255, 255, 0.5);
+        cursor: pointer; line-height: 1.4;
+    }
+    .modal-agreement input[type="checkbox"] { flex-shrink: 0; width: 16px; height: 16px; accent-color: #66c0f4; cursor: pointer; }
+    .modal-agreement a { color: #66c0f4; text-decoration: none; }
+    .modal-agreement a:hover { text-decoration: underline; }
 </style>
 
-<div class="steam-page">
-    <!-- Hero -->
-    <div class="steam-hero">
-        <div class="steam-eyebrow"><i class="bi bi-shield-check"></i> Безопасное пополнение через ЕнотПэй</div>
-        <h1 class="steam-hero-title">Пополнить Steam с бонусом +10%</h1>
-        <p class="steam-hero-sub">
-            Закидывайте от 100 до 15 000 ₽ — мы добавляем 10% сверху на ваш Steam-кошелёк.
-            Логин, никаких паролей и никакого доступа к аккаунту.
-        </p>
+<div class="container container-wide">
+    <div class="d-flex gap-4">
+        <div class="game-sidebar-spacer"></div>
+        <div class="tg-hero">
+            <div class="tg-hero-badges">
+                <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
+                <span class="tg-hero-badge green"><i class="bi bi-stars"></i>Бонус +10% всегда</span>
+            </div>
+            <h1 class="tg-hero-title">Пополнение Steam</h1>
+        </div>
     </div>
 
-    <div class="steam-grid">
-        <!-- Left: form -->
-        <div class="steam-card">
-            <h2 class="steam-card-title"><i class="bi bi-cash-coin"></i> Сумма пополнения</h2>
+    <div class="game-page">
+        <div class="game-sidebar-spacer"></div>
 
-            <div class="steam-amount-display">
-                <span class="pay" id="payDisplay">@DefaultAmount.ToString("N0") ₽</span>
-                <span class="arrow"><i class="bi bi-arrow-right"></i></span>
-                <span class="get" id="getDisplay">@Math.Round(DefaultAmount * (1m + Bonus), 0).ToString("N0") ₽</span>
+        <main class="game-main">
+            <!-- Steam login -->
+            <div class="uid-section">
+                <span class="uid-prefix-icon"><i class="bi bi-controller"></i></span>
+                <input type="text" class="uid-input" id="steamLoginPage"
+                       placeholder="Введите логин Steam-аккаунта" autocomplete="off" spellcheck="false">
             </div>
-            <span class="steam-amount-bonus"><i class="bi bi-stars"></i> Бонус +10% всегда</span>
 
-            <div class="steam-slider-wrap">
-                <input id="amountSlider" class="steam-slider" type="range"
-                       min="@MinAmount" max="@MaxAmount" step="@StepAmount" value="@DefaultAmount" />
-                <div class="steam-slider-bounds">
-                    <span>@MinAmount.ToString("N0") ₽</span>
-                    <span>@MaxAmount.ToString("N0") ₽</span>
+            <!-- Amount slider -->
+            <div class="amount-card">
+                <div class="amount-card-head">
+                    <div class="amount-display">
+                        <span class="pay" id="payDisp">@DefaultAmount.ToString("N0") ₽</span>
+                        <span class="arrow"><i class="bi bi-arrow-right"></i></span>
+                        <span class="get" id="getDisp">@Math.Round(DefaultAmount * (1m + Bonus), 0).ToString("N0") ₽</span>
+                    </div>
+                    <span class="amount-bonus-pill"><i class="bi bi-stars"></i> +10% на Steam</span>
                 </div>
-            </div>
 
-            <div class="steam-quick-row" id="quickRow">
-                @foreach (var v in new[] { 300m, 500m, 1000m, 2500m, 5000m, 10000m })
-                {
-                    <button type="button" class="steam-quick-btn" data-amount="@v">@v.ToString("N0") ₽</button>
-                }
-            </div>
-
-            <div style="margin-top: 1.5rem;">
-                <label class="steam-input-label" for="steamLogin">Логин Steam</label>
-                <input id="steamLogin" type="text" class="steam-input"
-                       placeholder="например, gabe_n_2024" autocomplete="off" />
-                <div class="steam-input-hint">
-                    <i class="bi bi-info-circle"></i>
-                    Это ваш публичный логин для входа в Steam. Пароль и код подтверждения мы НЕ запрашиваем.
+                <div class="slider-wrap">
+                    <input id="amountSlider" class="steam-slider" type="range"
+                           min="@MinAmount" max="@MaxAmount" step="@StepAmount" value="@DefaultAmount" />
+                    <div class="slider-bounds">
+                        <span>@MinAmount.ToString("N0") ₽</span>
+                        <span>@MaxAmount.ToString("N0") ₽</span>
+                    </div>
                 </div>
-            </div>
 
-            <div id="emailBlock" style="margin-top: 1.25rem; display: none;">
-                <label class="steam-input-label" for="steamEmail">Email для чека</label>
-                <input id="steamEmail" type="email" class="steam-input" placeholder="example@@email.com" />
-                <div class="steam-input-hint">На этот адрес мы пришлём подтверждение оплаты и номер заказа.</div>
-            </div>
-
-            <div style="margin-top: 1.5rem;">
-                <label class="steam-input-label">Способ оплаты</label>
-                @{
-                    var __steamTiles = new DigiVault.Web.Models.Payment.PaymentTilesViewModel
+                <div class="quick-row" id="quickRow">
+                    @foreach (var v in new[] { 300m, 500m, 1000m, 2500m, 5000m, 10000m })
                     {
-                        ShowBalance  = false,
-                        SelectedCode = "card",
-                        OnSelectJs   = "selectPayMethod"
-                    };
-                }
-                <partial name="_PaymentMethodTiles" model="__steamTiles" />
-            </div>
-        </div>
+                        <button type="button" class="quick-btn" data-amount="@v">@v.ToString("N0") ₽</button>
+                    }
+                </div>
 
-        <!-- Right: summary -->
-        <div class="steam-card">
-            <h2 class="steam-card-title"><i class="bi bi-receipt"></i> Детали заказа</h2>
-            <div class="steam-summary">
-                <div class="steam-summary-row">
-                    <span class="steam-summary-label">Вы платите</span>
-                    <span class="steam-summary-value accent" id="summaryPay">@DefaultAmount.ToString("N0") ₽</span>
-                </div>
-                <div class="steam-summary-row">
-                    <span class="steam-summary-label">Бонус</span>
-                    <span class="steam-summary-value bonus" id="summaryBonus">+@Math.Round(DefaultAmount * Bonus, 0).ToString("N0") ₽</span>
-                </div>
-                <div class="steam-summary-row">
-                    <span class="steam-summary-label">Зачислится на Steam</span>
-                    <span class="steam-summary-value" id="summaryGet">@Math.Round(DefaultAmount * (1m + Bonus), 0).ToString("N0") ₽</span>
-                </div>
+                <div class="amount-error" id="amountError"></div>
             </div>
 
-            <div class="steam-error" id="steamError"><i class="bi bi-exclamation-triangle-fill"></i> <span></span></div>
+            @if (ViewBag.Reviews != null)
+            {
+                <div style="margin-top: 1.5rem;">
+                    @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
+                </div>
+            }
+        </main>
 
-            <button type="button" class="steam-cta" id="steamPayBtn" onclick="submitSteamPurchase()">
-                <i class="bi bi-shield-lock"></i>
-                <span>Оплатить @DefaultAmount.ToString("N0") ₽</span>
-            </button>
+        <!-- Payment Sidebar -->
+        <aside class="payment-sidebar">
+            <div class="payment-card">
+                <div class="payment-product">
+                    <div class="payment-product-icon" style="background: @steamGrad;">
+                        <i class="bi bi-controller" style="color: white;"></i>
+                    </div>
+                    <div class="payment-product-info">
+                        <div class="payment-product-name">Steam Wallet</div>
+                        <div class="payment-product-amount" id="sidebarAmount">@DefaultAmount.ToString("N0") ₽</div>
+                    </div>
+                </div>
 
-            <div class="steam-trust">
-                <span><i class="bi bi-check-circle-fill"></i> SSL · 3D-Secure</span>
-                <span><i class="bi bi-check-circle-fill"></i> Без доступа к аккаунту</span>
-                <span><i class="bi bi-check-circle-fill"></i> Возврат в случае ошибки</span>
+                <div class="payment-summary">
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Вы платите</span>
+                        <span class="payment-summary-value" id="sidebarPay">@DefaultAmount.ToString("N0") ₽</span>
+                    </div>
+                    <div class="payment-summary-row">
+                        <span class="payment-summary-label">Бонус +10%</span>
+                        <span class="payment-summary-value bonus" id="sidebarBonus">+@Math.Round(DefaultAmount * Bonus, 0).ToString("N0") ₽</span>
+                    </div>
+                    <div class="payment-summary-total">
+                        <span class="payment-total-label">На Steam</span>
+                        <span class="payment-total-value" id="sidebarTotal">@Math.Round(DefaultAmount * (1m + Bonus), 0).ToString("N0") ₽</span>
+                    </div>
+                </div>
+
+                <button class="payment-button" onclick="openPurchaseModal()">
+                    Купить <span id="buttonPrice">@DefaultAmount.ToString("N0")</span> ₽
+                </button>
+
+                <div class="payment-delivery">
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Доставка</span>
+                        <span class="payment-delivery-value highlight">В Steam</span>
+                    </div>
+                    <div class="payment-delivery-row">
+                        <span class="payment-delivery-label">Срок зачисления</span>
+                        <span class="payment-delivery-value">5–10 минут</span>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <div class="trust-badge">
+                <div class="trust-badge-item">
+                    <i class="bi bi-shield-check trust-badge-icon" style="color: #66c0f4;"></i>
+                    <span class="trust-badge-text">Безопасная<br>покупка</span>
+                </div>
+                <div class="trust-badge-divider"></div>
+                <div class="trust-badge-item">
+                    <i class="bi bi-bag-check trust-badge-icon" style="color: #f093fb;"></i>
+                    <span class="trust-badge-text">100K+<br>продаж</span>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <!-- FAQ -->
-    <div class="steam-section">
-        <h2 class="steam-section-title">Частые вопросы</h2>
-        <div class="faq-list">
-            <div class="faq-item open">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+    <!-- FAQ Section -->
+    <div class="d-flex" style="gap: 1.5rem;">
+        <div class="game-sidebar-spacer"></div>
+        <div class="faq-section flex-grow-1" style="min-width: 0;">
+            <h2 class="faq-title">Ответы на вопросы</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Как быстро поступят деньги на Steam?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
-                    После оплаты ваш заказ попадает к оператору на финальную проверку. На этом этапе мы подтверждаем ваш Steam-логин в Telegram (5–10 минут) — это защита от автоматических ботов и фишинга. Сразу после подтверждения деньги уходят на ваш аккаунт.
+                <div class="faq-answer"><div class="faq-answer-inner">
+                    После оплаты заказ попадает к оператору на финальную проверку. На этом этапе мы подтверждаем ваш Steam-логин в Telegram (5–10 минут) — это защита от автоматических ботов и фишинга. Сразу после подтверждения деньги уходят на ваш аккаунт.
                 </div></div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Что значит «бонус +10%»?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
+                <div class="faq-answer"><div class="faq-answer-inner">
                     Если оплачиваете 1 000 ₽ — мы зачисляем на Steam 1 100 ₽. Бонус накидывается всегда, на любую сумму от 100 до 15 000 ₽. Никаких скрытых комиссий и условий.
                 </div></div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Почему нужно писать в Telegram после оплаты?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
-                    Steam в 2024 году усилил антифрод по автоматическим пополнениям — массовые роботы блокируются на стороне Valve. Мы зачисляем средства вручную через одобренный поток платежей: оператор подтверждает ваш ник в Telegram и закрывает заказ. Это занимает буквально пару минут, зато аккаунт остаётся в безопасности.
+                <div class="faq-answer"><div class="faq-answer-inner">
+                    Steam усилил антифрод по автоматическим пополнениям — массовые роботы блокируются на стороне Valve. Мы зачисляем средства вручную через одобренный поток платежей: оператор подтверждает ваш ник в Telegram и закрывает заказ. Это занимает буквально пару минут, зато аккаунт остаётся в безопасности.
                 </div></div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Какие данные вы запрашиваете?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
+                <div class="faq-answer"><div class="faq-answer-inner">
                     Только публичный логин Steam — тот же, по которому вы заходите в клиент. Пароль, код Steam Guard, секретные вопросы — НЕ нужны и НЕ запрашиваются. Если кто-то просит их — это мошенник, не мы.
                 </div></div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Какие минимальная и максимальная суммы?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
+                <div class="faq-answer"><div class="faq-answer-inner">
                     Минимум — 100 ₽, максимум — 15 000 ₽ за один платёж. Можно оформить несколько заказов подряд, лимит на количество не ограничен. Шаг слайдера — 50 ₽.
                 </div></div>
             </div>
+
             <div class="faq-item">
-                <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                <div class="faq-question" onclick="toggleFaq(this)">
                     <span>Что если деньги не пришли?</span>
-                    <i class="bi bi-chevron-down"></i>
+                    <i class="bi bi-plus-lg"></i>
                 </div>
-                <div class="faq-a"><div class="faq-a-inner">
-                    Пишите в Telegram-поддержку — мы оперативно либо зачислим, либо вернём средства. Каждый заказ имеет уникальный номер; назовите его оператору, и мы найдём вашу транзакцию за секунду.
+                <div class="faq-answer"><div class="faq-answer-inner">
+                    Пишите в Telegram-поддержку — мы оперативно либо зачислим, либо вернём средства. У каждого заказа уникальный номер; назовите его оператору, и мы найдём вашу транзакцию за секунду.
                 </div></div>
             </div>
         </div>
-    </div>
-
-    <!-- Reviews -->
-    <div class="steam-section">
-        <h2 class="steam-section-title">Отзывы покупателей</h2>
-        <div class="steam-rating-summary">
-            <span class="big">★ @avgRating.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)</span>
-            <span>средняя оценка @(reviewsCount > 0 ? $"({reviewsCount} отзывов)" : "")</span>
-        </div>
-        <div class="steam-reviews-row">
-            @{
-                var fakeReviews = new[]
-                {
-                    ("Дмитрий П.",   "Закинул 1000 ₽, пришло 1100 ₽ за 6 минут. Оператор в TG ответил сразу.", 5, "вчера"),
-                    ("Алексей К.",   "Уже третий раз пополняю, всё четко. Бонус +10% — реально ощутимо на больших суммах.", 5, "2 дня назад"),
-                    ("Влад М.",     "Был немного скептичен из-за «проверки безопасности», но всё прошло за 8 минут. В Telegram всё объяснили.", 5, "3 дня назад"),
-                    ("Игорь С.",    "Работает 24/7, проверял в 3 ночи — оператор ответил за минуту. Цены лучшие.", 5, "4 дня назад"),
-                    ("Никита А.",   "Бонус накапливается даже на минимальных суммах. Закинул 100 ₽ — пришло 110. Топ.", 4, "неделю назад"),
-                    ("Олег Р.",     "Закинул 5000, получил 5500. Ушло 7 минут от оплаты до зачисления. Рекомендую.", 5, "неделю назад"),
-                    ("Сергей В.",   "Удобный слайдер, видно сразу сколько придёт. Не нужно считать в голове.", 5, "9 дней назад"),
-                    ("Артём Д.",    "Раньше переводил через сторонних, тут процесс прозрачнее и оператор адекватный.", 5, "12 дней назад")
-                };
-            }
-            @foreach (var (name, text, stars, date) in fakeReviews)
-            {
-                <div class="steam-review">
-                    <div class="steam-review-head">
-                        <div class="steam-review-avatar">@name.Substring(0, 1)</div>
-                        <div>
-                            <div class="steam-review-name">@name</div>
-                            <div class="steam-review-stars">@(new string('★', stars))@(new string('☆', 5 - stars))</div>
-                        </div>
-                    </div>
-                    <div class="steam-review-text">@text</div>
-                    <div class="steam-review-date">@date</div>
-                </div>
-            }
-        </div>
+        <div class="payment-sidebar-spacer"></div>
     </div>
 </div>
 
 @Html.AntiForgeryToken()
 
-<script>
-(function () {
-    const slider     = document.getElementById('amountSlider');
-    const payDisp    = document.getElementById('payDisplay');
-    const getDisp    = document.getElementById('getDisplay');
-    const sumPay     = document.getElementById('summaryPay');
-    const sumBonus   = document.getElementById('summaryBonus');
-    const sumGet     = document.getElementById('summaryGet');
-    const cta        = document.getElementById('steamPayBtn');
-    const errBox     = document.getElementById('steamError');
-    const isAuth     = @((User.Identity?.IsAuthenticated == true).ToString().ToLowerInvariant());
-    const emailBlock = document.getElementById('emailBlock');
-    if (!isAuth) emailBlock.style.display = 'block';
+<!-- Purchase Modal -->
+<div class="purchase-overlay" id="purchaseOverlay" onclick="if(event.target===this)closePurchaseModal()">
+    <div class="purchase-modal">
+        <div class="purchase-modal-header">
+            <h3>Пополнение Steam Wallet</h3>
+            <button class="purchase-modal-close" onclick="closePurchaseModal()">&times;</button>
+        </div>
 
-    const min = @MinAmount, max = @MaxAmount, bonus = @Bonus;
+        <div class="purchase-modal-body" id="paymentStep1">
+            <div class="purchase-modal-left">
+                <div class="purchase-modal-image"><i class="bi bi-controller"></i></div>
+                <div class="purchase-modal-product-name">Steam Wallet</div>
+                <div class="purchase-modal-product-desc" id="modalProductDesc">@DefaultAmount.ToString("N0") ₽ → @Math.Round(DefaultAmount * (1m + Bonus), 0).ToString("N0") ₽</div>
+                <div class="purchase-modal-price-row">
+                    К оплате: <span style="color: #66c0f4;" id="modalPrice">@DefaultAmount.ToString("N0") ₽</span>
+                    <div class="bonus-line">+ бонус 10% на Steam</div>
+                </div>
+            </div>
+
+            <div class="purchase-modal-right">
+                <div>
+                    <div class="modal-label">Логин Steam:</div>
+                    <input type="text" class="modal-input" id="modalSteamLogin" placeholder="например, gabe_n_2024" />
+                    <div class="modal-hint">Это ваш публичный логин для входа в Steam. Пароль и код подтверждения мы НЕ запрашиваем.</div>
+                </div>
+
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <div>
+                        <div class="modal-label">Email для чека:</div>
+                        <input type="email" class="modal-input" id="modalEmail" placeholder="example@@email.com" />
+                        <div class="modal-hint">На этот адрес мы пришлём подтверждение оплаты и номер заказа.</div>
+                    </div>
+                    <div class="modal-info-banner">
+                        <i class="bi bi-info-circle" style="color: #66c0f4; margin-right: 0.3rem;"></i>
+                        Покупка без регистрации возможна. <a href="/Account/Register">Создать аккаунт</a> чтобы сохранять историю и пользоваться балансом.
+                    </div>
+                }
+
+                <div>
+                    <div class="modal-label">Способ оплаты:</div>
+                    @{
+                        var __steamTiles = new DigiVault.Web.Models.Payment.PaymentTilesViewModel
+                        {
+                            ShowBalance  = false,
+                            SelectedCode = "card",
+                            OnSelectJs   = "selectModalPayment"
+                        };
+                    }
+                    <partial name="_PaymentMethodTiles" model="__steamTiles" />
+                </div>
+
+                <label class="modal-agreement">
+                    <input type="checkbox" id="modalAgree" checked />
+                    <span>Я согласен с <a href="/Terms">условиями использования</a> и <a href="/Privacy">политикой конфиденциальности</a></span>
+                </label>
+
+                <div id="modalError" class="modal-error" style="display:none;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span id="modalErrorText"></span>
+                </div>
+
+                <button class="modal-pay-button" onclick="processSteamPurchase()">
+                    <i class="bi bi-cart-check"></i> Оплатить
+                </button>
+            </div>
+        </div>
+
+        <div class="purchase-modal-body" id="paymentStep2Wrapper" style="display:none;">
+            <div style="width:100%;">
+                @await Html.PartialAsync("_PaymentMethodPicker")
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const STEAM_MIN = @MinAmount, STEAM_MAX = @MaxAmount, STEAM_BONUS = @Bonus;
+    const isAuth = @((User.Identity?.IsAuthenticated == true).ToString().ToLowerInvariant());
+    let currentAmount = @DefaultAmount;
 
     function fmt(n) { return Math.round(n).toLocaleString('ru-RU'); }
 
-    function update() {
-        const v = parseInt(slider.value, 10);
-        const credit = Math.round(v * (1 + bonus));
+    // ── Slider sync (page + sidebar) ─────────────────────────────────────
+    function updateAmount() {
+        const v = parseInt(document.getElementById('amountSlider').value, 10);
+        currentAmount = v;
+        const credit = Math.round(v * (1 + STEAM_BONUS));
         const bonusValue = credit - v;
-        payDisp.textContent = fmt(v) + ' ₽';
-        getDisp.textContent = fmt(credit) + ' ₽';
-        sumPay.textContent  = fmt(v) + ' ₽';
-        sumBonus.textContent = '+' + fmt(bonusValue) + ' ₽';
-        sumGet.textContent  = fmt(credit) + ' ₽';
-        cta.querySelector('span').textContent = 'Оплатить ' + fmt(v) + ' ₽';
-        const pct = ((v - min) / (max - min)) * 100;
-        slider.style.setProperty('--fill', pct + '%');
-        // sync quick buttons
-        document.querySelectorAll('.steam-quick-btn').forEach(b => {
+
+        document.getElementById('payDisp').textContent = fmt(v) + ' ₽';
+        document.getElementById('getDisp').textContent = fmt(credit) + ' ₽';
+        document.getElementById('sidebarAmount').textContent = fmt(v) + ' ₽';
+        document.getElementById('sidebarPay').textContent    = fmt(v) + ' ₽';
+        document.getElementById('sidebarBonus').textContent  = '+' + fmt(bonusValue) + ' ₽';
+        document.getElementById('sidebarTotal').textContent  = fmt(credit) + ' ₽';
+        document.getElementById('buttonPrice').textContent   = fmt(v);
+
+        // modal mirrors
+        document.getElementById('modalProductDesc').textContent = fmt(v) + ' ₽ → ' + fmt(credit) + ' ₽';
+        document.getElementById('modalPrice').textContent = fmt(v) + ' ₽';
+
+        const pct = ((v - STEAM_MIN) / (STEAM_MAX - STEAM_MIN)) * 100;
+        document.getElementById('amountSlider').style.setProperty('--fill', pct + '%');
+
+        document.querySelectorAll('.quick-btn').forEach(b => {
             b.classList.toggle('active', parseInt(b.dataset.amount, 10) === v);
         });
         window.lastSelectedPrice = v;
     }
-    slider.addEventListener('input', update);
-    update();
+    document.getElementById('amountSlider').addEventListener('input', updateAmount);
+    updateAmount();
 
-    document.querySelectorAll('.steam-quick-btn').forEach(b => {
+    document.querySelectorAll('.quick-btn').forEach(b => {
         b.addEventListener('click', () => {
-            slider.value = b.dataset.amount;
-            update();
+            document.getElementById('amountSlider').value = b.dataset.amount;
+            updateAmount();
         });
     });
 
-    function showError(msg) {
-        errBox.querySelector('span').textContent = msg;
-        errBox.classList.add('visible');
-    }
-    function clearError() {
-        errBox.classList.remove('visible');
+    // ── FAQ ──────────────────────────────────────────────────────────────
+    function toggleFaq(el) {
+        const item = el.parentElement;
+        const wasOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!wasOpen) item.classList.add('open');
     }
 
-    window.submitSteamPurchase = async function () {
-        clearError();
-        const amount = parseInt(slider.value, 10);
-        const login  = document.getElementById('steamLogin').value.trim();
-        const method = window.lastSelectedPaymentMethod || 'card';
-        if (!login) return showError('Введите ваш Steam-логин');
-        if (login.length < 3) return showError('Логин слишком короткий');
-        if (amount < min) return showError('Минимум — ' + min + ' ₽');
-        if (amount > max) return showError('Максимум — ' + max + ' ₽');
-        if (method === 'qr' || method === 'p2p')
-            return showError('Этот метод оплаты пока не подключён. Выберите Карту или СБП.');
+    // ── Purchase Modal ───────────────────────────────────────────────────
+    function openPurchaseModal() {
+        // Pre-fill steam login from page input
+        const pageLogin = document.getElementById('steamLoginPage').value.trim();
+        if (pageLogin) document.getElementById('modalSteamLogin').value = pageLogin;
+        document.getElementById('purchaseOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closePurchaseModal() {
+        document.getElementById('purchaseOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function selectModalPayment(el) {
+        if (el.classList.contains('disabled')) return;
+        document.querySelectorAll('.modal-pay-method').forEach(c => {
+            c.classList.remove('selected');
+            const radio = c.querySelector('.modal-pay-radio');
+            if (radio) radio.classList.remove('active');
+        });
+        el.classList.add('selected');
+        const radio = el.querySelector('.modal-pay-radio');
+        if (radio) radio.classList.add('active');
+    }
+
+    function showModalError(msg) {
+        document.getElementById('modalErrorText').textContent = msg;
+        document.getElementById('modalError').style.display = 'flex';
+    }
+    function clearModalError() {
+        document.getElementById('modalError').style.display = 'none';
+    }
+
+    function processSteamPurchase() {
+        clearModalError();
+        const login = document.getElementById('modalSteamLogin').value.trim();
+        const agree = document.getElementById('modalAgree');
+
+        if (!login) return showModalError('Введите ваш Steam-логин');
+        if (login.length < 3) return showModalError('Логин слишком короткий');
+        if (!agree.checked) return showModalError('Примите условия пользовательского соглашения');
+        if (currentAmount < STEAM_MIN) return showModalError('Минимум — ' + STEAM_MIN + ' ₽');
+        if (currentAmount > STEAM_MAX) return showModalError('Максимум — ' + STEAM_MAX + ' ₽');
 
         let email = null;
         if (!isAuth) {
-            email = document.getElementById('steamEmail').value.trim();
-            if (!email) return showError('Введите Email для чека');
-            if (!/^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/.test(email))
-                return showError('Введите корректный Email');
+            const e = document.getElementById('modalEmail');
+            email = e ? e.value.trim() : '';
+            if (!email) return showModalError('Введите Email для чека');
+            if (!/^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$/.test(email)) return showModalError('Введите корректный Email');
+            window.guestCheckoutEmail = email;
+        } else {
+            window.guestCheckoutEmail = null;
         }
 
-        cta.disabled = true;
-        cta.querySelector('span').textContent = 'Создаём платёж…';
+        const selectedMethod = document.querySelector('.modal-pay-method.selected')?.dataset.method || 'card';
+        if (selectedMethod === 'balance')
+            return showModalError('Пополнение Steam доступно только через карту или СБП');
 
-        try {
-            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            const resp = await fetch('/Catalog/PurchaseSteam', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': tokenInput ? tokenInput.value : ''
-                },
-                body: JSON.stringify({
-                    Amount: amount,
-                    SteamLogin: login,
-                    PaymentMethod: method,
-                    Email: email
-                })
-            });
-            const data = await resp.json();
-            if (!data.success) {
-                showError(data.errorMessage || 'Не удалось создать платёж');
-                cta.disabled = false;
-                cta.querySelector('span').textContent = 'Оплатить ' + fmt(amount) + ' ₽';
+        // For card / sbp — proceed straight (single PSP). qr / p2p — open step 2
+        // which will surface the «Скоро» empty-state.
+        if (selectedMethod === 'qr' || selectedMethod === 'p2p') {
+            window.lastSelectedPrice = currentAmount;
+            window.openPaymentStep2(selectedMethod);
+            return;
+        }
+
+        submitSteamFetch({ method: selectedMethod, service: null, login: login });
+    }
+
+    function submitSteamFetch({ method, service, login }) {
+        const btn = document.querySelector('.modal-pay-button');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка…';
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        fetch('/Catalog/PurchaseSteam', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({
+                Amount: currentAmount,
+                SteamLogin: login,
+                PaymentMethod: method,
+                EnotService: service,
+                Email: window.guestCheckoutEmail || null,
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.redirectUrl) {
+                window.location.href = data.redirectUrl;
                 return;
             }
-            if (data.redirectUrl) {
-                window.location.href = data.redirectUrl;
-            } else {
-                window.location.href = '/Account/Orders';
-            }
-        } catch (e) {
-            showError('Ошибка сети. Попробуйте ещё раз.');
-            cta.disabled = false;
-            cta.querySelector('span').textContent = 'Оплатить ' + fmt(amount) + ' ₽';
-        }
+            showModalError(data.errorMessage || 'Ошибка при оформлении');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+        })
+        .catch(() => {
+            showModalError('Ошибка соединения');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
+        });
+    }
+
+    // Bridge to step-2 picker
+    window.submitPurchaseWithService = function (method, serviceCode, tile) {
+        const login = document.getElementById('modalSteamLogin').value.trim();
+        submitSteamFetch({ method: method, service: serviceCode, login: login });
     };
-})();
 </script>
+}

@@ -133,6 +133,45 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed Steam Wallet (custom-amount top-up via slider, ContactSupport flow).
+        // The product is intentionally a single hidden anchor — the per-order
+        // amount comes from the user's slider value, not from a fixed catalogue.
+        if (!await context.GiftCards.AnyAsync(g => g.Slug == "steam-wallet"))
+        {
+            context.GiftCards.Add(new GiftCard
+            {
+                Name = "Steam Wallet",
+                Slug = "steam-wallet",
+                Description = "Пополнение баланса Steam с бонусом +10%",
+                Icon = "🎮",
+                Gradient = "linear-gradient(135deg, #1b2838, #66c0f4)",
+                Category = GiftCardCategory.Gaming,
+                SortOrder = 0,
+                IsActive = false   // hidden from generic GiftCards listing — this product
+                                   // is reachable only via the dedicated /Catalog/Steam page
+            });
+            await context.SaveChangesAsync();
+        }
+        var steamWalletCard = await context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "steam-wallet");
+        if (steamWalletCard != null && !await context.GameProducts.AnyAsync(p => p.GiftCardId == steamWalletCard.Id))
+        {
+            // Single anchor product. Real per-order amount is supplied at checkout
+            // and overrides UnitPrice / TotalAmount.
+            context.GameProducts.Add(new GameProduct
+            {
+                GiftCardId    = steamWalletCard.Id,
+                Name          = "Пополнение Steam Wallet",
+                Amount        = "custom",
+                TotalDisplay  = "Steam Wallet",
+                Price         = 1,
+                ProductType   = GameProductType.GiftCard,
+                SortOrder     = 0,
+                IsActive      = false,
+                StockQuantity = 999_999
+            });
+            await context.SaveChangesAsync();
+        }
+
         // Seed Telegram cards
         if (!await context.GiftCards.AnyAsync(g => g.Category == GiftCardCategory.Telegram))
         {

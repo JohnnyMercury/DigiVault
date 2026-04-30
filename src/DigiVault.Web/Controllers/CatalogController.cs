@@ -31,6 +31,20 @@ public class PurchaseRequest
     public string? Email { get; set; }
 }
 
+/// <summary>
+/// Body for the dedicated Steam Wallet top-up endpoint. Amount comes from
+/// the user-controlled slider on /Catalog/Steam — not from a fixed catalogue
+/// product, so it's part of the request rather than a GameProductId lookup.
+/// </summary>
+public class PurchaseSteamRequest
+{
+    public decimal Amount { get; set; }
+    public string SteamLogin { get; set; } = "";
+    public string PaymentMethod { get; set; } = "card";
+    public string? EnotService { get; set; }
+    public string? Email { get; set; }
+}
+
 public class CatalogController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -171,6 +185,44 @@ public class CatalogController : Controller
             userId, request.GameProductId, 1, request.DeliveryInfo,
             request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
         return Json(extResult);
+    }
+
+    /// <summary>
+    /// Dedicated Steam Wallet top-up. Slider-driven amount, fixed +10% bonus
+    /// shown to the user (charged amount → operator credits amount × 1.10).
+    /// Always external payment (no balance flow): the page is reachable to
+    /// guests too, so we follow the same auto-create-account logic as
+    /// <see cref="Purchase"/>.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PurchaseSteam([FromBody] PurchaseSteamRequest request)
+    {
+        if (request.PaymentMethod == "balance")
+            return Json(new PurchaseResult { Success = false,
+                ErrorMessage = "Пополнение Steam доступно только через карту или СБП" });
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+        {
+            var guestEmail = (request.Email ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(guestEmail))
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Введите Email для оформления заказа" });
+            if (!System.Text.RegularExpressions.Regex.IsMatch(guestEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return Json(new PurchaseResult { Success = false, ErrorMessage = "Введите корректный Email" });
+
+            userId = await ResolveOrCreateGuestUserAsync(guestEmail);
+            if (userId == null)
+                return Json(new PurchaseResult { Success = false,
+                    ErrorMessage = "Не удалось создать гостевой аккаунт. Попробуйте войти и повторить." });
+        }
+
+        var siteBaseUrl = $"{Request.Scheme}://{Request.Host}";
+        var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _orderService.CreateSteamWalletPurchaseAsync(
+            userId, request.Amount, request.SteamLogin ?? "",
+            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
+        return Json(result);
     }
 
     /// <summary>
@@ -510,5 +562,22 @@ public class CatalogController : Controller
         await LoadReviewsViewBagAsync("GiftCard", premiumCard.Slug, giftCardId: premiumCard.Id);
 
         return View("Telegram");
+    }
+
+    /// <summary>
+    /// Steam Wallet top-up page. Slider-driven amount with a +10% visual bonus
+    /// (charged amount → operator credits amount × 1.10 to the Steam account
+    /// after a brief security-check workflow on the support side).
+    /// </summary>
+    public async Task<IActionResult> Steam()
+    {
+        // Anchor card exists only to participate in fulfilment routing — page
+        // doesn't need to render it, just confirm the seed ran.
+        var card = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "steam-wallet");
+        if (card == null) return NotFound();
+
+        await SetUserBalanceAsync();
+        await LoadReviewsViewBagAsync("GiftCard", card.Slug, giftCardId: card.Id);
+        return View();
     }
 }

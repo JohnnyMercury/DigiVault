@@ -43,6 +43,19 @@ public interface IOrderService
     /// </summary>
     Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId, int quantity,
         string? deliveryInfo, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp);
+
+    /// <summary>
+    /// Special-case purchase for Steam Wallet top-up: the amount is supplied by
+    /// the user's slider (not by a fixed catalogue product). We anchor the
+    /// OrderItem to the hidden <c>steam-wallet</c> GameProduct so the existing
+    /// fulfilment pipeline kicks in (CredentialGenerator routes by Slug to
+    /// <c>ContactSupportCredential</c>), but UnitPrice / Order.TotalAmount come
+    /// from <paramref name="customAmount"/>.
+    /// <paramref name="steamLogin"/> is stored on Order.DeliveryInfo so the
+    /// support operator sees which Steam account to credit.
+    /// </summary>
+    Task<PurchaseResult> CreateSteamWalletPurchaseAsync(string userId, decimal customAmount,
+        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp);
 }
 
 public class OrderService : IOrderService
@@ -292,6 +305,136 @@ public class OrderService : IOrderService
         {
             _logger.LogError(ex, "External purchase failed for user {UserId}, product {GameProductId}",
                 userId, gameProductId);
+            return new PurchaseResult { Success = false, ErrorMessage = "Произошла ошибка при оформлении заказа" };
+        }
+    }
+
+    public async Task<PurchaseResult> CreateSteamWalletPurchaseAsync(string userId, decimal customAmount,
+        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp)
+    {
+        try
+        {
+            // Validate the slider amount — backend mirrors the UI bounds.
+            if (customAmount < 100m)
+                return new PurchaseResult { Success = false, ErrorMessage = "Минимальная сумма пополнения — 100 ₽" };
+            if (customAmount > 15000m)
+                return new PurchaseResult { Success = false, ErrorMessage = "Максимальная сумма пополнения — 15 000 ₽" };
+            if (string.IsNullOrWhiteSpace(steamLogin))
+                return new PurchaseResult { Success = false, ErrorMessage = "Укажите логин Steam-аккаунта" };
+
+            // Anchor product (hidden, IsActive=false). We bypass IsActive here
+            // because the user reaches this only via the dedicated /Catalog/Steam
+            // page, and the product is intentionally invisible in generic listings.
+            var anchor = await _context.GameProducts
+                .Include(p => p.GiftCard)
+                .FirstOrDefaultAsync(p => p.GiftCard != null && p.GiftCard.Slug == "steam-wallet");
+            if (anchor == null)
+                return new PurchaseResult { Success = false, ErrorMessage = "Товар временно недоступен" };
+
+            // Visual «bonus» — we charge customAmount but the operator credits
+            // customAmount * 1.10 to Steam. The bonus is displayed on the page
+            // and stored on the OrderItem.TotalDisplay-style hint via DeliveryInfo.
+            var bonusedDisplay = $"{Math.Round(customAmount * 1.10m, 0):N0} ₽ на Steam";
+
+            var method = MapPaymentMethod(paymentMethod);
+            var provider = _providerFactory.GetProviderForMethod(method);
+            if (provider == null || !provider.IsEnabled)
+                return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
+
+            var orderNumber = GenerateOrderNumber();
+            var deliveryInfo = $"Steam: {steamLogin.Trim()}; Зачислить: {bonusedDisplay}";
+
+            var order = new Order
+            {
+                UserId       = userId,
+                OrderNumber  = orderNumber,
+                TotalAmount  = customAmount,
+                Status       = OrderStatus.Pending,
+                CreatedAt    = DateTime.UtcNow,
+                DeliveryInfo = deliveryInfo
+            };
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            var orderItem = new OrderItem
+            {
+                OrderId       = order.Id,
+                GameProductId = anchor.Id,
+                Quantity      = 1,
+                UnitPrice     = customAmount,
+                TotalPrice    = customAmount,
+            };
+            _context.OrderItems.Add(orderItem);
+            await _context.SaveChangesAsync();
+
+            var user = await _context.Users.FindAsync(userId);
+            var siteBase = siteBaseUrl.TrimEnd('/');
+            var metadata = new Dictionary<string, string>();
+            if (!string.IsNullOrWhiteSpace(enotService))
+                metadata["enot_service"] = enotService.Trim();
+            var enotServices = MapPaymentMethodToEnotServices(paymentMethod);
+            if (enotServices.Length > 0)
+                metadata["enot_services"] = string.Join(",", enotServices);
+
+            var paymentRequest = new DigiVault.Core.Models.Payment.PaymentRequest
+            {
+                UserId      = userId,
+                Amount      = customAmount,
+                Currency    = "RUB",
+                Method      = method,
+                Email       = user?.Email,
+                Description = $"Пополнение Steam: {bonusedDisplay} ({orderNumber})",
+                OrderId     = order.Id,
+                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
+                CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
+                WebhookUrl  = $"{siteBase}/api/webhooks/{provider.Name}",
+                ClientIp    = clientIp,
+                Metadata    = metadata.Count > 0 ? metadata : null,
+            };
+
+            var providerResult = await provider.CreatePaymentAsync(paymentRequest);
+            if (!providerResult.Success || string.IsNullOrEmpty(providerResult.RedirectUrl))
+            {
+                _context.OrderItems.Remove(orderItem);
+                _context.Orders.Remove(order);
+                await _context.SaveChangesAsync();
+                return new PurchaseResult { Success = false,
+                    ErrorMessage = providerResult.ErrorMessage ?? "Не удалось создать платёж" };
+            }
+
+            _context.PaymentTransactions.Add(new PaymentTransaction
+            {
+                TransactionId         = providerResult.TransactionId ?? Guid.NewGuid().ToString("N"),
+                ProviderTransactionId = providerResult.ProviderTransactionId,
+                ProviderName          = provider.Name,
+                UserId                = userId,
+                OrderId               = order.Id,
+                Method                = method,
+                Status                = DigiVault.Core.Enums.PaymentStatus.Pending,
+                Amount                = customAmount,
+                Currency              = "RUB",
+                Description           = paymentRequest.Description,
+                ClientIp              = clientIp,
+                CreatedAt             = DateTime.UtcNow,
+                UpdatedAt             = DateTime.UtcNow,
+            });
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Steam Wallet purchase initiated: Order {OrderNumber}, User {UserId}, Amount {Amount} → {Bonused}",
+                orderNumber, userId, customAmount, bonusedDisplay);
+
+            return new PurchaseResult
+            {
+                Success     = true,
+                OrderNumber = orderNumber,
+                OrderId     = order.Id,
+                RedirectUrl = providerResult.RedirectUrl,
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Steam Wallet purchase failed for user {UserId}, amount {Amount}", userId, customAmount);
             return new PurchaseResult { Success = false, ErrorMessage = "Произошла ошибка при оформлении заказа" };
         }
     }

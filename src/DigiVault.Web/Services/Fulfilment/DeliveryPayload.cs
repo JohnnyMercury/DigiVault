@@ -25,13 +25,40 @@ public abstract class DeliveryPayload
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    public string Serialize() => JsonSerializer.Serialize(this, GetType(), JsonOptions);
+    // CRITICAL: serialise via the abstract base type so System.Text.Json
+    // emits the `kind` discriminator from [JsonPolymorphic]. Using
+    // `Serialize(this, GetType(), ...)` writes the concrete subtype directly
+    // (no discriminator), and Deserialize<DeliveryPayload> later returns null
+    // - which is what made every order render the «no payload» fallback
+    // banner instead of the real Code / Confirmation / Support credential.
+    public string Serialize() => JsonSerializer.Serialize<DeliveryPayload>(this, JsonOptions);
 
     public static DeliveryPayload? Deserialize(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return null;
-        try { return JsonSerializer.Deserialize<DeliveryPayload>(json, JsonOptions); }
-        catch { return null; }
+        try
+        {
+            var payload = JsonSerializer.Deserialize<DeliveryPayload>(json, JsonOptions);
+            if (payload != null) return payload;
+        }
+        catch { /* fall through to legacy sniffing */ }
+
+        // Backwards-compat: orders sealed before the Serialize fix above wrote
+        // the JSON without a `kind` field. Try to sniff the variant by the
+        // shape of the document so old orders still render correctly.
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("code", out _))
+                return JsonSerializer.Deserialize<CodeCredential>(json, JsonOptions);
+            if (root.TryGetProperty("supportUsername", out _))
+                return JsonSerializer.Deserialize<ContactSupportCredential>(json, JsonOptions);
+            if (root.TryGetProperty("transactionId", out _))
+                return JsonSerializer.Deserialize<ConfirmationCredential>(json, JsonOptions);
+        }
+        catch { }
+        return null;
     }
 }
 

@@ -306,94 +306,41 @@
             </div>
 
             <div class="deposit-label">Способ оплаты</div>
-            <div class="deposit-pay-methods">
-                @if (isAdmin)
-                {
-                    <div class="deposit-pay-method selected" data-method="admin" onclick="selectDepositMethod(this)">
-                        <div class="deposit-pay-left">
-                            <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                                <i class="bi bi-shield-check"></i>
-                            </div>
+
+            @* Optional admin-only «manual top-up» tile rendered above the
+               unified picker. Same look-and-feel via .pmtile classes. *@
+            @if (isAdmin)
+            {
+                <div class="pmtiles" style="margin-bottom: 0.5rem;">
+                    <div class="pmtile selected" data-method="admin" data-available="true" onclick="selectPayMethod(this)">
+                        <div class="pmtile-left">
+                            <span class="pmtile-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);"><i class="bi bi-shield-check"></i></span>
                             <div>
-                                <div class="deposit-pay-name">Админ-начисление</div>
-                                <div class="deposit-pay-desc">Мгновенное зачисление без оплаты</div>
+                                <div class="pmtile-title">Админ-начисление</div>
+                                <div class="pmtile-desc">Мгновенное зачисление без оплаты</div>
                             </div>
                         </div>
-                        <div class="deposit-pay-right">
-                            <span class="deposit-pay-badge active">Доступно</span>
-                            <div class="deposit-pay-radio active"></div>
+                        <div class="pmtile-right">
+                            <span class="pmtile-badge instant">Доступно</span>
+                            <span class="pmtile-radio active"></span>
                         </div>
-                    </div>
-                }
-
-                <div class="deposit-pay-method @(isAdmin ? "" : "selected")" data-method="card" onclick="selectDepositMethod(this)">
-                    <div class="deposit-pay-left">
-                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            <i class="bi bi-credit-card"></i>
-                        </div>
-                        <div>
-                            <div class="deposit-pay-name">Банковская карта</div>
-                            <div class="deposit-pay-desc">Visa, MasterCard, МИР</div>
-                        </div>
-                    </div>
-                    <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge active">Доступно</span>
-                        <div class="deposit-pay-radio @(isAdmin ? "" : "active")"></div>
                     </div>
                 </div>
+            }
 
-                <div class="deposit-pay-method" data-method="sbp" onclick="selectDepositMethod(this)">
-                    <div class="deposit-pay-left">
-                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
-                            <i class="bi bi-lightning-charge"></i>
-                        </div>
-                        <div>
-                            <div class="deposit-pay-name">СБП</div>
-                            <div class="deposit-pay-desc">Система быстрых платежей (включая QR-код)</div>
-                        </div>
-                    </div>
-                    <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge active">Доступно</span>
-                        <div class="deposit-pay-radio"></div>
-                    </div>
-                </div>
+            @{
+                var __depTiles = new DigiVault.Web.Models.Payment.PaymentTilesViewModel
+                {
+                    ShowBalance     = false,
+                    SelectedCode    = isAdmin ? "admin" : "card",
+                    OnSelectJs      = "selectPayMethod",
+                    HiddenInputName = "PaymentMethod",
+                    HiddenInputId   = "paymentMethod"
+                };
+            }
+            <partial name="_PaymentMethodTiles" model="__depTiles" />
 
-                <div class="deposit-pay-method disabled" data-method="p2p" onclick="selectDepositMethod(this)">
-                    <div class="deposit-pay-left">
-                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #ec4899, #e11d48);">
-                            <i class="bi bi-people"></i>
-                        </div>
-                        <div>
-                            <div class="deposit-pay-name">P2P перевод</div>
-                            <div class="deposit-pay-desc">Перевод на карту</div>
-                        </div>
-                    </div>
-                    <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge soon">Скоро</span>
-                        <div class="deposit-pay-radio"></div>
-                    </div>
-                </div>
-
-                <div class="deposit-pay-method disabled" data-method="qr" onclick="selectDepositMethod(this)">
-                    <div class="deposit-pay-left">
-                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                            <i class="bi bi-qr-code"></i>
-                        </div>
-                        <div>
-                            <div class="deposit-pay-name">QR-код</div>
-                            <div class="deposit-pay-desc">Оплата по QR-коду</div>
-                        </div>
-                    </div>
-                    <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge soon">Скоро</span>
-                        <div class="deposit-pay-radio"></div>
-                    </div>
-                </div>
-            </div>
-
-            <input type="hidden" name="PaymentMethod" id="paymentMethod" value="@(isAdmin ? "admin" : "card")" />
-
-            <button type="submit" class="deposit-submit" id="depositBtn">
+            <button type="submit" class="deposit-submit" id="depositBtn" style="margin-top: 1.25rem;">
                 <i class="bi bi-check-circle"></i>
                 <span id="depositBtnText">@(isAdmin ? "Начислить" : "Перейти к оплате")</span>
             </button>
@@ -414,21 +361,37 @@
             });
         });
 
-        function selectDepositMethod(el) {
-            if (el.classList.contains('disabled')) return;
+        // The unified _PaymentMethodTiles partial defines window.selectPayMethod
+        // which manages selected-state and updates the hidden input flagged
+        // with [data-pmtiles-target]. We just need to clear the optional
+        // admin-tile selection (which lives outside the partial's container)
+        // when the user picks one of the regular methods, and the inverse.
+        window.onPayMethodChange = function (code, tile) {
+            // Find the standalone admin tile (it's in its own .pmtiles wrapper).
+            var adminTile = document.querySelector('.pmtile[data-method="admin"]');
+            if (!adminTile) return;
+            if (code === 'admin') {
+                // partial cleared its own selection — also pull all .pmtile.selected
+                // outside the partial's container so only admin stays selected.
+                var partialContainer = tile.closest('.pmtiles');
+                document.querySelectorAll('.pmtile.selected').forEach(function (t) {
+                    if (t !== tile && t.closest('.pmtiles') !== partialContainer) {
+                        // already cleared by partial; nothing to do
+                    }
+                });
+            } else {
+                // Method picked from the partial — drop admin's selected state.
+                adminTile.classList.remove('selected');
+                var r = adminTile.querySelector('.pmtile-radio');
+                if (r) r.classList.remove('active');
+            }
+        };
 
-            document.querySelectorAll('.deposit-pay-method').forEach(m => {
-                m.classList.remove('selected');
-                var radio = m.querySelector('.deposit-pay-radio');
-                if (radio) radio.classList.remove('active');
-            });
-
-            el.classList.add('selected');
-            var radio = el.querySelector('.deposit-pay-radio');
-            if (radio) radio.classList.add('active');
-
-            document.getElementById('paymentMethod').value = el.dataset.method;
-            document.getElementById('depositBtn').disabled = false;
-        }
+        // When the user clicks a disabled (Скоро) tile.
+        window.onPayMethodUnavailable = function (code) {
+            // Could surface inline notice; for now we just no-op — server-side
+            // rejects qr/p2p with a friendly TempData banner if it ever submits.
+            console.info('Метод', code, 'пока не подключён');
+        };
     </script>
 }

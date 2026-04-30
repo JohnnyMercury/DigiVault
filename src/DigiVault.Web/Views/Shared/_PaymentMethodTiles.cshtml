@@ -1,0 +1,194 @@
+@*
+    Unified payment-method picker (step 1) used everywhere on the site:
+        - 4 catalog purchase modals (Game / Telegram / GiftCard / VpnProvider)
+        - /Account/Deposit (balance top-up)
+        - any future cart-checkout / subscription page
+
+    Tiles come from a single C# registry: DigiVault.Web.Services.Payment
+    .PaymentMethodCatalog.All. To add / remove / rename a method — edit
+    that one file.
+
+    Render with:
+        <partial name="_PaymentMethodTiles" model='new PaymentTilesViewModel { ... }' />
+
+    The partial renders both the new `.pmtile*` class set (canonical) and
+    the legacy `.modal-pay-method*` aliases — so existing JS in the catalog
+    modals that queries `.modal-pay-method.selected` keeps working without
+    edits.
+
+    Selection is propagated via:
+        - calling Model.OnSelectJs(this) on click
+        - updating window.lastSelectedPaymentMethod
+        - updating the hidden input (if Model.HiddenInputName is set)
+*@
+@using DigiVault.Web.Services.Payment
+@model DigiVault.Web.Models.Payment.PaymentTilesViewModel
+
+@{
+    var selected   = Model.SelectedCode ?? "card";
+    var assetsKey  = "__pmtiles_assets_emitted";
+    var emitAssets = Context.Items[assetsKey] == null;
+    if (emitAssets) { Context.Items[assetsKey] = true; }
+}
+
+<div class="pmtiles modal-payment-methods">
+    @if (Model.ShowBalance)
+    {
+        var balSel = selected == "balance";
+        <div class="pmtile modal-pay-method @(balSel ? "selected" : "")"
+             data-method="balance"
+             data-available="true"
+             onclick="@(Model.OnSelectJs)(this)">
+            <div class="pmtile-left modal-pay-method-left">
+                <span class="pmtile-icon modal-pay-method-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <i class="bi bi-wallet2"></i>
+                </span>
+                <div>
+                    <div class="pmtile-title modal-pay-method-title">Баланс аккаунта</div>
+                    <div class="pmtile-desc modal-pay-method-desc">
+                        Доступно: <span class="js-pmtile-balance" id="userBalanceDisplay">@Model.Balance.ToString("N2")</span> ₽
+                    </div>
+                </div>
+            </div>
+            <div class="pmtile-right modal-pay-method-right">
+                <span class="pmtile-badge instant modal-pay-badge-instant">Мгновенно</span>
+                <span class="pmtile-radio modal-pay-radio @(balSel ? "active" : "")"></span>
+            </div>
+        </div>
+    }
+
+    @foreach (var m in PaymentMethodCatalog.All)
+    {
+        var isSel  = !m.Available ? false : selected == m.Code;
+        var isOff  = !m.Available;
+        <div class="pmtile modal-pay-method @(isSel ? "selected" : "") @(isOff ? "disabled" : "")"
+             data-method="@m.Code"
+             data-available="@(m.Available ? "true" : "false")"
+             onclick="@(Model.OnSelectJs)(this)">
+            <div class="pmtile-left modal-pay-method-left">
+                <span class="pmtile-icon modal-pay-method-icon" style="background: @m.Gradient;">
+                    <i class="bi @m.IconClass"></i>
+                </span>
+                <div>
+                    <div class="pmtile-title modal-pay-method-title">@m.Title</div>
+                    <div class="pmtile-desc modal-pay-method-desc">@m.Description</div>
+                </div>
+            </div>
+            <div class="pmtile-right modal-pay-method-right">
+                @if (isOff)
+                {
+                    <span class="pmtile-badge soon">@(m.UnavailableHint ?? "Скоро")</span>
+                }
+                <span class="pmtile-radio modal-pay-radio @(isSel ? "active" : "")"></span>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.HiddenInputName))
+{
+    <input type="hidden"
+           name="@Model.HiddenInputName"
+           id="@Model.HiddenInputId"
+           data-pmtiles-target="true"
+           value="@selected" />
+}
+
+@if (emitAssets)
+{
+    <style>
+        .pmtiles { display: flex; flex-direction: column; gap: 0.5rem; }
+        .pmtile {
+            display: flex; align-items: center; justify-content: space-between; gap: 0.85rem;
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, box-shadow .15s;
+        }
+        .pmtile:hover:not(.disabled) {
+            background: rgba(102,126,234,0.07);
+            border-color: rgba(102,126,234,0.4);
+        }
+        .pmtile.selected {
+            border-color: #667eea;
+            background: rgba(102,126,234,0.12);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+        }
+        .pmtile.disabled { opacity: 0.55; cursor: not-allowed; }
+        .pmtile-left { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+        .pmtile-icon {
+            width: 38px; height: 38px;
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .pmtile-title { color: #fff; font-weight: 600; font-size: 0.95rem; }
+        .pmtile-desc  { color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 1px; }
+        .pmtile-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+        .pmtile-badge {
+            font-size: 0.7rem; font-weight: 600;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+        .pmtile-badge.instant { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .pmtile-badge.soon    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+        .pmtile-radio {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25);
+            transition: border-color .15s, background .15s;
+            flex-shrink: 0;
+        }
+        .pmtile-radio.active {
+            border-color: #667eea;
+            background: radial-gradient(circle, #667eea 38%, transparent 42%);
+        }
+    </style>
+
+    <script>
+    (function () {
+        if (window.__pmtilesInit) return;
+        window.__pmtilesInit = true;
+
+        // Default selector handler. Pages can override Model.OnSelectJs
+        // (catalog modals use selectModalPayment) — those functions stay
+        // responsible for any page-specific side-effects (Buy button text,
+        // step-2 picker, etc.). This default just maintains the visual
+        // selected state and the hidden input.
+        window.selectPayMethod = function (tile) {
+            if (!tile) return;
+            if (tile.classList.contains('disabled')) {
+                if (typeof window.onPayMethodUnavailable === 'function') {
+                    window.onPayMethodUnavailable(tile.dataset.method, tile);
+                }
+                return;
+            }
+            var container = tile.closest('.pmtiles');
+            if (!container) return;
+            container.querySelectorAll('.pmtile').forEach(function (t) {
+                t.classList.remove('selected');
+                var r = t.querySelector('.pmtile-radio');
+                if (r) r.classList.remove('active');
+            });
+            tile.classList.add('selected');
+            var radio = tile.querySelector('.pmtile-radio');
+            if (radio) radio.classList.add('active');
+
+            window.lastSelectedPaymentMethod = tile.dataset.method;
+
+            // Update any sibling hidden inputs flagged for pmtiles.
+            document
+                .querySelectorAll('input[type=hidden][data-pmtiles-target="true"]')
+                .forEach(function (h) { h.value = tile.dataset.method; });
+
+            if (typeof window.onPayMethodChange === 'function') {
+                window.onPayMethodChange(tile.dataset.method, tile);
+            }
+        };
+    })();
+    </script>
+}

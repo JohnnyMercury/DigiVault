@@ -273,25 +273,19 @@ public class AccountController : Controller
             return RedirectToAction("Dashboard");
         }
 
-        // Реальное пополнение через PSP (Enot). Маппим UI-категорию на
-        // PaymentMethod-enum — фактический список Enot-сервисов формирует
-        // EnotPaymentProvider из Method.
-        var pspMethod = rawMethod switch
-        {
-            "card" => PaymentMethod.Card,
-            "sbp"  => PaymentMethod.SBP,
-            _      => PaymentMethod.Card
-        };
-
-        // qr/p2p пока без PSP — отбиваем на UI-этапе, но на всякий случай:
-        if (rawMethod == "qr" || rawMethod == "p2p")
+        // Реальное пополнение через PSP. Реестр методов и факт «доступен ли
+        // PSP под этот код» — в DigiVault.Web.Services.Payment.PaymentMethodCatalog.
+        // Здесь больше нет своего switch — добавляем новые методы в каталог,
+        // и пополнение баланса автоматически их подхватывает.
+        if (!Services.Payment.PaymentMethodCatalog.IsAvailable(rawMethod))
         {
             TempData["Error"] = "Этот метод пополнения скоро станет доступен. Используйте «Банковскую карту» или «СБП».";
             return RedirectToAction("Deposit");
         }
 
-        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var result = await _paymentService.CreateDepositAsync(user.Id, model.Amount, pspMethod, clientIp);
+        var pspMethod = Services.Payment.PaymentMethodCatalog.ToEnum(rawMethod);
+        var clientIp  = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result    = await _paymentService.CreateDepositAsync(user.Id, model.Amount, pspMethod, clientIp);
 
         if (!result.Success || string.IsNullOrEmpty(result.RedirectUrl))
         {

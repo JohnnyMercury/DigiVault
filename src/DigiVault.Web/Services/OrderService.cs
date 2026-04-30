@@ -296,12 +296,10 @@ public class OrderService : IOrderService
         }
     }
 
-    private static DigiVault.Core.Enums.PaymentMethod MapPaymentMethod(string raw) => raw?.ToLowerInvariant() switch
-    {
-        "card" => DigiVault.Core.Enums.PaymentMethod.Card,
-        "sbp"  => DigiVault.Core.Enums.PaymentMethod.SBP,
-        _      => DigiVault.Core.Enums.PaymentMethod.Card,
-    };
+    // Single source of truth: DigiVault.Web.Services.Payment.PaymentMethodCatalog.
+    // Add / remove / rename methods there — mapping here updates automatically.
+    private static DigiVault.Core.Enums.PaymentMethod MapPaymentMethod(string raw)
+        => DigiVault.Web.Services.Payment.PaymentMethodCatalog.ToEnum(raw);
 
     /// <summary>
     /// Top-level UI category → list of Enot service codes actually enabled in

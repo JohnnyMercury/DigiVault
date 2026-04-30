@@ -1,0 +1,166 @@
+@using DigiVault.Core.Entities
+@{
+    ViewData["Title"] = "Steam Wallet";
+    var card = ViewBag.Card as GiftCard;
+    var ordersCount = (int)(ViewBag.OrdersCount ?? 0);
+    var minAmount     = ViewBag.MinAmount     as string ?? "100";
+    var maxAmount     = ViewBag.MaxAmount     as string ?? "15000";
+    var stepAmount    = ViewBag.StepAmount    as string ?? "50";
+    var defaultAmount = ViewBag.DefaultAmount as string ?? "1000";
+    var bonusPercent  = ViewBag.BonusPercent  as string ?? "10";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-controller me-2" style="color: #66c0f4;"></i>Steam Wallet</h4>
+        <small class="text-muted">Управление страницей пополнения Steam (слайдер + бонус)</small>
+    </div>
+    <a href="/Catalog/Steam" target="_blank" class="btn btn-outline-light">
+        <i class="bi bi-box-arrow-up-right me-1"></i>Открыть на сайте
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(102,192,244,0.2), rgba(27,154,223,0.2)); color: #66c0f4;">
+                <i class="bi bi-percent"></i>
+            </div>
+            <div class="stat-value">@bonusPercent%</div>
+            <div class="stat-label">Бонус на Steam</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon products">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="stat-value">@minAmount - @maxAmount</div>
+            <div class="stat-label">Диапазон, ₽</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-icon orders">
+                <i class="bi bi-bag-check-fill"></i>
+            </div>
+            <div class="stat-value">@ordersCount</div>
+            <div class="stat-label">Заказов Steam</div>
+        </div>
+    </div>
+</div>
+
+<!-- Card image -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-image me-2" style="color: #66c0f4;"></i>Изображение карточки</h5>
+    </div>
+    <div class="p-4">
+        <form asp-action="UpdateImage" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="row align-items-center g-3">
+                <div class="col-auto">
+                    @if (!string.IsNullOrEmpty(card?.ImageUrl))
+                    {
+                        <img src="@card.ImageUrl" alt="Steam Wallet"
+                             style="width: 120px; height: 120px; object-fit: cover; border-radius: 12px; border: 1px solid var(--card-border);">
+                    }
+                    else
+                    {
+                        <div style="width: 120px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, #1b2838, #66c0f4); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-controller" style="font-size: 2.5rem; color: #fff;"></i>
+                        </div>
+                    }
+                </div>
+                <div class="col">
+                    <label class="form-label" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Картинка карточки</label>
+                    <input type="file" name="imageFile" class="form-control" accept="image/*">
+                    <small class="text-muted">Рекомендуемый размер: 400×400 px. Отображается на главной и в каталоге.</small>
+                    <div class="mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-upload me-1"></i>Загрузить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Card text -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-pencil-square me-2" style="color: #66c0f4;"></i>Текст и оформление</h5>
+    </div>
+    <div class="p-4">
+        <form asp-action="UpdateCard" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Название</label>
+                    <input type="text" name="name" value="@(card?.Name ?? "Steam Wallet")" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Иконка (emoji)</label>
+                    <input type="text" name="icon" value="@(card?.Icon ?? "🎮")" class="form-control" maxlength="8">
+                    <small class="text-muted">Используется как fallback, если не загружено изображение.</small>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Описание</label>
+                    <input type="text" name="description" value="@(card?.Description ?? "")" class="form-control" placeholder="Пополнение баланса Steam с бонусом +10%">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">CSS-градиент</label>
+                    <input type="text" name="gradient" value="@(card?.Gradient ?? "linear-gradient(135deg, #1b2838, #66c0f4)")" class="form-control" placeholder="linear-gradient(135deg, #1b2838, #66c0f4)">
+                    <small class="text-muted">Запасной фон если изображения нет.</small>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Сохранить
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Slider settings -->
+<div class="data-card mb-4">
+    <div class="data-card-header">
+        <h5 class="data-card-title"><i class="bi bi-sliders me-2" style="color: #66c0f4;"></i>Настройки слайдера</h5>
+    </div>
+    <div class="p-4">
+        <form asp-action="UpdateSettings" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Минимум, ₽</label>
+                    <input type="number" name="minAmount" value="@minAmount" min="1" step="1" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Максимум, ₽</label>
+                    <input type="number" name="maxAmount" value="@maxAmount" min="1" step="1" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Шаг, ₽</label>
+                    <input type="number" name="stepAmount" value="@stepAmount" min="1" step="1" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">По умолчанию, ₽</label>
+                    <input type="number" name="defaultAmount" value="@defaultAmount" min="1" step="1" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Бонус, %</label>
+                    <input type="number" name="bonusPercent" value="@bonusPercent" min="0" max="100" step="0.5" class="form-control" required>
+                    <small class="text-muted">Сколько % сверху зачисляется на Steam.</small>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Сохранить настройки
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

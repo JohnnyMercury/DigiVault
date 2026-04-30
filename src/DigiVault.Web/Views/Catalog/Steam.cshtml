@@ -1,13 +1,22 @@
+@using DigiVault.Core.Entities
 @{
     ViewData["Title"] = "Пополнение Steam - Key Zona";
 
-    const decimal MinAmount = 100m;
-    const decimal MaxAmount = 15000m;
-    const decimal StepAmount = 50m;
-    const decimal DefaultAmount = 1000m;
-    const decimal Bonus = 0.10m; // визуальный бонус +10%
+    // Admin-editable via /Admin/Steam (AppSettings: steam:* keys).
+    var card          = ViewBag.SteamCard as GiftCard;
+    var MinAmount     = ViewBag.SteamMin      is decimal __mn ? __mn : 100m;
+    var MaxAmount     = ViewBag.SteamMax      is decimal __mx ? __mx : 15000m;
+    var StepAmount    = ViewBag.SteamStep     is decimal __st ? __st : 50m;
+    var DefaultAmount = ViewBag.SteamDefault  is decimal __df ? __df : 1000m;
+    var BonusPct      = ViewBag.SteamBonusPct is decimal __bp ? __bp : 10m;
+    var Bonus         = BonusPct / 100m;
 
-    var steamGrad = "linear-gradient(135deg, #1b2838 0%, #66c0f4 100%)";
+    var steamGrad = !string.IsNullOrWhiteSpace(card?.Gradient)
+        ? card.Gradient!
+        : "linear-gradient(135deg, #1b2838 0%, #66c0f4 100%)";
+    var heroTitle = !string.IsNullOrWhiteSpace(card?.Name) && card!.Name != "Steam Wallet"
+        ? $"Пополнение {card.Name}"
+        : "Пополнение Steam";
 }
 
 <style>

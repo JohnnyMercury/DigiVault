@@ -314,27 +314,37 @@ public class OrderService : IOrderService
     {
         try
         {
-            // Validate the slider amount — backend mirrors the UI bounds.
-            if (customAmount < 100m)
-                return new PurchaseResult { Success = false, ErrorMessage = "Минимальная сумма пополнения — 100 ₽" };
-            if (customAmount > 15000m)
-                return new PurchaseResult { Success = false, ErrorMessage = "Максимальная сумма пополнения — 15 000 ₽" };
+            // Slider bounds + bonus are admin-editable in AppSettings (steam:*).
+            // Read once and validate, fall back to original hard-coded defaults
+            // if not yet seeded.
+            decimal SteamSetting(string key, decimal fallback)
+            {
+                var v = _context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == key)?.Value;
+                if (string.IsNullOrEmpty(v)) return fallback;
+                return decimal.TryParse(v, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var parsed) ? parsed : fallback;
+            }
+            var minBound  = SteamSetting("steam:min_amount",   100m);
+            var maxBound  = SteamSetting("steam:max_amount",   15000m);
+            var bonusPct  = SteamSetting("steam:bonus_percent", 10m);
+            var bonusMult = 1m + bonusPct / 100m;
+
+            if (customAmount < minBound)
+                return new PurchaseResult { Success = false, ErrorMessage = $"Минимальная сумма пополнения - {minBound:N0} ₽" };
+            if (customAmount > maxBound)
+                return new PurchaseResult { Success = false, ErrorMessage = $"Максимальная сумма пополнения - {maxBound:N0} ₽" };
             if (string.IsNullOrWhiteSpace(steamLogin))
                 return new PurchaseResult { Success = false, ErrorMessage = "Укажите логин Steam-аккаунта" };
 
-            // Anchor product (hidden, IsActive=false). We bypass IsActive here
-            // because the user reaches this only via the dedicated /Catalog/Steam
-            // page, and the product is intentionally invisible in generic listings.
             var anchor = await _context.GameProducts
                 .Include(p => p.GiftCard)
                 .FirstOrDefaultAsync(p => p.GiftCard != null && p.GiftCard.Slug == "steam-wallet");
             if (anchor == null)
                 return new PurchaseResult { Success = false, ErrorMessage = "Товар временно недоступен" };
 
-            // Visual «bonus» — we charge customAmount but the operator credits
-            // customAmount * 1.10 to Steam. The bonus is displayed on the page
-            // and stored on the OrderItem.TotalDisplay-style hint via DeliveryInfo.
-            var bonusedDisplay = $"{Math.Round(customAmount * 1.10m, 0):N0} ₽ на Steam";
+            // Visual «bonus» — charge customAmount, operator credits
+            // customAmount * bonusMult on Steam side.
+            var bonusedDisplay = $"{Math.Round(customAmount * bonusMult, 0):N0} ₽ на Steam";
 
             var method = MapPaymentMethod(paymentMethod);
             var provider = _providerFactory.GetProviderForMethod(method);

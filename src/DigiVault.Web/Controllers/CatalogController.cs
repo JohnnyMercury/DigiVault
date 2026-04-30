@@ -565,16 +565,34 @@ public class CatalogController : Controller
     }
 
     /// <summary>
-    /// Steam Wallet top-up page. Slider-driven amount with a +10% visual bonus
-    /// (charged amount → operator credits amount × 1.10 to the Steam account
-    /// after a brief security-check workflow on the support side).
+    /// Steam Wallet top-up page. Slider-driven amount with a configurable
+    /// visual bonus (operator credits paid amount × (1 + bonus%) to the Steam
+    /// account after a brief security-check workflow on the support side).
+    /// Slider bounds and bonus % are admin-editable via /Admin/Steam.
     /// </summary>
     public async Task<IActionResult> Steam()
     {
-        // Anchor card exists only to participate in fulfilment routing — page
-        // doesn't need to render it, just confirm the seed ran.
         var card = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "steam-wallet");
         if (card == null) return NotFound();
+
+        // Slider config from AppSettings (steam:* keys, edited in admin).
+        // Defaults match the original hard-coded values so the page works even
+        // before the admin saves anything.
+        var settings = await _context.AppSettings
+            .Where(s => s.Key.StartsWith("steam:"))
+            .ToDictionaryAsync(s => s.Key, s => s.Value);
+
+        decimal Read(string key, decimal fallback) =>
+            settings.TryGetValue(key, out var v) &&
+            decimal.TryParse(v, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var parsed) ? parsed : fallback;
+
+        ViewBag.SteamCard      = card;
+        ViewBag.SteamMin       = Read("steam:min_amount", 100m);
+        ViewBag.SteamMax       = Read("steam:max_amount", 15000m);
+        ViewBag.SteamStep      = Read("steam:step", 50m);
+        ViewBag.SteamDefault   = Read("steam:default_amount", 1000m);
+        ViewBag.SteamBonusPct  = Read("steam:bonus_percent", 10m);
 
         await SetUserBalanceAsync();
         await LoadReviewsViewBagAsync("GiftCard", card.Slug, giftCardId: card.Id);

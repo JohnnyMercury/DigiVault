@@ -264,6 +264,21 @@
             </div>
         </div>
 
+        @if (TempData["Error"] is string err && !string.IsNullOrEmpty(err))
+        {
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.55rem; font-size: 0.85rem;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@err</span>
+            </div>
+        }
+        @if (TempData["Success"] is string ok && !string.IsNullOrEmpty(ok))
+        {
+            <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #86efac; border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.55rem; font-size: 0.85rem;">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>@ok</span>
+            </div>
+        }
+
         @if (isAdmin)
         {
             <div class="deposit-admin-badge">
@@ -311,7 +326,7 @@
                     </div>
                 }
 
-                <div class="deposit-pay-method disabled" data-method="card" onclick="selectDepositMethod(this)">
+                <div class="deposit-pay-method @(isAdmin ? "" : "selected")" data-method="card" onclick="selectDepositMethod(this)">
                     <div class="deposit-pay-left">
                         <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                             <i class="bi bi-credit-card"></i>
@@ -322,23 +337,23 @@
                         </div>
                     </div>
                     <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge soon">Скоро</span>
-                        <div class="deposit-pay-radio"></div>
+                        <span class="deposit-pay-badge active">Доступно</span>
+                        <div class="deposit-pay-radio @(isAdmin ? "" : "active")"></div>
                     </div>
                 </div>
 
-                <div class="deposit-pay-method disabled" data-method="sbp" onclick="selectDepositMethod(this)">
+                <div class="deposit-pay-method" data-method="sbp" onclick="selectDepositMethod(this)">
                     <div class="deposit-pay-left">
-                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <div class="deposit-pay-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
                             <i class="bi bi-lightning-charge"></i>
                         </div>
                         <div>
                             <div class="deposit-pay-name">СБП</div>
-                            <div class="deposit-pay-desc">Система быстрых платежей</div>
+                            <div class="deposit-pay-desc">Система быстрых платежей (включая QR-код)</div>
                         </div>
                     </div>
                     <div class="deposit-pay-right">
-                        <span class="deposit-pay-badge soon">Скоро</span>
+                        <span class="deposit-pay-badge active">Доступно</span>
                         <div class="deposit-pay-radio"></div>
                     </div>
                 </div>
@@ -376,11 +391,11 @@
                 </div>
             </div>
 
-            <input type="hidden" name="PaymentMethod" id="paymentMethod" value="@(isAdmin ? "admin" : "")" />
+            <input type="hidden" name="PaymentMethod" id="paymentMethod" value="@(isAdmin ? "admin" : "card")" />
 
-            <button type="submit" class="deposit-submit" id="depositBtn" @(isAdmin ? "" : "disabled")>
+            <button type="submit" class="deposit-submit" id="depositBtn">
                 <i class="bi bi-check-circle"></i>
-                <span id="depositBtnText">@(isAdmin ? "Начислить" : "Пополнить")</span>
+                <span id="depositBtnText">@(isAdmin ? "Начислить" : "Перейти к оплате")</span>
             </button>
         </form>
 

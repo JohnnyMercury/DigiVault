@@ -232,13 +232,6 @@ public class AccountController : Controller
 
         model.CurrentBalance = user.Balance;
 
-        // Только админ может пополнять без оплаты
-        if (!User.IsInRole("Admin"))
-        {
-            TempData["Error"] = "Пополнение пока недоступно";
-            return RedirectToAction("Dashboard");
-        }
-
         if (model.Amount <= 0)
         {
             ModelState.AddModelError("Amount", "Сумма должна быть больше нуля");
@@ -251,24 +244,62 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Админ-начисление: добавляем баланс напрямую
-        user.Balance += model.Amount;
-        await _userManager.UpdateAsync(user);
+        var rawMethod = (model.PaymentMethod ?? "card").ToLowerInvariant();
 
-        // Записываем транзакцию
-        var transaction = new Transaction
+        // Админ-начисление: только когда админ явно выбрал этот метод —
+        // обычные пополнения идут через PSP даже у админа.
+        if (rawMethod == "admin")
         {
-            UserId = user.Id,
-            Amount = model.Amount,
-            Type = TransactionType.Deposit,
-            Description = "Админ-начисление",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Transactions.Add(transaction);
-        await _context.SaveChangesAsync();
+            if (!User.IsInRole("Admin"))
+            {
+                TempData["Error"] = "Этот способ доступен только администраторам";
+                return RedirectToAction("Deposit");
+            }
 
-        TempData["Success"] = $"Баланс пополнен на {model.Amount:N0} ₽. Новый баланс: {user.Balance:N0} ₽";
-        return RedirectToAction("Dashboard");
+            user.Balance += model.Amount;
+            await _userManager.UpdateAsync(user);
+
+            _context.Transactions.Add(new Transaction
+            {
+                UserId = user.Id,
+                Amount = model.Amount,
+                Type = TransactionType.Deposit,
+                Description = "Админ-начисление",
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"Баланс пополнен на {model.Amount:N0} ₽. Новый баланс: {user.Balance:N0} ₽";
+            return RedirectToAction("Dashboard");
+        }
+
+        // Реальное пополнение через PSP (Enot). Маппим UI-категорию на
+        // PaymentMethod-enum — фактический список Enot-сервисов формирует
+        // EnotPaymentProvider из Method.
+        var pspMethod = rawMethod switch
+        {
+            "card" => PaymentMethod.Card,
+            "sbp"  => PaymentMethod.SBP,
+            _      => PaymentMethod.Card
+        };
+
+        // qr/p2p пока без PSP — отбиваем на UI-этапе, но на всякий случай:
+        if (rawMethod == "qr" || rawMethod == "p2p")
+        {
+            TempData["Error"] = "Этот метод пополнения скоро станет доступен. Используйте «Банковскую карту» или «СБП».";
+            return RedirectToAction("Deposit");
+        }
+
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var result = await _paymentService.CreateDepositAsync(user.Id, model.Amount, pspMethod, clientIp);
+
+        if (!result.Success || string.IsNullOrEmpty(result.RedirectUrl))
+        {
+            TempData["Error"] = result.ErrorMessage ?? "Не удалось создать платёж. Попробуйте ещё раз.";
+            return RedirectToAction("Deposit");
+        }
+
+        return Redirect(result.RedirectUrl);
     }
 
     [Authorize]

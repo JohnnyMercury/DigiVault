@@ -284,5 +284,34 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed PaymentLink (start.paymentlnk.com) — disabled by default,
+        // admin enters credentials via /Admin/PaymentProviders before flipping
+        // IsEnabled to true. Keys map to the v3.0 spec:
+        //   ApiKey      → секретный_ключ_1 (issued at registration)
+        //   SecretKey   → секретный_ключ_2 (set inside ЛК)
+        //   MerchantId  → account (магазин-ID)
+        //   Settings    → JSON, e.g. {"algo":"hmac_sha256"} (or "md5")
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "paymentlink"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "paymentlink",
+                DisplayName = "PaymentLink",
+                IsEnabled   = false,   // until admin enters credentials
+                Priority    = 20,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "{\"algo\":\"hmac_sha256\"}",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

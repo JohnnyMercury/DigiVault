@@ -209,16 +209,21 @@
     // Verified against /shops/{shopId}/payment-tariffs — re-check after any
     // tariff change.
     const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
+    const PLINK_BADGE = 'linear-gradient(135deg, #66c0f4, #1b9adf)';
     const PROVIDERS_BY_METHOD = {
         card: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
+            { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',          icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'Visa, MasterCard',                icon: 'bi-credit-card',          color: PLINK_BADGE },
         ],
         sbp: [
-            { code: 'enot', title: 'Enot Pay', desc: 'СБП — реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE },
+            { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код',     icon: 'bi-lightning-charge',     color: ENOT_BADGE },
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП с QR-кодом банка',           icon: 'bi-qr-code-scan',         color: PLINK_BADGE },
         ],
         // qr и p2p: плитки на шаге 1 видны как заготовка под будущие PSP
-        // (BlvckPay / PayPecker). Когда подключим — добавляем сюда записи.
-        qr:  [],
+        // (BlvckPay / PayPecker). Когда подключим - добавляем сюда записи.
+        qr:  [
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'Оплата сканированием QR-кода',   icon: 'bi-qr-code',              color: PLINK_BADGE },
+        ],
         p2p: [],
     };
 
@@ -340,11 +345,12 @@
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка…';
 
-        // We pass only the top-level method. The picked provider's
-        // hosted-checkout page lets the user finish the payment using any
-        // service the gateway supports for that method category.
+        // Pass top-level method PLUS the picked provider's code (e.g. "enot",
+        // "paymentlink"). Backend uses it to route to the right
+        // IPaymentProvider instead of relying on first-match.
+        window.lastSelectedProvider = currentProvider;
         if (typeof window.submitPurchaseWithService === 'function') {
-            window.submitPurchaseWithService(currentMethod, null, null);
+            window.submitPurchaseWithService(currentMethod, currentProvider, null);
         } else {
             console.error('submitPurchaseWithService is not defined on this page');
             alert('Ошибка инициализации');

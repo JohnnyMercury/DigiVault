@@ -23,6 +23,13 @@ public class PurchaseRequest
     /// </summary>
     public string? EnotService { get; set; }
     /// <summary>
+    /// PSP code chosen on the modal's step 2 picker (e.g. <c>"enot"</c>,
+    /// <c>"paymentlink"</c>). Empty / null = pick the first enabled provider
+    /// for this method (current behaviour). Set by the unified
+    /// _PaymentMethodPicker partial when more than one PSP is registered.
+    /// </summary>
+    public string? Provider { get; set; }
+    /// <summary>
     /// Email for guest checkout. Required when the user is not authenticated.
     /// We auto-create an <see cref="ApplicationUser"/> with this email if one
     /// doesn't exist, so the order can later be looked up and the customer
@@ -42,6 +49,8 @@ public class PurchaseSteamRequest
     public string SteamLogin { get; set; } = "";
     public string PaymentMethod { get; set; } = "card";
     public string? EnotService { get; set; }
+    /// <summary>PSP code from step-2 picker (<c>"enot"</c> / <c>"paymentlink"</c>).</summary>
+    public string? Provider { get; set; }
     public string? Email { get; set; }
 }
 
@@ -183,7 +192,8 @@ public class CatalogController : Controller
         var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
         var extResult = await _orderService.CreateExternalPurchaseAsync(
             userId, request.GameProductId, 1, request.DeliveryInfo,
-            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
+            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp,
+            providerName: request.Provider);
         return Json(extResult);
     }
 
@@ -221,7 +231,8 @@ public class CatalogController : Controller
         var clientIp    = HttpContext.Connection.RemoteIpAddress?.ToString();
         var result = await _orderService.CreateSteamWalletPurchaseAsync(
             userId, request.Amount, request.SteamLogin ?? "",
-            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp);
+            request.PaymentMethod, request.EnotService, siteBaseUrl, clientIp,
+            providerName: request.Provider);
         return Json(result);
     }
 

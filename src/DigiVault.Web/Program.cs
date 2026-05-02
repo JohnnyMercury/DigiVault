@@ -70,6 +70,7 @@ builder.Services.AddHttpClient(); // for Enot/other providers' outbound HTTP
 // just returns the first match. Bring it back only inside `if (env.IsDevelopment())`
 // when you actually need the test fallback.
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Enot.EnotPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkPaymentProvider>();
 // TODO: Add real providers here:
 // builder.Services.AddScoped<IPaymentProvider, YooKassaProvider>();
 // builder.Services.AddScoped<IPaymentProvider, StripeProvider>();

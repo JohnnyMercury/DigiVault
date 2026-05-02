@@ -38,11 +38,15 @@ public interface IOrderService
     /// payment provider for a hosted-checkout URL. The user is redirected
     /// there; on successful webhook the order moves to Processing →
     /// Completed via the fulfilment pipeline.
-    /// <paramref name="enotService"/> — optional Enot service code to lock
+    /// <paramref name="enotService"/> - optional Enot service code to lock
     /// the checkout to a single payment system (e.g. <c>"card"</c>, <c>"sbp"</c>).
+    /// <paramref name="providerName"/> - explicit PSP code from the step-2
+    /// picker (<c>"enot"</c>, <c>"paymentlink"</c>). When set, overrides the
+    /// "first match" lookup so users actually get the gateway they picked.
     /// </summary>
     Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId, int quantity,
-        string? deliveryInfo, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp);
+        string? deliveryInfo, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp,
+        string? providerName = null);
 
     /// <summary>
     /// Special-case purchase for Steam Wallet top-up: the amount is supplied by
@@ -55,7 +59,8 @@ public interface IOrderService
     /// support operator sees which Steam account to credit.
     /// </summary>
     Task<PurchaseResult> CreateSteamWalletPurchaseAsync(string userId, decimal customAmount,
-        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp);
+        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp,
+        string? providerName = null);
 }
 
 public class OrderService : IOrderService
@@ -171,7 +176,7 @@ public class OrderService : IOrderService
 
     public async Task<PurchaseResult> CreateExternalPurchaseAsync(string userId, int gameProductId,
         int quantity, string? deliveryInfo, string paymentMethod, string? enotService,
-        string siteBaseUrl, string? clientIp)
+        string siteBaseUrl, string? clientIp, string? providerName = null)
     {
         try
         {
@@ -186,11 +191,25 @@ public class OrderService : IOrderService
             var totalPrice = gameProduct.Price * quantity;
 
             // 2. Resolve the provider that handles this method.
+            //    If the step-2 picker returned an explicit provider name (enot,
+            //    paymentlink, …) honour it. Otherwise fall back to the first
+            //    enabled provider that supports this method.
             var method = MapPaymentMethod(paymentMethod);
-            var provider = _providerFactory.GetProviderForMethod(method);
+            DigiVault.Core.Interfaces.IPaymentProvider? provider = null;
+            if (!string.IsNullOrWhiteSpace(providerName))
+            {
+                provider = _providerFactory.GetProvider(providerName);
+                if (provider != null && !provider.SupportedMethods.Contains(method))
+                {
+                    _logger.LogWarning("Provider '{P}' doesn't support method {M} - falling back",
+                        providerName, method);
+                    provider = null;
+                }
+            }
+            provider ??= _providerFactory.GetProviderForMethod(method);
             _logger.LogInformation(
-                "External purchase: requested paymentMethod='{Raw}' → mapped to {Method}, picked provider '{Provider}' (enabled={Enabled})",
-                paymentMethod, method, provider?.Name ?? "(none)", provider?.IsEnabled);
+                "External purchase: requested paymentMethod='{Raw}' provider='{Req}' → mapped to {Method}, picked provider '{Provider}' (enabled={Enabled})",
+                paymentMethod, providerName ?? "(any)", method, provider?.Name ?? "(none)", provider?.IsEnabled);
             if (provider == null || !provider.IsEnabled)
                 return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
 
@@ -310,7 +329,8 @@ public class OrderService : IOrderService
     }
 
     public async Task<PurchaseResult> CreateSteamWalletPurchaseAsync(string userId, decimal customAmount,
-        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp)
+        string steamLogin, string paymentMethod, string? enotService, string siteBaseUrl, string? clientIp,
+        string? providerName = null)
     {
         try
         {
@@ -347,7 +367,14 @@ public class OrderService : IOrderService
             var bonusedDisplay = $"{Math.Round(customAmount * bonusMult, 0):N0} ₽ на Steam";
 
             var method = MapPaymentMethod(paymentMethod);
-            var provider = _providerFactory.GetProviderForMethod(method);
+            DigiVault.Core.Interfaces.IPaymentProvider? provider = null;
+            if (!string.IsNullOrWhiteSpace(providerName))
+            {
+                provider = _providerFactory.GetProvider(providerName);
+                if (provider != null && !provider.SupportedMethods.Contains(method))
+                    provider = null;
+            }
+            provider ??= _providerFactory.GetProviderForMethod(method);
             if (provider == null || !provider.IsEnabled)
                 return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
 

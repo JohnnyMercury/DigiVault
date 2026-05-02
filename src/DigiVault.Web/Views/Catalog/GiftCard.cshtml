@@ -1244,7 +1244,7 @@
             gameProductId: selectedProductId,
             deliveryInfo: deliveryInfo,
             paymentMethod: method,
-            enotService: service,
+            enotService: null,            provider: service,
             email: window.guestCheckoutEmail || null,
         });
         fetch('/Catalog/Purchase', {

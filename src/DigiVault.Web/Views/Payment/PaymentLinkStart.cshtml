@@ -1,0 +1,75 @@
+@{
+    Layout = null;
+    var target = (ViewData["Target"] as string) ?? "";
+    var fields = (ViewData["Fields"] as Dictionary<string, string>) ?? new();
+    ViewData["Title"] = "Переход к оплате…";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Переход к оплате…</title>
+    <style>
+        html, body { height: 100%; margin: 0; }
+        body {
+            display: flex; align-items: center; justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #161630 100%);
+            color: #fff;
+        }
+        .card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 2rem 2.5rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .spinner {
+            width: 42px; height: 42px;
+            margin: 0 auto 1rem;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #66c0f4;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        h1 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 600; }
+        p { font-size: 0.85rem; margin: 0; color: rgba(255,255,255,0.55); }
+        .fallback {
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #66c0f4 0%, #1b9adf 100%);
+            color: #fff; border: none; border-radius: 10px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="spinner"></div>
+        <h1>Перенаправляем на страницу оплаты</h1>
+        <p>Если переход не произошёл автоматически, нажмите кнопку ниже.</p>
+
+        <form id="paymentLinkForm" action="@target" method="POST" accept-charset="UTF-8">
+            @foreach (var kv in fields)
+            {
+                <input type="hidden" name="@kv.Key" value="@kv.Value" />
+            }
+            <button type="submit" class="fallback">Перейти к оплате</button>
+        </form>
+    </div>
+
+    <script>
+        // Auto-submit. Wrapped in setTimeout so the spinner is visible for at
+        // least a frame, otherwise the page navigates instantly and the user
+        // sees a blank flash.
+        setTimeout(function () {
+            try { document.getElementById('paymentLinkForm').submit(); }
+            catch (e) { /* fall back to manual button */ }
+        }, 250);
+    </script>
+</body>
+</html>

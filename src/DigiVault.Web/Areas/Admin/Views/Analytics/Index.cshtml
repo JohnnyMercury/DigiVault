@@ -596,7 +596,7 @@
         });
 
         // Top products (only real site products)
-        const prodNames=['Telegram Stars','Telegram Premium','Fortnite V-Bucks','Roblox Robux','PUBG Mobile UC','Genshin Genesis','PlayStation Store','Xbox','NordVPN','Surfshark'];
+        const prodNames=['Telegram Premium','Steam Wallet','Fortnite V-Bucks','Roblox Robux','PUBG Mobile UC','Genshin Genesis','PlayStation Store','Xbox','NordVPN','Surfshark'];
         const prodRev=prodNames.map(()=>ri(15,200)*1000).sort((a,b)=>b-a);
         charts.products=new Chart(document.getElementById('chartProducts'),{
             type:'bar',
@@ -661,7 +661,7 @@
     let fNames=@Html.Raw(userNamesJson);
     if(!Array.isArray(fNames)||fNames.length===0) fNames=['Покупатель','Гость','Пользователь'];
     const lCities=['Москва','СПб','Новосибирск','Екатеринбург','Казань','Нижний Новгород','Челябинск','Самара','Ростов','Уфа','Красноярск','Краснодар','Минск','Алматы','Астана'];
-    const lProducts=['Telegram Stars','Telegram Premium','V-Bucks','Robux','PUBG UC','Genesis Crystals','Honkai Shards','Mobile Legends','PSN Карта','Xbox','NordVPN','Surfshark','ExpressVPN','Nintendo eShop','Netflix','Spotify','YouTube Premium'];
+    const lProducts=['Telegram Premium','Steam Wallet','V-Bucks','Robux','PUBG UC','Genesis Crystals','Honkai Shards','Mobile Legends','PSN Карта','Xbox','NordVPN','Surfshark','ExpressVPN','Nintendo eShop','Netflix','Spotify','YouTube Premium'];
     const avColors=['#667eea','#764ba2','#22c55e','#fbbf24','#4facfe','#f093fb','#ef4444','#2AABEE','#7e57c2','#66bb6a'];
     const lActions=[
         {t:'v',w:45,tx:g=>`Смотрит <span class="g">${g}</span>`,tag:'Смотрит'},
@@ -750,7 +750,7 @@
         {type:'paying',w:5,action:()=>'Оформление оплаты',page:()=>'/checkout'},
         {type:'paying',w:3,action:()=>'Оплата завершена',page:()=>'/checkout/success'},
         {type:'new',w:4,action:()=>'Регистрация',page:()=>'/Account/Register'},
-        {type:'viewing',w:8,action:()=>'Telegram Stars',page:()=>'/Catalog/Telegram'},
+        {type:'viewing',w:8,action:()=>'Telegram Premium',page:()=>'/Catalog/Telegram'},
         {type:'viewing',w:5,action:()=>'Пополнение баланса',page:()=>'/Account/Balance'},
         {type:'cart',w:5,action:()=>'Выбор товара',page:()=>pick(tmPages)},
     ];

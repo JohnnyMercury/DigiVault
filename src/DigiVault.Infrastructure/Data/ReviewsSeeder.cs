@@ -16,13 +16,6 @@ public static class ReviewsSeeder
     // Mix of short and detailed, all sound like real gamer/buyer speech.
     // ------------------------------------------------------------
 
-    // NOTE: Telegram Stars was removed from the catalog. Templates are no longer
-    // referenced by SeedAsync; left here in case the product is reactivated later.
-    private static readonly (string Title, string Text)[] TelegramStarsPositive_Unused =
-    {
-        ("Быстро зачислили Stars", "Покупал 500 звёзд, все пришло на аккаунт минут за 5."),
-    };
-
     private static readonly (string Title, string Text)[] TelegramPremiumPositive =
     {
         ("Premium активировался сразу", "Оплатил 3 месяца Telegram Premium. Пришло уведомление через 30 секунд. Все работает."),
@@ -282,7 +275,7 @@ public static class ReviewsSeeder
 
     // Bump this when review templates change — forces existing demo reviews to be
     // wiped and reseeded. Real user-authored reviews (UserId != null) are never touched.
-    private const string SeedVersion = "4";
+    private const string SeedVersion = "5";
     private const string SeedVersionKey = "reviews:seed_version";
 
     public static async Task SeedAsync(ApplicationDbContext context)

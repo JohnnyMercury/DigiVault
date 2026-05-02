@@ -91,63 +91,6 @@
         cursor: pointer;
     }
 
-    /* Stars input section */
-    .stars-input-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-grow: 1;
-    }
-
-    .stars-input-wrapper input[type="number"] {
-        flex-grow: 1;
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 1.05rem;
-        padding: 0.5rem 0;
-        font-weight: 500;
-        -moz-appearance: textfield;
-    }
-
-    .stars-input-wrapper input[type="number"]::-webkit-outer-spin-button,
-    .stars-input-wrapper input[type="number"]::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .stars-input-wrapper input[type="number"]:focus { outline: none; }
-    .stars-input-wrapper input[type="number"]::placeholder { color: rgba(255, 255, 255, 0.35); font-weight: 400; }
-
-    .stars-icon {
-        font-size: 1.4rem;
-        flex-shrink: 0;
-    }
-
-    .stars-price-display {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.9rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .stars-error {
-        display: none;
-        background: rgba(239, 68, 68, 0.15);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 10px;
-        padding: 0.6rem 1rem;
-        margin-top: -0.5rem;
-        margin-bottom: 1rem;
-        font-size: 0.8rem;
-        color: #ef4444;
-        line-height: 1.4;
-    }
-
-    .stars-error.visible {
-        display: block;
-    }
-
     /* Section Title */
     .section-title {
         font-size: 1.15rem;
@@ -912,7 +855,7 @@
                 <div>
                     <div class="modal-label">Юзернейм Telegram:</div>
                     <input type="text" class="modal-input" id="modalInput" placeholder="@@username" />
-                    <div class="modal-hint">Звёзды / Премиум будут доставлены на этот аккаунт</div>
+                    <div class="modal-hint">Premium будет активирован на этот аккаунт</div>
                 </div>
 
                 @if (User.Identity?.IsAuthenticated != true)

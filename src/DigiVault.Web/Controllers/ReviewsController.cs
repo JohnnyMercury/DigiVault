@@ -52,9 +52,15 @@ public class ReviewsController : Controller
             query = query.Where(r => r.Rating == rating.Value);
         }
 
-        // Filter by specific product slug
+        // Filter by specific product slug.
+        // Telegram Stars was removed from the catalog by SB request — block any
+        // direct ?product=telegram-stars deep-link so the slug doesn't surface
+        // a public, indexable page of historical reviews.
         if (!string.IsNullOrEmpty(product))
         {
+            if (product.Equals("telegram-stars", StringComparison.OrdinalIgnoreCase))
+                return NotFound();
+
             query = query.Where(r =>
                 (r.Game != null && r.Game.Slug == product) ||
                 (r.GiftCard != null && r.GiftCard.Slug == product) ||

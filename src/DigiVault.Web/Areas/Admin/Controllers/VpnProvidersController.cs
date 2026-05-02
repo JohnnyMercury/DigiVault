@@ -10,11 +10,13 @@ public class VpnProvidersController : AdminBaseController
 {
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
+    private readonly ILogger<VpnProvidersController> _logger;
 
-    public VpnProvidersController(ApplicationDbContext context, IFileService fileService)
+    public VpnProvidersController(ApplicationDbContext context, IFileService fileService, ILogger<VpnProvidersController> logger)
     {
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index()
@@ -247,19 +249,36 @@ public class VpnProvidersController : AdminBaseController
         ModelState.Remove("VpnProvider");
         ModelState.Remove("ProductKeys");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            if (imageFile != null)
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .Select(x => $"{x.Key}: {string.Join("; ", x.Value!.Errors.Select(e => e.ErrorMessage))}")
+                .ToList();
+            _logger.LogWarning("CreateProduct (VPN {Id}) validation failed: {Errors}",
+                product.VpnProviderId, string.Join(" | ", errors));
+        }
+        else
+        {
+            try
             {
-                product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                if (imageFile != null)
+                {
+                    product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                }
+
+                product.CreatedAt = DateTime.UtcNow;
+                _context.GameProducts.Add(product);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Товар успешно создан";
+                return RedirectToAction(nameof(Products), new { id = product.VpnProviderId });
             }
-
-            product.CreatedAt = DateTime.UtcNow;
-            _context.GameProducts.Add(product);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Товар успешно создан";
-            return RedirectToAction(nameof(Products), new { id = product.VpnProviderId });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateProduct failed for VPN {Id}", product.VpnProviderId);
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+            }
         }
 
         var provider = await _context.VpnProviders.FindAsync(product.VpnProviderId);

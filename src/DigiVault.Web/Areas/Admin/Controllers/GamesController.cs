@@ -245,19 +245,36 @@ public class GamesController : AdminBaseController
         ModelState.Remove("Game");
         ModelState.Remove("ProductKeys");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            if (imageFile != null)
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .Select(x => $"{x.Key}: {string.Join("; ", x.Value!.Errors.Select(e => e.ErrorMessage))}")
+                .ToList();
+            _logger.LogWarning("CreateProduct (Game {Id}) validation failed: {Errors}",
+                product.GameId, string.Join(" | ", errors));
+        }
+        else
+        {
+            try
             {
-                product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                if (imageFile != null)
+                {
+                    product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                }
+
+                product.CreatedAt = DateTime.UtcNow;
+                _context.GameProducts.Add(product);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Товар успешно создан";
+                return RedirectToAction(nameof(Products), new { id = product.GameId });
             }
-
-            product.CreatedAt = DateTime.UtcNow;
-            _context.GameProducts.Add(product);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Товар успешно создан";
-            return RedirectToAction(nameof(Products), new { id = product.GameId });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateProduct failed for Game {Id}", product.GameId);
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+            }
         }
 
         var game = await _context.Games.FindAsync(product.GameId);

@@ -13,6 +13,7 @@
 </div>
 
 <form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert" style="white-space:pre-wrap;"></div>
     @Html.AntiForgeryToken()
 
     <div class="row">

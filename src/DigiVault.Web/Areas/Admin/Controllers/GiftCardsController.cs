@@ -10,11 +10,13 @@ public class GiftCardsController : AdminBaseController
 {
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
+    private readonly ILogger<GiftCardsController> _logger;
 
-    public GiftCardsController(ApplicationDbContext context, IFileService fileService)
+    public GiftCardsController(ApplicationDbContext context, IFileService fileService, ILogger<GiftCardsController> logger)
     {
         _context = context;
         _fileService = fileService;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index(string? category = null)
@@ -259,19 +261,37 @@ public class GiftCardsController : AdminBaseController
         ModelState.Remove("GiftCard");
         ModelState.Remove("ProductKeys");
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            if (imageFile != null)
+            // Surface validation errors instead of silently re-rendering the form.
+            var errors = ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .Select(x => $"{x.Key}: {string.Join("; ", x.Value!.Errors.Select(e => e.ErrorMessage))}")
+                .ToList();
+            _logger.LogWarning("CreateProduct (GiftCard {Id}) validation failed: {Errors}",
+                product.GiftCardId, string.Join(" | ", errors));
+        }
+        else
+        {
+            try
             {
-                product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                if (imageFile != null)
+                {
+                    product.ImageUrl = await _fileService.SaveImageAsync(imageFile);
+                }
+
+                product.CreatedAt = DateTime.UtcNow;
+                _context.GameProducts.Add(product);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Товар успешно создан";
+                return RedirectToAction(nameof(Products), new { id = product.GiftCardId });
             }
-
-            product.CreatedAt = DateTime.UtcNow;
-            _context.GameProducts.Add(product);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Товар успешно создан";
-            return RedirectToAction(nameof(Products), new { id = product.GiftCardId });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CreateProduct failed for GiftCard {Id}", product.GiftCardId);
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+            }
         }
 
         var card = await _context.GiftCards.FindAsync(product.GiftCardId);

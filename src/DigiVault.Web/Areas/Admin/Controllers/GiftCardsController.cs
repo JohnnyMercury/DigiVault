@@ -311,9 +311,13 @@ public class GiftCardsController : AdminBaseController
 
             existing.Name = product.Name;
             existing.Amount = product.Amount;
+            existing.Bonus = product.Bonus;
+            existing.TotalDisplay = product.TotalDisplay;
             existing.Price = product.Price;
             existing.OldPrice = product.OldPrice;
             existing.Discount = product.Discount;
+            existing.ProductType = product.ProductType;
+            existing.Multiplier = product.Multiplier;
             existing.Region = product.Region;
             existing.SortOrder = product.SortOrder;
             existing.IsActive = product.IsActive;

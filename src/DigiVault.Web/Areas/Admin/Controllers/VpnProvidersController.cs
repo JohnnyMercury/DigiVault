@@ -305,6 +305,9 @@ public class VpnProvidersController : AdminBaseController
             existing.Price = product.Price;
             existing.OldPrice = product.OldPrice;
             existing.Discount = product.Discount;
+            existing.ProductType = product.ProductType;
+            existing.Multiplier = product.Multiplier;
+            existing.Region = product.Region;
             existing.SortOrder = product.SortOrder;
             existing.IsActive = product.IsActive;
             existing.IsFeatured = product.IsFeatured;

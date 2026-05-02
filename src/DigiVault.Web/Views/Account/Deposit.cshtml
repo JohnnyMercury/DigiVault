@@ -340,11 +340,22 @@
             }
             <partial name="_PaymentMethodTiles" model="__depTiles" />
 
-            <button type="submit" class="deposit-submit" id="depositBtn" style="margin-top: 1.25rem;">
+            @* Hidden field carries the chosen PSP code (enot / paymentlink)
+               from the step-2 picker. Empty for admin-credit flow. *@
+            <input type="hidden" name="Provider" id="depositProvider" value="" />
+
+            <button type="button" class="deposit-submit" id="depositBtn" style="margin-top: 1.25rem;">
                 <i class="bi bi-check-circle"></i>
                 <span id="depositBtnText">@(isAdmin ? "Начислить" : "Перейти к оплате")</span>
             </button>
         </form>
+
+        @* Step-2 PSP picker - same partial as on catalog modals. Hidden by
+           default; the «Перейти к оплате» button opens it for non-admin
+           methods, then submits the form once the user picks a PSP. *@
+        <div id="paymentStep2Wrapper" style="display:none; margin-top: 1.25rem;">
+            @await Html.PartialAsync("_PaymentMethodPicker")
+        </div>
 
         <a href="/Account/Dashboard" class="deposit-back">
             <i class="bi bi-arrow-left me-1"></i> Вернуться в личный кабинет
@@ -392,6 +403,54 @@
             // Could surface inline notice; for now we just no-op - server-side
             // rejects qr/p2p with a friendly TempData banner if it ever submits.
             console.info('Метод', code, 'пока не подключён');
+        };
+
+        // ── Step-2 picker glue ─────────────────────────────────────────────
+        // Same flow as catalog modals: the «Перейти к оплате» button doesn't
+        // submit the form directly. For admin-credit / balance-style methods
+        // we POST as-is. For Card / СБП / QR we open the PSP picker first;
+        // when the user confirms a PSP, the picker calls
+        // window.submitPurchaseWithService(method, providerCode, _) which we
+        // wire to set the hidden Provider field and submit the form.
+        var depositForm = document.getElementById('depositForm');
+        var depositBtn  = document.getElementById('depositBtn');
+
+        depositBtn.addEventListener('click', function () {
+            var method = (document.getElementById('paymentMethod').value || '').toLowerCase();
+            if (method === 'admin') {
+                // Manual admin credit - go straight to POST.
+                depositForm.submit();
+                return;
+            }
+            if (!method) {
+                alert('Выберите способ оплаты');
+                return;
+            }
+            // Real payment - open step-2 picker. lastSelectedPrice drives
+            // the Pay-button label inside the picker.
+            var amt = parseFloat(document.getElementById('Amount').value || '0');
+            if (!amt || amt <= 0) {
+                alert('Введите сумму пополнения');
+                document.getElementById('Amount').focus();
+                return;
+            }
+            window.lastSelectedPrice = amt;
+            if (typeof window.openPaymentStep2 === 'function') {
+                window.openPaymentStep2(method);
+            } else {
+                console.error('Step-2 picker not loaded - submitting without provider');
+                depositForm.submit();
+            }
+        });
+
+        // Picker calls this after the user clicks «Оплатить» on step 2.
+        // We stash the chosen PSP code into the form and submit.
+        window.submitPurchaseWithService = function (method, providerCode, _tile) {
+            document.getElementById('depositProvider').value = providerCode || '';
+            // Update the visible PaymentMethod hidden too, in case picker
+            // came from a different tile than what's currently selected.
+            if (method) document.getElementById('paymentMethod').value = method;
+            depositForm.submit();
         };
     </script>
 }

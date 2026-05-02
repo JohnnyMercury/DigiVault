@@ -89,4 +89,6 @@ public class DepositViewModel
     public decimal Amount { get; set; }
     public decimal CurrentBalance { get; set; }
     public string PaymentMethod { get; set; } = "card";
+    /// <summary>PSP code from the unified step-2 picker (<c>"enot"</c> / <c>"paymentlink"</c>).</summary>
+    public string? Provider { get; set; }
 }

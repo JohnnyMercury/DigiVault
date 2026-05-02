@@ -1258,12 +1258,12 @@
                 if (data.redirectUrl) { window.location.href = data.redirectUrl; return; }
                 window.location.href = "/Account/OrderDetails?orderNumber=" + encodeURIComponent(data.orderNumber); return;
             } else {
-                showModalError(data.errorMessage || 'Ошибка при покупке');
+                showModalError(data.errorMessage || 'Ошибка при покупке');                if (typeof window.resetStep2PayButton === "function") window.resetStep2PayButton(data.errorMessage || 'Ошибка при покупке');
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить'; }
             }
         })
         .catch(() => {
-            showModalError('Ошибка соединения');
+            showModalError('Ошибка соединения');            if (typeof window.resetStep2PayButton === "function") window.resetStep2PayButton('Ошибка соединения');
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить'; }
         });
     }

@@ -339,23 +339,64 @@
         payBtn.disabled = false;
     }
 
+    // Helper exposed to host pages so they can re-enable the Pay button
+    // when the backend returns an error (e.g. PSP not configured / disabled).
+    window.resetStep2PayButton = function (errorText) {
+        const payBtn = document.getElementById('paymentStep2PayBtn');
+        if (!payBtn) return;
+        payBtn.disabled = false;
+        const total = window.lastSelectedPrice || 0;
+        payBtn.textContent = total > 0
+            ? `Оплатить ${Number(total).toLocaleString('ru-RU')} ₽`
+            : 'Перейти к оплате';
+        if (errorText) {
+            // Inline error right under the Pay button so it's impossible to miss.
+            let box = document.getElementById('paymentStep2Error');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'paymentStep2Error';
+                box.style.cssText =
+                    'margin-top:0.75rem;padding:0.7rem 1rem;background:rgba(239,68,68,0.12);' +
+                    'border:1px solid rgba(239,68,68,0.35);border-radius:10px;' +
+                    'color:#fca5a5;font-size:0.85rem;line-height:1.45;';
+                payBtn.insertAdjacentElement('afterend', box);
+            }
+            box.textContent = errorText;
+        }
+    };
+
     window.confirmStep2Selection = function () {
         if (!currentMethod || !currentProvider) return;
         const payBtn = document.getElementById('paymentStep2PayBtn');
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка…';
 
+        // Wipe any previous error message before retrying.
+        const oldErr = document.getElementById('paymentStep2Error');
+        if (oldErr) oldErr.remove();
+
         // Pass top-level method PLUS the picked provider's code (e.g. "enot",
         // "paymentlink"). Backend uses it to route to the right
         // IPaymentProvider instead of relying on first-match.
         window.lastSelectedProvider = currentProvider;
         if (typeof window.submitPurchaseWithService === 'function') {
-            window.submitPurchaseWithService(currentMethod, currentProvider, null);
+            try {
+                window.submitPurchaseWithService(currentMethod, currentProvider, null);
+            } catch (e) {
+                console.error('submitPurchaseWithService threw', e);
+                window.resetStep2PayButton('Не удалось отправить запрос. Попробуйте ещё раз.');
+            }
+            // Safety net: if the host page never navigates / never calls
+            // resetStep2PayButton within 15s, unstick the button so the user
+            // isn't trapped on «Обработка…» forever.
+            setTimeout(function () {
+                if (payBtn.disabled && payBtn.textContent.indexOf('Обработка') >= 0) {
+                    window.resetStep2PayButton('Платёжная система не отвечает. Попробуйте ещё раз или выберите другой провайдер.');
+                }
+            }, 15000);
         } else {
             console.error('submitPurchaseWithService is not defined on this page');
-            alert('Ошибка инициализации');
-            payBtn.disabled = false;
-            payBtn.textContent = 'Перейти к оплате';
+            window.resetStep2PayButton('Ошибка инициализации страницы.');
         }
     };
 })();

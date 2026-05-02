@@ -767,12 +767,12 @@
                 window.location.href = data.redirectUrl;
                 return;
             }
-            showModalError(data.errorMessage || 'Ошибка при оформлении');
+            showModalError(data.errorMessage || 'Ошибка при оформлении');            if (typeof window.resetStep2PayButton === "function") window.resetStep2PayButton(data.errorMessage || 'Ошибка при оформлении');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
         })
         .catch(() => {
-            showModalError('Ошибка соединения');
+            showModalError('Ошибка соединения');            if (typeof window.resetStep2PayButton === "function") window.resetStep2PayButton('Ошибка соединения');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-cart-check"></i> Оплатить';
         });

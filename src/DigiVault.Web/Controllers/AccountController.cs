@@ -288,7 +288,8 @@ public class AccountController : Controller
 
         var pspMethod = Services.Payment.PaymentMethodCatalog.ToEnum(rawMethod);
         var clientIp  = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var result    = await _paymentService.CreateDepositAsync(user.Id, model.Amount, pspMethod, clientIp);
+        var siteBase  = $"{Request.Scheme}://{Request.Host}";
+        var result    = await _paymentService.CreateDepositAsync(user.Id, model.Amount, pspMethod, clientIp, siteBase);
 
         if (!result.Success || string.IsNullOrEmpty(result.RedirectUrl))
         {

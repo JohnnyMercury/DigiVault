@@ -10,8 +10,12 @@ namespace DigiVault.Web.Services;
 
 public interface IPaymentService
 {
-    /// <summary>Создать платеж для пополнения баланса</summary>
-    Task<PaymentResult> CreateDepositAsync(string userId, decimal amount, PaymentMethod method, string? clientIp = null);
+    /// <summary>Создать платеж для пополнения баланса.
+    /// <paramref name="siteBaseUrl"/> — абсолютный базовый URL сайта (https://host),
+    /// нужен Enot/PaymentLink для построения success/fail/webhook callbacks.
+    /// <paramref name="providerName"/> — явное имя PSP из step-2 picker'а.</summary>
+    Task<PaymentResult> CreateDepositAsync(string userId, decimal amount, PaymentMethod method,
+        string? clientIp = null, string? siteBaseUrl = null, string? providerName = null);
 
     /// <summary>Обработать webhook от провайдера</summary>
     Task<bool> ProcessWebhookAsync(string providerName, Dictionary<string, string> headers, string body);
@@ -46,7 +50,9 @@ public class PaymentService : IPaymentService
         string userId,
         decimal amount,
         PaymentMethod method,
-        string? clientIp = null)
+        string? clientIp = null,
+        string? siteBaseUrl = null,
+        string? providerName = null)
     {
         _logger.LogInformation(
             "Creating deposit for user {UserId}, amount {Amount}, method {Method}",
@@ -63,13 +69,29 @@ public class PaymentService : IPaymentService
         if (user == null)
             return PaymentResult.Failed("Пользователь не найден");
 
-        // Получаем провайдер
-        var provider = _providerFactory.GetProviderForMethod(method);
+        // Получаем провайдер. Если вызывающий явно указал имя (с step-2
+        // picker), уважаем выбор; иначе fallback на первый подходящий.
+        IPaymentProvider? provider = null;
+        if (!string.IsNullOrWhiteSpace(providerName))
+        {
+            provider = _providerFactory.GetProvider(providerName);
+            if (provider != null && !provider.SupportedMethods.Contains(method))
+                provider = null;
+        }
+        provider ??= _providerFactory.GetProviderForMethod(method);
         if (provider == null)
         {
             _logger.LogWarning("No provider found for method {Method}", method);
             return PaymentResult.Failed("Метод оплаты временно недоступен");
         }
+
+        // Build absolute callbacks. Enot validates these as URIs server-side
+        // and rejects relative paths («Поле fail_url имеет ошибочный формат»).
+        // Fallback for the legacy callsites that don't pass siteBaseUrl: use
+        // the production host so we never send Enot a relative path.
+        var siteBase = !string.IsNullOrWhiteSpace(siteBaseUrl)
+            ? siteBaseUrl!.TrimEnd('/')
+            : "https://key-zona.com";
 
         // Создаем запрос
         var request = new PaymentRequest
@@ -80,8 +102,9 @@ public class PaymentService : IPaymentService
             Method = method,
             Email = user.Email,
             Description = $"Пополнение баланса DigiVault",
-            SuccessUrl = "/Account/Deposit?success=true",
-            CancelUrl = "/Account/Deposit?cancelled=true",
+            SuccessUrl = $"{siteBase}/Account/Deposit?success=true",
+            CancelUrl  = $"{siteBase}/Account/Deposit?cancelled=true",
+            WebhookUrl = $"{siteBase}/api/webhooks/{provider.Name}",
             ClientIp = clientIp
         };
 

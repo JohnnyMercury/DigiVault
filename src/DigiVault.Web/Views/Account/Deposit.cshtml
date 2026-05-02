@@ -287,7 +287,10 @@
             </div>
         }
 
-        <form asp-action="Deposit" method="post" id="depositForm">
+        @* The form ALSO carries id="paymentStep1" so _PaymentMethodPicker
+           can hide/show it when toggling step-2. Without that id the picker
+           silently refuses to open (its guard requires both step1 and step2). *@
+        <form asp-action="Deposit" method="post" id="depositForm" data-step="paymentStep1">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <div class="deposit-label">Сумма пополнения</div>

@@ -249,7 +249,12 @@
         const count   = document.getElementById('paymentStep2Count');
         const step1   = document.getElementById('paymentStep1');
         const step2El = document.getElementById('paymentStep2');
-        if (!grid || !step1 || !step2El) return false;
+        // step1 is optional - host pages without a labelled «step 1» container
+        // can still use the picker (we just won't auto-hide their UI).
+        if (!grid || !step2El) {
+            console.error('[ps2] picker DOM not found - is _PaymentMethodPicker partial included?');
+            return false;
+        }
 
         currentMethod   = method;
         currentProvider = null;
@@ -308,10 +313,13 @@
 
         // Toggle modal screens — also hide the picker wrapper that exists as a
         // sibling so only one modal-body renders at a time.
-        step1.style.display = 'none';
+        if (step1) step1.style.display = 'none';
         step2El.style.display = 'block';
         const wrapper = document.getElementById('paymentStep2Wrapper');
         if (wrapper) wrapper.style.display = 'block';
+        // Smooth-scroll так чтобы пользователь увидел step-2 (особенно важно
+        // на /Account/Deposit где picker отрисовывается ниже формы).
+        try { step2El.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
         return true;
     };
 

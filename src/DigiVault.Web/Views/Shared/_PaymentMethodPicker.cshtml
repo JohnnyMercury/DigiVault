@@ -211,19 +211,22 @@
     const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
     const PLINK_BADGE = 'linear-gradient(135deg, #66c0f4, #1b9adf)';
     const PROVIDERS_BY_METHOD = {
+        // Карты - только Enot. PaymentLink подключали под СБП-QR (запрос
+        // команды), карты у них трогать не просили.
         card: [
-            { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',          icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'Visa, MasterCard',                icon: 'bi-credit-card',          color: PLINK_BADGE },
+            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
         ],
+        // СБП - оба PSP, пользователь сам выбирает.
         sbp: [
-            { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код',     icon: 'bi-lightning-charge',     color: ENOT_BADGE },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП с QR-кодом банка',           icon: 'bi-qr-code-scan',         color: PLINK_BADGE },
+            { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE },
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE },
         ],
-        // qr и p2p: плитки на шаге 1 видны как заготовка под будущие PSP
-        // (BlvckPay / PayPecker). Когда подключим - добавляем сюда записи.
-        qr:  [
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'Оплата сканированием QR-кода',   icon: 'bi-qr-code',              color: PLINK_BADGE },
+        // QR - закрывается PaymentLink'ом (на их checkout-странице
+        // пользователь видит QR-код банка для сканирования).
+        qr: [
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'Оплата сканированием QR-кода', icon: 'bi-qr-code', color: PLINK_BADGE },
         ],
+        // P2P - заготовка под будущие PSP (BlvckPay / PayPecker).
         p2p: [],
     };
 

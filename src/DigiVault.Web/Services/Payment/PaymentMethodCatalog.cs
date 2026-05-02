@@ -53,12 +53,11 @@ public static class PaymentMethodCatalog
         new PaymentMethodOption(
             Code: "qr",
             Title: "QR-код",
-            Description: "Оплата по QR-коду",
+            Description: "Оплата сканированием QR-кода банка",
             IconClass: "bi-qr-code",
             Gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
             EnumValue: PaymentMethod.SBP,
-            Available: false,
-            UnavailableHint: "Скоро"),
+            Available: true), // PaymentLink закрывает этот метод
 
         new PaymentMethodOption(
             Code: "p2p",

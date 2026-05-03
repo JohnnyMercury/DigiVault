@@ -2,6 +2,15 @@
 @{
     ViewData["Title"] = "Платёжные провайдеры";
     var stats = ViewBag.Stats as Dictionary<string, dynamic> ?? new();
+
+    // Map method-code → human label / icon for the per-provider badge row.
+    var methodMeta = new Dictionary<string, (string Label, string Icon, string Color)>
+    {
+        ["card"] = ("Карта", "bi-credit-card",       "#a5b4fc"),
+        ["sbp"]  = ("СБП",   "bi-lightning-charge",  "#c4b5fd"),
+        ["qr"]   = ("QR",    "bi-qr-code",           "#fbbf24"),
+        ["p2p"]  = ("P2P",   "bi-people",            "#f472b6"),
+    };
 }
 
 <div class="mb-4">
@@ -19,7 +28,7 @@
             <div class="col-lg-6">
                 <div class="data-card">
                     <div class="data-card-header">
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                             <h5 class="data-card-title mb-0">@provider.DisplayName</h5>
                             @if (provider.IsEnabled)
                             {
@@ -33,8 +42,20 @@
                             {
                                 <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">Тест</span>
                             }
+                            @if (!provider.IsVisible)
+                            {
+                                <span class="badge" style="background: rgba(148, 163, 184, 0.18); color: #cbd5e1;" title="Скрыт из публичного пикера, виден только админам">
+                                    <i class="bi bi-eye-slash me-1"></i>Скрыт
+                                </span>
+                            }
                         </div>
                         <div class="d-flex gap-1">
+                            <form asp-action="ToggleVisibility" asp-route-id="@provider.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-light btn-sm" title="@(provider.IsVisible ? "Скрыть из пикера" : "Показать в пикере")">
+                                    <i class="bi @(provider.IsVisible ? "bi-eye" : "bi-eye-slash")"></i>
+                                </button>
+                            </form>
                             <form asp-action="Toggle" asp-route-id="@provider.Id" method="post">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-outline-light btn-sm" title="@(provider.IsEnabled ? "Выключить" : "Включить")">
@@ -79,6 +100,32 @@
                                 </div>
                             </div>
                         }
+                        @{
+                            var providerMethods = (provider.EnabledMethods ?? "")
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                .Select(m => m.ToLowerInvariant())
+                                .ToList();
+                        }
+                        <hr style="border-color: var(--card-border);">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="text-muted small">Методы:</span>
+                            @if (providerMethods.Count == 0)
+                            {
+                                <span class="text-muted small fst-italic">не выбрано</span>
+                            }
+                            else
+                            {
+                                foreach (var m in providerMethods)
+                                {
+                                    if (methodMeta.TryGetValue(m, out var meta))
+                                    {
+                                        <span class="badge" style="background: rgba(255,255,255,0.06); color: @meta.Color; border: 1px solid rgba(255,255,255,0.08);">
+                                            <i class="bi @meta.Icon me-1"></i>@meta.Label
+                                        </span>
+                                    }
+                                }
+                            }
+                        </div>
                         @if (provider.MinAmount.HasValue || provider.MaxAmount.HasValue)
                         {
                             <hr style="border-color: var(--card-border);">

@@ -132,11 +132,16 @@ public class OverpayPaymentProvider : IPaymentProvider
 
         try
         {
+            // Serialize once so we can both log the body and post it. This
+            // matches what PostAsJsonAsync would produce — same default
+            // options, so the wire payload is identical.
+            var jsonBody = JsonSerializer.Serialize(body);
             _log.LogInformation(
-                "Overpay → POST {Url} txn={Txn} amount={Amt} method={M}",
-                url, ourTransactionId, request.Amount, pmCode);
+                "Overpay → POST {Url} txn={Txn} amount={Amt} method={M} body={Body}",
+                url, ourTransactionId, request.Amount, pmCode, jsonBody);
 
-            using var resp = await http.PostAsJsonAsync(url, body, ct);
+            using var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+            using var resp = await http.PostAsync(url, content, ct);
             var responseText = await resp.Content.ReadAsStringAsync(ct);
 
             _log.LogInformation("Overpay ← {Code} {Body}", (int)resp.StatusCode, responseText);

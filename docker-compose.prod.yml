@@ -20,6 +20,12 @@ services:
       - MinIO__UseRelativeUrls=true
     volumes:
       - digivault-backups:/app/backups
+      # Overpay mTLS client certificate. Drop the .p12 file at
+      # /var/www/digivault/secrets/overpay.p12 on the host (chmod 600,
+      # owned by the docker user). PaymentProviderConfig.Settings.certPath
+      # references this exact path so the named HttpClient picks it up.
+      # Read-only mount keeps the container from accidentally rewriting it.
+      - /var/www/digivault/secrets:/var/www/digivault/secrets:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/"]

@@ -208,23 +208,27 @@
     // Only methods actually enabled in our Enot merchant cabinet are listed.
     // Verified against /shops/{shopId}/payment-tariffs — re-check after any
     // tariff change.
-    const ENOT_BADGE = 'linear-gradient(135deg, #ff7043, #f4511e)';
-    const PLINK_BADGE = 'linear-gradient(135deg, #66c0f4, #1b9adf)';
-    // У каждого «работающего» метода - оба PSP, пользователь сам выбирает.
-    // Ровно как на Cyborg / NordHosting: видишь два тайла, кликаешь нужный.
+    const ENOT_BADGE     = 'linear-gradient(135deg, #ff7043, #f4511e)';
+    const PLINK_BADGE    = 'linear-gradient(135deg, #66c0f4, #1b9adf)';
+    const OVERPAY_BADGE  = 'linear-gradient(135deg, #2e6cdf, #0f3a8a)';
+    // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
+    // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
         card: [
-            { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'Visa, MasterCard',      icon: 'bi-credit-card',         color: PLINK_BADGE },
+            { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-front', color: ENOT_BADGE    },
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'Visa, MasterCard',          icon: 'bi-credit-card',         color: PLINK_BADGE   },
+            { code: 'overpay',     title: 'Overpay',     desc: 'Visa, MasterCard, МИР',     icon: 'bi-shield-lock',         color: OVERPAY_BADGE },
         ],
         sbp: [
-            { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE },
+            { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
+            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
+            { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
         ],
         // QR - только PaymentLink. Enot нативного QR-метода не имеет
         // (он умеет SBP, у которого QR это просто отображение формы) -
         // не примешиваем его сюда, чтобы не показывать «Enot под QR»
-        // там где Enot QR не делает.
+        // там где Enot QR не делает. Overpay тоже скрыт - SBP-через-QR
+        // у них живёт под методом «sbp», отдельной QR-плитки нет.
         qr: [
             { code: 'paymentlink', title: 'PaymentLink', desc: 'Оплата сканированием QR-кода', icon: 'bi-qr-code', color: PLINK_BADGE },
         ],

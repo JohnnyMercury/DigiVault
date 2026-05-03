@@ -71,6 +71,59 @@ builder.Services.AddHttpClient(); // for Enot/other providers' outbound HTTP
 // when you actually need the test fallback.
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Enot.EnotPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Overpay.OverpayPaymentProvider>();
+
+// Named HttpClient for Overpay - it requires mTLS (client certificate). The
+// p12 file path + passphrase are read from PaymentProviderConfig.Settings
+// (admin-editable). When admin doesn't supply a cert, the handler falls back
+// to a plain client (the provider itself logs «cert not configured» on first
+// outbound call). Lifetime = 5 min so cert rotations on disk get picked up
+// without app restart.
+builder.Services.AddHttpClient(
+    "overpay",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); })
+    .ConfigurePrimaryHttpMessageHandler(sp =>
+    {
+        var handler = new HttpClientHandler();
+        try
+        {
+            using var scope = sp.CreateScope();
+            var db = scope.ServiceProvider
+                .GetRequiredService<DigiVault.Infrastructure.Data.ApplicationDbContext>();
+            var cfg = db.PaymentProviderConfigs
+                .AsNoTracking()
+                .FirstOrDefault(c => c.Name == "overpay");
+
+            if (cfg != null && !string.IsNullOrWhiteSpace(cfg.Settings))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(cfg.Settings);
+                var root = doc.RootElement;
+                var path = root.TryGetProperty("certPath", out var p) ? p.GetString() : null;
+                var pass = root.TryGetProperty("certPass", out var ps) ? ps.GetString() : null;
+
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(
+                        path,
+                        pass ?? "",
+                        System.Security.Cryptography.X509Certificates.X509KeyStorageFlags.MachineKeySet
+                        | System.Security.Cryptography.X509Certificates.X509KeyStorageFlags.PersistKeySet
+                        | System.Security.Cryptography.X509Certificates.X509KeyStorageFlags.Exportable);
+                    handler.ClientCertificates.Add(cert);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Don't crash startup just because cert is missing - the provider
+            // returns a friendly error on first call.
+            sp.GetService<ILogger<Program>>()?
+                .LogWarning(ex, "Overpay client cert load failed; mTLS calls will be rejected by upstream");
+        }
+        return handler;
+    })
+    .SetHandlerLifetime(TimeSpan.FromMinutes(5));
+
 // TODO: Add real providers here:
 // builder.Services.AddScoped<IPaymentProvider, YooKassaProvider>();
 // builder.Services.AddScoped<IPaymentProvider, StripeProvider>();

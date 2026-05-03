@@ -313,5 +313,38 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed Overpay (api-pay.overpay.io). Sandbox credentials are
+        // pre-filled here for the development cycle - admin should rotate them
+        // via /Admin/PaymentProviders for prod.
+        //   ApiKey      → HTTP Basic username
+        //   SecretKey   → HTTP Basic password
+        //   MerchantId  → projectId (1084 for sandbox)
+        //   Settings    → JSON: certPath / certPass / baseUrl
+        // Overpay also requires mTLS — drop the .p12 file at certPath on the
+        // server (it's NOT committed to git; see deployment notes).
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "overpay"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "overpay",
+                DisplayName = "Overpay",
+                IsEnabled   = false,   // flip to true after deploying cert.p12
+                Priority    = 30,
+                ApiKey      = "key-zona",                            // basic-auth username
+                SecretKey   = "ISGCF?|YNtdzPH1",                     // basic-auth password
+                MerchantId  = "1084",                                 // projectId (sandbox)
+                Settings    = "{\"certPath\":\"/var/www/digivault/secrets/overpay.p12\","
+                            + "\"certPass\":\"gF9QZhIqaKAca47Q\","
+                            + "\"baseUrl\":\"https://api-pay.overpay.io\"}",
+                IsTestMode  = true,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

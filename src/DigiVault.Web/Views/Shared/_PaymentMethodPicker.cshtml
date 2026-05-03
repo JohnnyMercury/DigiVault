@@ -8,65 +8,7 @@
       - clicking a tile selects it; clicking the bottom "Оплатить" calls
         `window.submitPurchaseWithService(method, serviceCode, tile)` which
         the host page (Game/GiftCard/VpnProvider/Telegram) defines.
-
-    Per-provider visibility:
-      - PROVIDERS_BY_METHOD below is the *static catalogue* of every PSP
-        we know about (icons, descriptions, brand colours).
-      - The actual list of provider codes that are visible per method is
-        computed server-side from PaymentProviderConfig rows
-        (IsEnabled && (IsVisible || isAdmin) && method ∈ EnabledMethods)
-        and emitted into ALLOWED_BY_METHOD as JSON. JS intersects the two.
-      - Admins see hidden providers with a «(скрыт)» suffix so they can
-        still test a provider before opening it to the public.
 *@
-@using Microsoft.EntityFrameworkCore
-@inject DigiVault.Infrastructure.Data.ApplicationDbContext Db
-
-@{
-    var ps2IsAdmin = User?.IsInRole("Admin") == true;
-
-    // One DB hit per partial render — these tables are tiny (≤10 rows in
-    // practice) and not worth caching here. AsNoTracking keeps it lightweight.
-    var ps2Providers = await Db.PaymentProviderConfigs
-        .AsNoTracking()
-        .Where(p => p.IsEnabled)
-        .OrderBy(p => p.Priority)
-        .Select(p => new { p.Name, p.IsVisible, p.EnabledMethods })
-        .ToListAsync();
-
-    var ps2MethodCodes = new[] { "card", "sbp", "qr", "p2p" };
-    var ps2AllowedByMethod = new Dictionary<string, List<string>>();
-    var ps2HiddenByMethod  = new Dictionary<string, List<string>>(); // for admin badge
-
-    foreach (var method in ps2MethodCodes)
-    {
-        var allowed = new List<string>();
-        var hidden  = new List<string>();
-        foreach (var p in ps2Providers)
-        {
-            var methods = (p.EnabledMethods ?? "")
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(m => m.ToLowerInvariant());
-            if (!methods.Contains(method)) continue;
-
-            if (p.IsVisible)
-            {
-                allowed.Add(p.Name);
-            }
-            else if (ps2IsAdmin)
-            {
-                allowed.Add(p.Name);
-                hidden.Add(p.Name);
-            }
-            // else: not admin + hidden → drop completely
-        }
-        ps2AllowedByMethod[method] = allowed;
-        ps2HiddenByMethod[method]  = hidden;
-    }
-
-    var ps2AllowedJson = System.Text.Json.JsonSerializer.Serialize(ps2AllowedByMethod);
-    var ps2HiddenJson  = System.Text.Json.JsonSerializer.Serialize(ps2HiddenByMethod);
-}
 
 <div id="paymentStep2" class="ps2" style="display:none;">
     <div class="ps2-top">
@@ -166,18 +108,7 @@
         flex-shrink: 0;
     }
     .ps2-tile-text { flex: 1; min-width: 0; }
-    .ps2-tile-name { color: #fff; font-weight: 600; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-    .ps2-tile-hidden {
-        display: inline-flex; align-items: center; gap: 0.25rem;
-        font-size: 0.7rem; font-weight: 600;
-        padding: 0.1rem 0.45rem;
-        border-radius: 6px;
-        background: rgba(148,163,184,0.18);
-        color: #cbd5e1;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
-    .ps2-tile-hidden i { font-size: 0.7rem; }
+    .ps2-tile-name { color: #fff; font-weight: 600; font-size: 0.95rem; }
     .ps2-tile-meta { color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.45rem; }
     .ps2-tile-free { color: #22c55e; font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem; }
     .ps2-tile-free i { font-size: 0.7rem; }
@@ -280,16 +211,6 @@
     const ENOT_BADGE     = 'linear-gradient(135deg, #ff7043, #f4511e)';
     const PLINK_BADGE    = 'linear-gradient(135deg, #66c0f4, #1b9adf)';
     const OVERPAY_BADGE  = 'linear-gradient(135deg, #2e6cdf, #0f3a8a)';
-    // ALLOWED_BY_METHOD comes from the server: a per-method list of provider
-    // codes that PASS the (IsEnabled && (IsVisible || admin) && method-allowed)
-    // filter. We intersect this with the static catalogue below so admins
-    // never have to update both places when adding a new PSP - just add the
-    // tile metadata and flip flags in /Admin/PaymentProviders.
-    const ALLOWED_BY_METHOD = @Html.Raw(ps2AllowedJson);
-    // Subset of ALLOWED_BY_METHOD that's visible only because the current user
-    // is an admin (IsVisible=false). Used to add a «(скрыт)» tag to the tile.
-    const HIDDEN_BY_METHOD  = @Html.Raw(ps2HiddenJson);
-
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
@@ -325,33 +246,8 @@
     let currentMethod  = null;
     let currentProvider = null;
 
-    /**
-     * Filter the static catalogue by what the server says is visible to this
-     * user for the given method. If the server list is empty for a method,
-     * the picker shows the «Скоро» empty-state (regardless of catalogue).
-     */
-    function getVisibleProviders(method) {
-        const allowedNames = ALLOWED_BY_METHOD[method] || [];
-        const hiddenNames  = new Set(HIDDEN_BY_METHOD[method] || []);
-        const allowedSet   = new Set(allowedNames);
-        const catalogue    = PROVIDERS_BY_METHOD[method] || [];
-
-        // Preserve server-side ordering (priority) by iterating allowedNames.
-        const byCode = Object.fromEntries(catalogue.map(p => [p.code, p]));
-        const out = [];
-        allowedNames.forEach(code => {
-            const tile = byCode[code];
-            if (tile) {
-                out.push(Object.assign({}, tile, {
-                    hiddenForUsers: hiddenNames.has(code),
-                }));
-            }
-        });
-        return out;
-    }
-
     window.openPaymentStep2 = function (method) {
-        const providers = getVisibleProviders(method);
+        const providers = PROVIDERS_BY_METHOD[method] || [];
         const grid    = document.getElementById('paymentStep2Grid');
         const label   = document.getElementById('paymentStep2MethodLabel');
         const count   = document.getElementById('paymentStep2Count');
@@ -391,17 +287,13 @@
             payBtn.disabled = true;
             payBtn.textContent = 'Метод недоступен';
         } else {
-            grid.innerHTML = providers.map(p => {
-                const hiddenBadge = p.hiddenForUsers
-                    ? `<span class="ps2-tile-hidden" title="Скрыт от обычных пользователей — видно только админам"><i class="bi bi-eye-slash"></i> скрыт</span>`
-                    : '';
-                return `
+            grid.innerHTML = providers.map(p => `
                 <div class="ps2-tile" data-method="${method}" data-provider="${p.code}">
                     <div class="ps2-tile-icon" style="background: ${p.color};">
                         <i class="bi ${p.icon}"></i>
                     </div>
                     <div class="ps2-tile-text">
-                        <div class="ps2-tile-name">${p.title} ${hiddenBadge}</div>
+                        <div class="ps2-tile-name">${p.title}</div>
                         <div class="ps2-tile-meta">
                             <span>${p.desc}</span>
                             <span>·</span>
@@ -409,8 +301,8 @@
                         </div>
                     </div>
                     <div class="ps2-tile-radio"></div>
-                </div>`;
-            }).join('');
+                </div>
+            `).join('');
 
             grid.querySelectorAll('.ps2-tile').forEach(tile => {
                 tile.addEventListener('click', () => selectTile(tile));

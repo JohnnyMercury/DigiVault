@@ -50,7 +50,7 @@ public class PaymentProvidersController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, PaymentProviderConfig model, [FromForm] List<string>? EnabledMethodsList)
+    public async Task<IActionResult> Edit(int id, PaymentProviderConfig model)
     {
         var provider = await _context.PaymentProviderConfigs.FindAsync(id);
         if (provider == null)
@@ -61,7 +61,6 @@ public class PaymentProvidersController : AdminBaseController
 
         provider.DisplayName = model.DisplayName;
         provider.IsEnabled = model.IsEnabled;
-        provider.IsVisible = model.IsVisible;
         provider.IsTestMode = model.IsTestMode;
         provider.Priority = model.Priority;
         provider.ApiKey = model.ApiKey;
@@ -71,7 +70,6 @@ public class PaymentProvidersController : AdminBaseController
         provider.MinAmount = model.MinAmount;
         provider.MaxAmount = model.MaxAmount;
         provider.Settings = model.Settings;
-        provider.EnabledMethods = NormalizeMethods(EnabledMethodsList);
         provider.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -98,31 +96,6 @@ public class PaymentProvidersController : AdminBaseController
         return RedirectToAction("Index");
     }
 
-    /// <summary>
-    /// Quick-toggle for the «visible to end users» flag — лежит рядом с
-    /// обычным enable/disable. Для админских тестов можно держать провайдера
-    /// IsEnabled=true & IsVisible=false: бэкэнд платежи принимает, но
-    /// в публичном пикере его никто не видит.
-    /// </summary>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleVisibility(int id)
-    {
-        var provider = await _context.PaymentProviderConfigs.FindAsync(id);
-        if (provider == null)
-        {
-            TempData["ErrorMessage"] = "Провайдер не найден";
-            return RedirectToAction("Index");
-        }
-
-        provider.IsVisible = !provider.IsVisible;
-        provider.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = $"{provider.DisplayName}: {(provider.IsVisible ? "виден пользователям" : "скрыт из пикера")}";
-        return RedirectToAction("Index");
-    }
-
     [HttpGet]
     public IActionResult Create()
     {
@@ -131,7 +104,7 @@ public class PaymentProvidersController : AdminBaseController
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(PaymentProviderConfig model, [FromForm] List<string>? EnabledMethodsList)
+    public async Task<IActionResult> Create(PaymentProviderConfig model)
     {
         if (await _context.PaymentProviderConfigs.AnyAsync(p => p.Name == model.Name))
         {
@@ -139,30 +112,10 @@ public class PaymentProvidersController : AdminBaseController
             return View(model);
         }
 
-        model.EnabledMethods = NormalizeMethods(EnabledMethodsList);
         _context.PaymentProviderConfigs.Add(model);
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Провайдер {model.DisplayName} создан";
         return RedirectToAction("Index");
-    }
-
-    /// <summary>
-    /// Take the raw list of method codes coming from the form's checkboxes
-    /// and turn it into the canonical CSV stored on the entity. Filters out
-    /// unknown codes (anything that's not card / sbp / qr / p2p) so the field
-    /// stays clean even if a future POST sends garbage.
-    /// </summary>
-    private static string NormalizeMethods(List<string>? methods)
-    {
-        var allowed = new[] { "card", "sbp", "qr", "p2p" };
-        if (methods == null || methods.Count == 0) return string.Empty;
-        var clean = methods
-            .Where(m => !string.IsNullOrWhiteSpace(m))
-            .Select(m => m.Trim().ToLowerInvariant())
-            .Where(m => allowed.Contains(m))
-            .Distinct()
-            .ToArray();
-        return string.Join(",", clean);
     }
 }

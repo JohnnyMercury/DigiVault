@@ -60,44 +60,10 @@
                     </div>
 
                     <div class="row g-3 mt-1">
-                        <div class="col-12">
-                            <label class="form-label">Доступно для методов оплаты</label>
-                            <div class="form-text mb-2">
-                                Отметь только те методы, которые этот провайдер реально закрывает.
-                                По умолчанию — все четыре.
-                            </div>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="card" id="method_card" checked />
-                                    <label class="form-check-label" for="method_card"><i class="bi bi-credit-card me-1"></i>Карта</label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="sbp" id="method_sbp" checked />
-                                    <label class="form-check-label" for="method_sbp"><i class="bi bi-lightning-charge me-1"></i>СБП</label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="qr" id="method_qr" checked />
-                                    <label class="form-check-label" for="method_qr"><i class="bi bi-qr-code me-1"></i>QR-код</label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="p2p" id="method_p2p" checked />
-                                    <label class="form-check-label" for="method_p2p"><i class="bi bi-people me-1"></i>P2P</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row g-3 mt-1">
                         <div class="col-auto">
                             <div class="form-check form-switch">
                                 <input asp-for="IsEnabled" class="form-check-input" />
                                 <label class="form-check-label" asp-for="IsEnabled">Активен</label>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="form-check form-switch">
-                                <input asp-for="IsVisible" class="form-check-input" checked />
-                                <label class="form-check-label" asp-for="IsVisible">Виден пользователям</label>
                             </div>
                         </div>
                         <div class="col-auto">

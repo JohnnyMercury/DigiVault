@@ -271,8 +271,6 @@ public static class DbSeeder
                 Name        = "enot",
                 DisplayName = "Enot",
                 IsEnabled   = true,
-                IsVisible   = true,
-                EnabledMethods = "card,sbp",
                 Priority    = 10,
                 ApiKey      = "1c7b4970850d33ae175b2e9efd855cedeeec82a5",
                 SecretKey   = "f883bfefb973aebb9bc5ce988377f47576c68518",
@@ -301,8 +299,6 @@ public static class DbSeeder
                 Name        = "paymentlink",
                 DisplayName = "PaymentLink",
                 IsEnabled   = false,   // until admin enters credentials
-                IsVisible   = true,
-                EnabledMethods = "card,sbp,qr",  // PaymentLink is the only QR PSP
                 Priority    = 20,
                 ApiKey      = "",
                 SecretKey   = "",
@@ -334,8 +330,6 @@ public static class DbSeeder
                 Name        = "overpay",
                 DisplayName = "Overpay",
                 IsEnabled   = false,   // flip to true after deploying cert.p12
-                IsVisible   = true,
-                EnabledMethods = "card,sbp",
                 Priority    = 30,
                 ApiKey      = "key-zona",                            // basic-auth username
                 SecretKey   = "ISGCF?|YNtdzPH1",                     // basic-auth password

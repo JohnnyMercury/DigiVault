@@ -622,17 +622,10 @@ namespace DigiVault.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("EnabledMethods")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsTestMode")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsVisible")
                         .HasColumnType("boolean");
 
                     b.Property<decimal?>("MaxAmount")

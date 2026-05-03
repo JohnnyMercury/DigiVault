@@ -72,77 +72,18 @@
                         </div>
                     </div>
 
-                    @{
-                        var enabledMethodsList = (Model.EnabledMethods ?? "card,sbp,qr,p2p")
-                            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                            .Select(m => m.ToLowerInvariant())
-                            .ToHashSet();
-                    }
-
-                    <div class="row g-3 mt-1">
-                        <div class="col-12">
-                            <label class="form-label d-flex align-items-center gap-2">
-                                Доступно для методов оплаты
-                                <span class="badge" style="background: rgba(102,126,234,0.18); color: #a5b4fc; font-weight: 500;">Видимость</span>
-                            </label>
-                            <div class="text-muted small mb-2">
-                                В пикере на шаге 2 провайдер будет показан только для отмеченных методов.
-                                Если ни один не отмечен — провайдер недоступен в публичном пикере.
-                            </div>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="card"
-                                           id="method_card" @(enabledMethodsList.Contains("card") ? "checked" : "") />
-                                    <label class="form-check-label" for="method_card">
-                                        <i class="bi bi-credit-card me-1"></i>Карта
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="sbp"
-                                           id="method_sbp" @(enabledMethodsList.Contains("sbp") ? "checked" : "") />
-                                    <label class="form-check-label" for="method_sbp">
-                                        <i class="bi bi-lightning-charge me-1"></i>СБП
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="qr"
-                                           id="method_qr" @(enabledMethodsList.Contains("qr") ? "checked" : "") />
-                                    <label class="form-check-label" for="method_qr">
-                                        <i class="bi bi-qr-code me-1"></i>QR-код
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="EnabledMethodsList" value="p2p"
-                                           id="method_p2p" @(enabledMethodsList.Contains("p2p") ? "checked" : "") />
-                                    <label class="form-check-label" for="method_p2p">
-                                        <i class="bi bi-people me-1"></i>P2P
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="row g-3 mt-1">
                         <div class="col-auto">
                             <div class="form-check form-switch">
                                 <input asp-for="IsEnabled" class="form-check-input" />
                                 <label class="form-check-label" asp-for="IsEnabled">Активен</label>
                             </div>
-                            <div class="text-muted small">Провайдер обрабатывает платежи</div>
-                        </div>
-                        <div class="col-auto">
-                            <div class="form-check form-switch">
-                                <input asp-for="IsVisible" class="form-check-input" />
-                                <label class="form-check-label" asp-for="IsVisible">Виден пользователям</label>
-                            </div>
-                            <div class="text-muted small">Если выкл — скрыт из публичного пикера<br/>(админы всё ещё видят)</div>
                         </div>
                         <div class="col-auto">
                             <div class="form-check form-switch">
                                 <input asp-for="IsTestMode" class="form-check-input" />
                                 <label class="form-check-label" asp-for="IsTestMode">Тестовый режим</label>
                             </div>
-                            <div class="text-muted small">Sandbox / песочница</div>
                         </div>
                     </div>
 

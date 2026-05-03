@@ -57,7 +57,8 @@ public static class PaymentMethodCatalog
             IconClass: "bi-qr-code",
             Gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
             EnumValue: PaymentMethod.SBP,
-            Available: true), // PaymentLink закрывает этот метод
+            Available: false,
+            UnavailableHint: "Скоро"),
 
         new PaymentMethodOption(
             Code: "p2p",

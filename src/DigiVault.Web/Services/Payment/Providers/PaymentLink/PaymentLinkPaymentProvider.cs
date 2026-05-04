@@ -37,7 +37,8 @@ namespace DigiVault.Web.Services.Payment.Providers.PaymentLink;
 /// </summary>
 public class PaymentLinkPaymentProvider : IPaymentProvider
 {
-    public const string TargetUrl = "https://start.paymentlnk.com/api/payment/start";
+    public const string TargetUrl     = "https://start.paymentlnk.com/api/payment/start";
+    public const string TestTargetUrl = "https://start-test.paymentlnk.com/api/payment/start";
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<PaymentLinkPaymentProvider> _log;
@@ -145,7 +146,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
         var providerData = JsonSerializer.Serialize(new
         {
-            target = TargetUrl,
+            target = ReadTargetUrl(cfg),
             algo,
             form = formFields.Where(kv => !string.IsNullOrEmpty(kv.Value))
                              .ToDictionary(kv => kv.Key, kv => kv.Value!),
@@ -263,6 +264,26 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         }
         catch { /* fall through */ }
         return "hmac_sha256";
+    }
+
+    internal static string ReadTargetUrl(PaymentProviderConfig cfg)
+    {
+        // 1. Explicit override in Settings JSON: {"targetUrl":"https://..."}
+        if (!string.IsNullOrWhiteSpace(cfg.Settings))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(cfg.Settings);
+                if (doc.RootElement.TryGetProperty("targetUrl", out var t))
+                {
+                    var v = t.GetString();
+                    if (!string.IsNullOrWhiteSpace(v)) return v.TrimEnd('/');
+                }
+            }
+            catch { /* fall through */ }
+        }
+        // 2. IsTestMode flag → use test endpoint automatically
+        return cfg.IsTestMode ? TestTargetUrl : TargetUrl;
     }
 
     private static PaymentStatus MapStatus(string result, string status)

@@ -19,6 +19,7 @@ public class AccountController : Controller
     private readonly IPaymentService _paymentService;
     private readonly IOrderService _orderService;
     private readonly IConfiguration _config;
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
@@ -26,7 +27,8 @@ public class AccountController : Controller
         ApplicationDbContext context,
         IPaymentService paymentService,
         IOrderService orderService,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -34,6 +36,7 @@ public class AccountController : Controller
         _paymentService = paymentService;
         _orderService = orderService;
         _config = config;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -466,6 +469,17 @@ public class AccountController : Controller
         // omitted: a top-level cross-site POST often arrives without our
         // SameSite=Lax auth cookie, so requiring auth here would bounce the
         // user to /Login and lose the orderId context.
+        await LogPaymentReturnPayloadAsync(orderId, "PaymentSuccess");
+
+        // PaymentLink semantics: backURL is hit on BOTH success and failure;
+        // an `errorcode` field in the POST body marks failure even though
+        // we're on the "success" route. Treat it as failure so the user sees
+        // the real reason instead of a misleading "оплата прошла" message.
+        if (await IsFailureReturnAsync())
+        {
+            return await PaymentFail(orderId);
+        }
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
@@ -490,17 +504,86 @@ public class AccountController : Controller
     [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
     public async Task<IActionResult> PaymentFail(int orderId)
     {
+        await LogPaymentReturnPayloadAsync(orderId, "PaymentFail");
+
+        var errorText = ExtractErrorText();
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            TempData["ErrorMessage"] = "Платёж не был завершён. Войдите чтобы попробовать снова.";
+            TempData["ErrorMessage"] = errorText ?? "Платёж не был завершён. Войдите чтобы попробовать снова.";
             return RedirectToAction(nameof(Login));
         }
 
         var order = await _orderService.GetOrderAsync(user.Id, orderId);
-        TempData["ErrorMessage"] = "Платёж не был завершён. Попробуйте ещё раз или свяжитесь с поддержкой.";
+        TempData["ErrorMessage"] = errorText ?? "Платёж не был завершён. Попробуйте ещё раз или свяжитесь с поддержкой.";
         if (order != null)
             return RedirectToAction(nameof(OrderDetails), new { orderNumber = order.OrderNumber });
         return RedirectToAction(nameof(Orders));
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Payment-return helpers (PaymentLink/Enot/Overpay all POST or GET back
+    // here with provider-specific status fields). We never trust this body
+    // for fulfilment - that's the webhook's job - we just want to:
+    //   • leave a breadcrumb in logs so we can diagnose silent-redirect
+    //     failures (PaymentLink test server rejecting form parameters etc.);
+    //   • surface a meaningful error message to the user when the provider
+    //     told us why the charge failed.
+    // ────────────────────────────────────────────────────────────────────
+
+    private async Task LogPaymentReturnPayloadAsync(int orderId, string source)
+    {
+        try
+        {
+            var fields = new List<string>();
+            foreach (var kv in Request.Query)
+                fields.Add($"q.{kv.Key}={kv.Value}");
+
+            if (Request.HasFormContentType)
+            {
+                var form = await Request.ReadFormAsync();
+                foreach (var kv in form)
+                {
+                    // Mask PAN-like fields just in case some provider posts them
+                    var v = kv.Value.ToString();
+                    if (kv.Key.Equals("PAN", StringComparison.OrdinalIgnoreCase)
+                     || kv.Key.Equals("pan", StringComparison.OrdinalIgnoreCase))
+                        v = "<masked>";
+                    fields.Add($"f.{kv.Key}={v}");
+                }
+            }
+
+            _logger.LogInformation(
+                "{Source} payload for orderId={OrderId}: method={Method}, contentType={CT}, {Fields}",
+                source, orderId, Request.Method, Request.ContentType,
+                string.Join(", ", fields));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to log payment return payload for {Source}", source);
+        }
+    }
+
+    private async Task<bool> IsFailureReturnAsync()
+    {
+        if (Request.Query.TryGetValue("errorcode", out var qec) && !string.IsNullOrEmpty(qec))
+            return true;
+        if (Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync();
+            if (form.TryGetValue("errorcode", out var fec) && !string.IsNullOrEmpty(fec))
+                return true;
+        }
+        return false;
+    }
+
+    private string? ExtractErrorText()
+    {
+        if (Request.Query.TryGetValue("errortext", out var qet) && !string.IsNullOrEmpty(qet))
+            return $"PSP: {Uri.UnescapeDataString(qet!)}";
+        if (Request.HasFormContentType && Request.Form.TryGetValue("errortext", out var fet) && !string.IsNullOrEmpty(fet))
+            return $"PSP: {Uri.UnescapeDataString(fet!)}";
+        return null;
     }
 }

@@ -105,11 +105,13 @@ public class FulfilmentService : IFulfilmentService
 
     public async Task<int> SweepPendingAsync(int maxOrders = 50, CancellationToken ct = default)
     {
-        // Pick orders that have at least one Pending item and aren't terminal/Completed.
+        // CRITICAL: only sweep PROCESSING orders (payment confirmed via webhook
+        // or wallet debit). Order.Status starts at Pending and only moves to
+        // Processing once a successful payment webhook is received - sweeping
+        // Pending would deliver products before payment lands, letting users
+        // get goods for free.
         var orderIds = await _db.Orders
-            .Where(o => o.Status != OrderStatus.Completed
-                     && o.Status != OrderStatus.Cancelled
-                     && o.Status != OrderStatus.Refunded
+            .Where(o => o.Status == OrderStatus.Processing
                      && o.OrderItems.Any(oi => oi.DeliveryStatus == DeliveryStatus.Pending))
             .OrderBy(o => o.CreatedAt)
             .Take(maxOrders)

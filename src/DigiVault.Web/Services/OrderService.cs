@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
 using DigiVault.Infrastructure.Data;
@@ -303,6 +304,9 @@ public class OrderService : IOrderService
                 Currency              = "RUB",
                 Description           = paymentRequest.Description,
                 ClientIp              = clientIp,
+                ProviderData          = providerResult.ProviderData != null
+                                            ? JsonSerializer.Serialize(providerResult.ProviderData)
+                                            : null,
                 CreatedAt             = DateTime.UtcNow,
                 UpdatedAt             = DateTime.UtcNow,
             });
@@ -452,6 +456,9 @@ public class OrderService : IOrderService
                 Currency              = "RUB",
                 Description           = paymentRequest.Description,
                 ClientIp              = clientIp,
+                ProviderData          = providerResult.ProviderData != null
+                                            ? JsonSerializer.Serialize(providerResult.ProviderData)
+                                            : null,
                 CreatedAt             = DateTime.UtcNow,
                 UpdatedAt             = DateTime.UtcNow,
             });

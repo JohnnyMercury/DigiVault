@@ -73,6 +73,18 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Overpay.OverpayPaymentProvider>();
 
+// PaymentLink server-to-server HTTP client (used by /api/payment/invoice for
+// SBP and /api/payment/operate for status polling). 30s timeout — their
+// endpoints are usually <1s, anything past 30s indicates a real outage.
+builder.Services.AddHttpClient(
+    "paymentlink",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
+
+// Background poller that reconciles PaymentLink transactions stuck in
+// Pending. Their callbacks fire only on success (per support guidance), so
+// failures and the SBP wait→error flow only surface via /api/payment/operate.
+builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkStatusPollerService>();
+
 // Named HttpClient for Overpay - it requires mTLS (client certificate). The
 // p12 file path + passphrase are read from PaymentProviderConfig.Settings
 // (admin-editable). When admin doesn't supply a cert, the handler falls back

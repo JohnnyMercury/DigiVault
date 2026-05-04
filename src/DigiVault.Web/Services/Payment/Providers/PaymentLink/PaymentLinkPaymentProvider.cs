@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
@@ -11,53 +12,58 @@ namespace DigiVault.Web.Services.Payment.Providers.PaymentLink;
 
 /// <summary>
 /// <see cref="IPaymentProvider"/> for start.paymentlnk.com (Merchant Interface
-/// v3.0). Unlike Enot, PaymentLink does not have a server-side «create
-/// invoice» REST endpoint — the integration spec is a redirect-with-form to
-/// <c>https://start.paymentlnk.com/api/payment/start</c> with all params
-/// (incl. signature) sent in the POST body.
+/// v3.0). Supports two flows depending on payment method:
 ///
-/// To fit our existing pattern (<see cref="PaymentResult.RedirectUrl"/> is a
-/// GET-able URL), we generate the params + signature here, persist them as
-/// JSON in <see cref="PaymentTransaction.ProviderData"/>, and return a
-/// redirect to our local <c>/Payment/PaymentLinkStart/{transactionId}</c>
-/// page. That page reads the JSON and renders an auto-submitting HTML form to
-/// PaymentLink's endpoint.
+///   • Card (currency=MBC) — redirect-with-form to /api/payment/start. The
+///     customer's browser auto-submits the form to PL's hosted checkout. We
+///     stash the prepared params in PaymentTransaction.ProviderData and
+///     return a redirect to /Payment/PaymentLinkStart/{txId} which renders
+///     the form.
 ///
-/// Webhook handling: PaymentLink POSTs the same params back to our
-/// configured callback (LK setting) — we receive it via the generic
-/// <c>WebhooksController</c> route <c>/api/webhooks/paymentlink</c>, parse it
-/// as application/x-www-form-urlencoded and verify the signature with the
-/// same canonical-string rule.
+///   • SBP / EXT (currency=EXT, paysys=EXT in invoice flow) — server-to-
+///     server POST to /api/payment/invoice. PL responds with a payURL we
+///     redirect the customer to. PL's confirmation webhook is NOT used in
+///     this flow (per PL support: "в этом режиме интеграции отсутствуют
+///     наши запросы на подтверждение"); we only get the statusURL webhook
+///     after a successful charge, and rely on /api/payment/operate polling
+///     for wait → error transitions.
 ///
 /// Configuration in <see cref="PaymentProviderConfig"/> (Name="paymentlink"):
 ///   ApiKey      → секретный_ключ_1 (issued at registration)
 ///   SecretKey   → секретный_ключ_2 (set in LK)
 ///   MerchantId  → account (магазин-ID, shown in LK)
-///   Settings    → optional JSON, e.g. {"algo":"hmac_sha256"} or {"algo":"md5"}
+///   Settings    → JSON; supports {"algo":"md5"|"hmac_sha256"} and
+///                 {"baseUrl":"https://..."} (override host for test/staging).
 /// </summary>
 public class PaymentLinkPaymentProvider : IPaymentProvider
 {
-    public const string TargetUrl     = "https://start.paymentlnk.com/api/payment/start";
-    public const string TestTargetUrl = "https://start-test.paymentlnk.com/api/payment/start";
+    public const string BaseUrl     = "https://start.paymentlnk.com";
+    public const string TestBaseUrl = "https://start-test.paymentlnk.com";
+
+    // Backward compat — referenced by Views/Payment/PaymentLinkStart.cshtml
+    // and existing tests/logging.
+    public const string TargetUrl     = BaseUrl     + "/api/payment/start";
+    public const string TestTargetUrl = TestBaseUrl + "/api/payment/start";
+
+    private const string HttpClientName = "paymentlink";
 
     private readonly ApplicationDbContext _db;
+    private readonly IHttpClientFactory _httpFactory;
     private readonly ILogger<PaymentLinkPaymentProvider> _log;
 
-    public PaymentLinkPaymentProvider(ApplicationDbContext db,
+    public PaymentLinkPaymentProvider(
+        ApplicationDbContext db,
+        IHttpClientFactory httpFactory,
         ILogger<PaymentLinkPaymentProvider> log)
     {
         _db = db;
+        _httpFactory = httpFactory;
         _log = log;
     }
 
     public string Name => "paymentlink";
     public string DisplayName => "PaymentLink";
 
-    /// <summary>
-    /// PaymentLink supports cards (MBC) and an «alternative» bucket (EXT) that
-    /// covers SBP / wallets / etc. We expose Card + SBP — our PaymentMethod
-    /// catalog only needs those two right now.
-    /// </summary>
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {
         PaymentMethod.Card,
@@ -78,10 +84,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
     public bool SupportsRefund => false;
 
-    // ────────────────────────────────────────────────────────────────────
-    // Create payment — build params + signature, stash them, return our
-    // redirect-page URL.
-    // ────────────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    // CreatePaymentAsync — dispatches Card → /payment/start, SBP → /payment/invoice
+    // ════════════════════════════════════════════════════════════════════
 
     public async Task<PaymentResult> CreatePaymentAsync(PaymentRequest request, CancellationToken ct = default)
     {
@@ -93,26 +98,30 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         if (string.IsNullOrEmpty(cfg.ApiKey) || string.IsNullOrEmpty(cfg.SecretKey))
             return PaymentResult.Failed("PaymentLink: не заданы секретные ключи (ApiKey + SecretKey).");
 
+        return request.Method == PaymentMethod.SBP
+            ? await CreateInvoicePaymentAsync(cfg, request, ct)
+            : await CreateRedirectPaymentAsync(cfg, request, ct);
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // /api/payment/start flow — used for cards (MBC). Browser auto-submits.
+    // ────────────────────────────────────────────────────────────────────
+
+    private async Task<PaymentResult> CreateRedirectPaymentAsync(
+        PaymentProviderConfig cfg, PaymentRequest request, CancellationToken ct)
+    {
         // Number must be ≤ 32 chars; allowed: 0-9 a-z A-Z а-я А-Я . - / space.
-        // Rotating prefix via TxnIdHelper avoids antifraud/aggregator
-        // fingerprinting on a fixed brand-prefix.
         var ourTransactionId = TxnIdHelper.Generate(maxLength: 28);
 
         var algo = ReadAlgo(cfg.Settings);
         var trtype = 1;
         var amountCurr = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
-        // currency code in PaymentLink land: MBC for cards, EXT for everything
-        // else (SBP / QR / wallets). Maps directly from our PaymentMethod.
-        var plCurrency = request.Method == PaymentMethod.Card ? "MBC" : "EXT";
+        var plCurrency = "MBC"; // card flow only
         var description = string.IsNullOrEmpty(request.Description)
             ? $"Order {ourTransactionId}"
             : request.Description;
 
-        // cf1 must be `userid:<our-user-id>` per PaymentLink support guidance —
-        // they use this for cross-merchant antifraud (linking the same buyer
-        // across our shops). When cf1 is set, the helper auto-includes
-        // empty cf2/cf3 in the signature so the canonical string ends in
-        // `userid:X:::k1:k2`, which is what their docs show.
+        // cf1 carries the buyer id in PaymentLink's expected format.
         var cf1Value = $"userid:{request.UserId}";
 
         var signature = PaymentLinkSignatureHelper.Build(
@@ -122,49 +131,22 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             number:      ourTransactionId,
             description: description,
             trtype:      trtype,
-            account:     cfg.MerchantId,
+            account:     cfg.MerchantId!,
             paytoken:    null,
             backUrl:     request.SuccessUrl,
             cf1:         cf1Value,
             cf2:         null,
             cf3:         null,
-            secretKey1:  cfg.ApiKey,
-            secretKey2:  cfg.SecretKey,
+            secretKey1:  cfg.ApiKey!,
+            secretKey2:  cfg.SecretKey!,
             algo:        algo);
 
-        // PaymentLink LK setting "Contact data are required" + their test
-        // server reject the form with errorcode 311 ("There are no required
-        // contact fields (phone, email)") if neither field is present. We
-        // need to send BOTH email and phone. Use the real values from the
-        // user's profile when available (best for antifraud and fiscal
-        // receipts) and fall back to safe placeholders otherwise.
         var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
             ? request.Email
             : "noreply@key-zona.com";
 
-        // Strip non-digit chars from a stored phone (DB rows may contain
-        // formatting like "+7 (999) 123-45-67"); spec wants raw digits only,
-        // country code first, no leading plus, e.g. 79991234567.
-        string customerPhone;
-        if (!string.IsNullOrWhiteSpace(request.Phone))
-        {
-            var digits = new string(request.Phone.Where(char.IsDigit).ToArray());
-            // Treat as RU number if it starts with 8 (legacy domestic format).
-            if (digits.Length == 11 && digits.StartsWith("8"))
-                digits = "7" + digits.Substring(1);
-            customerPhone = string.IsNullOrEmpty(digits) ? "79000000000" : digits;
-        }
-        else
-        {
-            customerPhone = "79000000000";
-        }
+        var customerPhone = NormalizePhone(request.Phone);
 
-        // Form fields the redirect page will POST to PaymentLink. Stored as
-        // JSON in ProviderData so the page can rebuild them by transactionId.
-        // Both email AND phone are included to satisfy PaymentLink's "311 -
-        // There are no required contact fields" validator: their LK has a
-        // "Contact data are required" toggle and the test server appears to
-        // enforce both fields regardless of the toggle state.
         var formFields = new Dictionary<string, string?>
         {
             ["amount"]      = request.Amount.ToString("0.##",
@@ -177,53 +159,173 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["account"]     = cfg.MerchantId,
             ["backURL"]     = request.SuccessUrl,
             ["email"]       = customerEmail,
-            // Use the computed customerPhone (real number from user.Phone if
-            // present, falling back to placeholder). Was previously hardcoded
-            // to the placeholder by mistake — that meant antifraud saw the
-            // same phone on every payment regardless of who was paying.
             ["phone"]       = customerPhone,
             ["lang"]        = "ru",
             ["cf1"]         = cf1Value,
-            // cf2/cf3 left empty intentionally; helper still includes them in
-            // the signature when cf1 is set, per spec.
             ["signature"]   = signature,
         };
 
-        // Log everything except signature so we can debug rejections against
-        // the LK without leaking the secret-derived hash.
         _log.LogInformation(
-            "PaymentLink form fields: {Fields}",
+            "PaymentLink /start fields: {Fields}",
             string.Join(", ", formFields.Where(kv => kv.Key != "signature")
                                         .Select(kv => $"{kv.Key}={kv.Value}")));
 
         var providerData = JsonSerializer.Serialize(new
         {
-            target = ReadTargetUrl(cfg),
+            target = ReadBaseUrl(cfg) + "/api/payment/start",
             algo,
             form = formFields.Where(kv => !string.IsNullOrEmpty(kv.Value))
                              .ToDictionary(kv => kv.Key, kv => kv.Value!),
         });
 
         _log.LogInformation(
-            "PaymentLink → prepared redirect for txn={Txn} amount={Amount} currency={Currency} method={Method}",
-            ourTransactionId, request.Amount, plCurrency, request.Method);
+            "PaymentLink → prepared /start redirect for txn={Txn} amount={Amount}",
+            ourTransactionId, request.Amount);
 
         return new PaymentResult
         {
-            Success               = true,
-            TransactionId         = ourTransactionId,
-            RedirectUrl           = $"/Payment/PaymentLinkStart/{ourTransactionId}",
-            Status                = PaymentStatus.Pending,
-            ProviderData          = new Dictionary<string, string> { ["data"] = providerData },
+            Success       = true,
+            TransactionId = ourTransactionId,
+            RedirectUrl   = $"/Payment/PaymentLinkStart/{ourTransactionId}",
+            Status        = PaymentStatus.Pending,
+            ProviderData  = new Dictionary<string, string> { ["data"] = providerData },
         };
     }
 
     // ────────────────────────────────────────────────────────────────────
-    // Status check — PaymentLink has a /api/payment/status endpoint we could
-    // call here, but the cheaper path (and the one webhook fires anyway) is
-    // to trust the DB until the webhook arrives. We return Pending if no
-    // transaction row exists yet, otherwise mirror its persisted status.
+    // /api/payment/invoice flow — used for SBP / EXT. Server-to-server.
     // ────────────────────────────────────────────────────────────────────
+
+    private async Task<PaymentResult> CreateInvoicePaymentAsync(
+        PaymentProviderConfig cfg, PaymentRequest request, CancellationToken ct)
+    {
+        var ourTransactionId = TxnIdHelper.Generate(maxLength: 28);
+
+        var algo = ReadAlgo(cfg.Settings);
+        var amountCurr = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
+        var paysys = "EXT"; // SBP / alternative methods bucket
+        var description = string.IsNullOrEmpty(request.Description)
+            ? $"Order {ourTransactionId}"
+            : request.Description;
+        var firstName = "Покупатель"; // PL spec allows static placeholder name
+        // validity: how long PL keeps the invoice payable. 60 min is enough
+        // for SBP (user opens bank app, scans QR, confirms).
+        var validity = DateTime.UtcNow.AddMinutes(60).ToString("yyyy-MM-ddTHH:mm:sszzz",
+            System.Globalization.CultureInfo.InvariantCulture);
+
+        var cf1Value = $"userid:{request.UserId}";
+        var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
+            ? request.Email
+            : "noreply@key-zona.com";
+        var customerPhone = NormalizePhone(request.Phone);
+
+        var signature = PaymentLinkSignatureHelper.BuildInvoice(
+            amount:       request.Amount,
+            amountCurr:   amountCurr,
+            paysys:       paysys,
+            number:       ourTransactionId,
+            description:  description,
+            validity:     validity,
+            firstName:    firstName,
+            lastName:     null,
+            middleName:   null,
+            cf1:          cf1Value,
+            cf2:          null,
+            cf3:          null,
+            email:        customerEmail,
+            notifyEmail:  "0",
+            phone:        customerPhone,
+            notifyPhone:  "0",
+            paytoken:     null,
+            backUrl:      request.SuccessUrl,
+            account:      cfg.MerchantId!,
+            secretKey1:   cfg.ApiKey!,
+            secretKey2:   cfg.SecretKey!,
+            algo:         algo);
+
+        var formFields = new Dictionary<string, string?>
+        {
+            ["amount"]       = request.Amount.ToString("0.##",
+                                  System.Globalization.CultureInfo.InvariantCulture),
+            ["amountcurr"]   = amountCurr,
+            ["paysys"]       = paysys,
+            ["number"]       = ourTransactionId,
+            ["description"]  = description,
+            ["validity"]     = validity,
+            ["first_name"]   = firstName,
+            ["email"]        = customerEmail,
+            ["notify_email"] = "0",
+            ["phone"]        = customerPhone,
+            ["notify_phone"] = "0",
+            ["account"]      = cfg.MerchantId,
+            ["backURL"]      = request.SuccessUrl,
+            ["cf1"]          = cf1Value,
+            ["signature"]    = signature,
+        };
+
+        _log.LogInformation(
+            "PaymentLink /invoice fields: {Fields}",
+            string.Join(", ", formFields.Where(kv => kv.Key != "signature")
+                                        .Select(kv => $"{kv.Key}={kv.Value}")));
+
+        var url = ReadBaseUrl(cfg) + "/api/payment/invoice";
+        var http = _httpFactory.CreateClient(HttpClientName);
+
+        try
+        {
+            var body = new FormUrlEncodedContent(
+                formFields.Where(kv => kv.Value != null)!
+                          .Select(kv => new KeyValuePair<string, string>(kv.Key, kv.Value!))!);
+            using var resp = await http.PostAsync(url, body, ct);
+            var responseText = await resp.Content.ReadAsStringAsync(ct);
+
+            _log.LogInformation("PaymentLink ← /invoice {Code} {Body}", (int)resp.StatusCode, responseText);
+
+            if (!resp.IsSuccessStatusCode)
+                return PaymentResult.Failed(
+                    $"PaymentLink /invoice вернул {(int)resp.StatusCode}",
+                    ((int)resp.StatusCode).ToString());
+
+            using var doc = JsonDocument.Parse(responseText);
+            var root = doc.RootElement;
+            var status = root.TryGetProperty("status", out var s) ? (s.GetString() ?? "") : "";
+
+            if (string.Equals(status, "error", StringComparison.OrdinalIgnoreCase))
+            {
+                var errCode = root.TryGetProperty("errorcode", out var ec) ? ec.GetString() : null;
+                var errText = root.TryGetProperty("errortext", out var et) ? et.GetString() : null;
+                return PaymentResult.Failed(
+                    string.IsNullOrEmpty(errText) ? "PaymentLink отказал в выставлении счёта" : errText,
+                    errCode);
+            }
+
+            // status == "wait" — счёт выставлен, ждём оплаты.
+            var transId = root.TryGetProperty("transID", out var ti) ? ti.GetString() : null;
+            var payUrl  = root.TryGetProperty("payURL",  out var pu) ? pu.GetString() : null;
+
+            if (string.IsNullOrEmpty(payUrl))
+                return PaymentResult.Failed("PaymentLink не вернул payURL для редиректа");
+
+            _log.LogInformation(
+                "PaymentLink → /invoice prepared txn={Txn} transID={TransId} payURL={PayUrl}",
+                ourTransactionId, transId, payUrl);
+
+            return PaymentResult.Successful(
+                transactionId:         ourTransactionId,
+                redirectUrl:           payUrl,
+                providerTransactionId: transId);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "PaymentLink /invoice threw");
+            return PaymentResult.Failed("Сетевая ошибка при обращении к PaymentLink");
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // GetPaymentStatusAsync — used by /Account/Order pages. Reads from DB
+    // (poller service does the actual /operate calls).
+    // ════════════════════════════════════════════════════════════════════
 
     public async Task<PaymentStatusResult> GetPaymentStatusAsync(string transactionId, CancellationToken ct = default)
     {
@@ -244,10 +346,15 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         };
     }
 
-    // ────────────────────────────────────────────────────────────────────
-    // Webhook — application/x-www-form-urlencoded body posted by PaymentLink.
-    // ────────────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    // Webhooks
+    // ════════════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Confirmation webhook (LK setting "Payment Confirmation Request URL").
+    /// PaymentLink POSTs this BEFORE charging. Response must be the literal
+    /// transID; any other body aborts the operation with errcode=130.
+    /// </summary>
     public async Task<WebhookValidationResult> ValidateWebhookAsync(
         Dictionary<string, string> headers, string body, CancellationToken ct = default)
     {
@@ -256,9 +363,6 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         if (string.IsNullOrEmpty(cfg.ApiKey) || string.IsNullOrEmpty(cfg.SecretKey))
             return WebhookValidationResult.Invalid("PaymentLink: ключи не заданы");
 
-        // Body comes as `key=val&key=val…` — parse with the same helper used
-        // by ASP.NET form binding to avoid edge cases (URL-encoded values,
-        // empty fields, etc.).
         var form = QueryHelpers.ParseQuery(body)
             .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
 
@@ -266,7 +370,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
         if (!PaymentLinkSignatureHelper.VerifyConfirmationWebhook(form, cfg.ApiKey, cfg.SecretKey, algo))
         {
-            _log.LogWarning("PaymentLink webhook signature mismatch. Body: {Body}", body);
+            _log.LogWarning("PaymentLink confirmation webhook signature mismatch. Body: {Body}", body);
             return WebhookValidationResult.Invalid("Неверная подпись webhook");
         }
 
@@ -274,14 +378,6 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var transId  = form.GetValueOrDefault("transID") ?? "";
         var opertype = (form.GetValueOrDefault("opertype") ?? "").ToLowerInvariant();
 
-        // Map Payment Confirmation Request URL operations:
-        //   pay         → payment is being approved, treat as Completed
-        //   reversal    → refund / cancellation
-        //   terminate   → capture of pre-authorised amount → Completed
-        //   unblock     → release of held funds (effectively cancel)
-        //   recurring   → scheduled recurring charge → Completed
-        // PaymentLink expects us to respond with the `transID` value to
-        // approve - any other body aborts the operation.
         var newStatus = opertype switch
         {
             "pay"       => PaymentStatus.Completed,
@@ -298,7 +394,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             System.Globalization.CultureInfo.InvariantCulture, out amount);
 
         _log.LogInformation(
-            "PaymentLink webhook accepted: txn={Number} transID={TransId} opertype={OpType} → {Status}",
+            "PaymentLink confirmation webhook accepted: txn={Number} transID={TransId} opertype={OpType} → {Status}",
             number, transId, opertype, newStatus);
 
         return new WebhookValidationResult
@@ -308,20 +404,150 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             NewStatus     = newStatus,
             Amount        = amount,
             RawData       = body,
-            // CRITICAL: PaymentLink requires the response body to be exactly the
-            // transID value (plain text, no JSON, no quotes). Any other body
-            // causes them to abort the operation. The controller honors
-            // ResponseBody when it sees a 200 OK with valid signature.
             ResponseBody  = transId,
         };
+    }
+
+    /// <summary>
+    /// Status webhook (LK setting "Payment Status Update URL"). PaymentLink
+    /// POSTs this AFTER a successful charge. Response must be the literal
+    /// "OK"; any other body causes them to retry the notification for hours.
+    /// Different signature canonical from the confirmation webhook.
+    /// </summary>
+    public async Task<WebhookValidationResult> ValidateStatusWebhookAsync(
+        Dictionary<string, string> headers, string body, CancellationToken ct = default)
+    {
+        var cfg = await LoadConfigAsync(ct);
+        if (cfg == null) return WebhookValidationResult.Invalid("PaymentLink не настроен");
+        if (string.IsNullOrEmpty(cfg.ApiKey) || string.IsNullOrEmpty(cfg.SecretKey))
+            return WebhookValidationResult.Invalid("PaymentLink: ключи не заданы");
+
+        var form = QueryHelpers.ParseQuery(body)
+            .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+
+        var algo = ReadAlgo(cfg.Settings);
+
+        if (!PaymentLinkSignatureHelper.VerifyStatusWebhook(form, cfg.ApiKey, cfg.SecretKey, algo))
+        {
+            _log.LogWarning("PaymentLink status webhook signature mismatch. Body: {Body}", body);
+            return WebhookValidationResult.Invalid("Неверная подпись status-webhook");
+        }
+
+        var number  = form.GetValueOrDefault("number") ?? "";
+        var transId = form.GetValueOrDefault("transID") ?? "";
+
+        decimal amount = 0;
+        decimal.TryParse(form.GetValueOrDefault("payamount") ?? form.GetValueOrDefault("amount"),
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out amount);
+
+        _log.LogInformation(
+            "PaymentLink status webhook accepted: txn={Number} transID={TransId} → Completed",
+            number, transId);
+
+        // Status webhook only fires after successful settlement → Completed.
+        return new WebhookValidationResult
+        {
+            IsValid       = true,
+            TransactionId = number,
+            NewStatus     = PaymentStatus.Completed,
+            Amount        = amount,
+            RawData       = body,
+            ResponseBody  = "OK", // спецификация: «должны быть возвращены символы OK»
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Status polling — used by PaymentLinkStatusPollerService for txns where
+    // no callback has arrived (PL only pushes callbacks for successes).
+    // ════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Polls PaymentLink's /api/payment/operate with opertype=check for the
+    /// given provider transID. Returns the parsed status (OK/error/wait/etc).
+    /// Caller is responsible for applying status mapping + DB updates.
+    /// </summary>
+    public async Task<PaymentLinkOperateResult> PollOperateStatusAsync(
+        string providerTransactionId, CancellationToken ct = default)
+    {
+        var cfg = await LoadConfigAsync(ct);
+        if (cfg == null)
+            return new PaymentLinkOperateResult { Status = "error", ErrorText = "PaymentLink не настроен" };
+        if (string.IsNullOrEmpty(cfg.ApiKey) || string.IsNullOrEmpty(cfg.SecretKey) ||
+            string.IsNullOrEmpty(cfg.MerchantId))
+            return new PaymentLinkOperateResult { Status = "error", ErrorText = "PaymentLink: ключи не заданы" };
+
+        var algo = ReadAlgo(cfg.Settings);
+        var signature = PaymentLinkSignatureHelper.BuildOperateCheck(
+            opertype:   "check",
+            account:    cfg.MerchantId,
+            transId:    providerTransactionId,
+            secretKey1: cfg.ApiKey,
+            secretKey2: cfg.SecretKey,
+            algo:       algo);
+
+        var url = ReadBaseUrl(cfg) + "/api/payment/operate";
+        var http = _httpFactory.CreateClient(HttpClientName);
+
+        try
+        {
+            var body = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("opertype",  "check"),
+                new KeyValuePair<string, string>("account",   cfg.MerchantId),
+                new KeyValuePair<string, string>("transID",   providerTransactionId),
+                new KeyValuePair<string, string>("signature", signature),
+            });
+
+            using var resp = await http.PostAsync(url, body, ct);
+            var responseText = await resp.Content.ReadAsStringAsync(ct);
+
+            if (!resp.IsSuccessStatusCode)
+                return new PaymentLinkOperateResult
+                {
+                    Status    = "error",
+                    ErrorText = $"HTTP {(int)resp.StatusCode}: {responseText}",
+                };
+
+            using var doc = JsonDocument.Parse(responseText);
+            var root = doc.RootElement;
+
+            var status = (root.TryGetProperty("status", out var s) ? s.GetString() : null) ?? "";
+            decimal finalAmount = 0;
+            if (root.TryGetProperty("finalamount", out var fa))
+            {
+                if (fa.ValueKind == JsonValueKind.String)
+                    decimal.TryParse(fa.GetString(),
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture, out finalAmount);
+                else if (fa.ValueKind == JsonValueKind.Number)
+                    finalAmount = fa.GetDecimal();
+            }
+
+            return new PaymentLinkOperateResult
+            {
+                Status      = status,
+                TransId     = root.TryGetProperty("transID",  out var ti) ? ti.GetString() : null,
+                Number      = root.TryGetProperty("number",   out var n)  ? n.GetString()  : null,
+                FinalAmount = finalAmount,
+                ErrorCode   = root.TryGetProperty("errorcode", out var ec) ? ec.GetString() : null,
+                ErrorText   = root.TryGetProperty("errortext", out var et) ? et.GetString() : null,
+                Raw         = responseText,
+            };
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "PaymentLink /operate threw for transID={TransId}", providerTransactionId);
+            return new PaymentLinkOperateResult { Status = "error", ErrorText = ex.Message };
+        }
     }
 
     public Task<PaymentResult> RefundAsync(string transactionId, decimal? amount = null, CancellationToken ct = default)
         => Task.FromResult(PaymentResult.Failed("Возвраты в PaymentLink делаются вручную через ЛК"));
 
-    // ────────────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
     // Helpers
-    // ────────────────────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
 
     private async Task<PaymentProviderConfig?> LoadConfigAsync(CancellationToken ct)
         => await _db.PaymentProviderConfigs.AsNoTracking()
@@ -329,12 +555,6 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
     private static string ReadAlgo(string? settingsJson)
     {
-        // PaymentLink LK has a "HMAC Signature Hash" checkbox; UNCHECKED (the
-        // default) means MD5 with keys appended to the canonical string. Most
-        // merchants leave it off, so default to md5 here. Override via
-        // Settings JSON {"algo":"hmac_sha256"} when the merchant ticks the
-        // box (verifiable: their failure response shows a `control_string`
-        // ending in `:key1:key2` for md5 vs no trailing keys for hmac).
         if (string.IsNullOrWhiteSpace(settingsJson)) return "md5";
         try
         {
@@ -346,24 +566,61 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         return "md5";
     }
 
-    internal static string ReadTargetUrl(PaymentProviderConfig cfg)
+    /// <summary>
+    /// Reads the protocol+host base for PaymentLink endpoints. Settings JSON
+    /// can override via <c>{"baseUrl":"https://..."}</c>; for backward
+    /// compatibility we also recognise the older <c>"targetUrl"</c> key by
+    /// stripping its <c>/api/payment/start</c> suffix. Otherwise selects test
+    /// vs prod based on <see cref="PaymentProviderConfig.IsTestMode"/>.
+    /// </summary>
+    internal static string ReadBaseUrl(PaymentProviderConfig cfg)
     {
-        // 1. Explicit override in Settings JSON: {"targetUrl":"https://..."}
         if (!string.IsNullOrWhiteSpace(cfg.Settings))
         {
             try
             {
                 using var doc = JsonDocument.Parse(cfg.Settings);
+                if (doc.RootElement.TryGetProperty("baseUrl", out var b))
+                {
+                    var v = b.GetString();
+                    if (!string.IsNullOrWhiteSpace(v)) return v.TrimEnd('/');
+                }
                 if (doc.RootElement.TryGetProperty("targetUrl", out var t))
                 {
-                    var v = t.GetString();
-                    if (!string.IsNullOrWhiteSpace(v)) return v.TrimEnd('/');
+                    var v = (t.GetString() ?? "").TrimEnd('/');
+                    const string startSuffix = "/api/payment/start";
+                    if (v.EndsWith(startSuffix, StringComparison.OrdinalIgnoreCase))
+                        v = v.Substring(0, v.Length - startSuffix.Length);
+                    if (!string.IsNullOrWhiteSpace(v)) return v;
                 }
             }
             catch { /* fall through */ }
         }
-        // 2. IsTestMode flag → use test endpoint automatically
-        return cfg.IsTestMode ? TestTargetUrl : TargetUrl;
+        return cfg.IsTestMode ? TestBaseUrl : BaseUrl;
     }
 
+    /// <summary>Compatibility shim — used by PaymentLinkStart.cshtml view.</summary>
+    internal static string ReadTargetUrl(PaymentProviderConfig cfg)
+        => ReadBaseUrl(cfg) + "/api/payment/start";
+
+    private static string NormalizePhone(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return "79000000000";
+        var digits = new string(raw.Where(char.IsDigit).ToArray());
+        if (digits.Length == 11 && digits.StartsWith("8"))
+            digits = "7" + digits.Substring(1);
+        return string.IsNullOrEmpty(digits) ? "79000000000" : digits;
+    }
+}
+
+/// <summary>Lightweight DTO for /api/payment/operate poll responses.</summary>
+public sealed class PaymentLinkOperateResult
+{
+    public string Status { get; set; } = "";
+    public string? TransId { get; set; }
+    public string? Number { get; set; }
+    public decimal FinalAmount { get; set; }
+    public string? ErrorCode { get; set; }
+    public string? ErrorText { get; set; }
+    public string? Raw { get; set; }
 }

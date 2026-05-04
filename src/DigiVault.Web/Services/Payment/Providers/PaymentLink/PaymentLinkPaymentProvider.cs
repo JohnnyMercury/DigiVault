@@ -108,6 +108,13 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ? $"Order {ourTransactionId}"
             : request.Description;
 
+        // cf1 must be `userid:<our-user-id>` per PaymentLink support guidance —
+        // they use this for cross-merchant antifraud (linking the same buyer
+        // across our shops). When cf1 is set, the helper auto-includes
+        // empty cf2/cf3 in the signature so the canonical string ends in
+        // `userid:X:::k1:k2`, which is what their docs show.
+        var cf1Value = $"userid:{request.UserId}";
+
         var signature = PaymentLinkSignatureHelper.Build(
             amount:      request.Amount,
             amountCurr:  amountCurr,
@@ -118,8 +125,8 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             account:     cfg.MerchantId,
             paytoken:    null,
             backUrl:     request.SuccessUrl,
-            cf1:         request.OrderId?.ToString(),
-            cf2:         request.UserId,
+            cf1:         cf1Value,
+            cf2:         null,
             cf3:         null,
             secretKey1:  cfg.ApiKey,
             secretKey2:  cfg.SecretKey,
@@ -170,13 +177,15 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["account"]     = cfg.MerchantId,
             ["backURL"]     = request.SuccessUrl,
             ["email"]       = customerEmail,
-            // Placeholder phone in international RU format (spec example:
-            // 79991234567 — country code + 10 digits, no plus). Real phone is
-            // not collected today; this is enough to pass the validator.
-            ["phone"]       = "79000000000",
+            // Use the computed customerPhone (real number from user.Phone if
+            // present, falling back to placeholder). Was previously hardcoded
+            // to the placeholder by mistake — that meant antifraud saw the
+            // same phone on every payment regardless of who was paying.
+            ["phone"]       = customerPhone,
             ["lang"]        = "ru",
-            ["cf1"]         = request.OrderId?.ToString(),
-            ["cf2"]         = request.UserId,
+            ["cf1"]         = cf1Value,
+            // cf2/cf3 left empty intentionally; helper still includes them in
+            // the signature when cf1 is set, per spec.
             ["signature"]   = signature,
         };
 

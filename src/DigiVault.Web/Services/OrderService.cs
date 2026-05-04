@@ -267,7 +267,12 @@ public class OrderService : IOrderService
                 Currency    = "RUB",
                 Method      = method,
                 Email       = user?.Email,
-                Description = $"Заказ {orderNumber}: {gameProduct.Name}",
+                Phone       = user?.PhoneNumber,
+                // Generic neutral description — full orderNumber and product
+                // name kept off the PSP-side payload to deny antifraud
+                // brand-clustering. Reconciliation happens via
+                // merchantTransactionId.
+                Description = $"Покупка №{order.Id}",
                 OrderId     = order.Id,
                 SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
                 CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
@@ -424,7 +429,9 @@ public class OrderService : IOrderService
                 Currency    = "RUB",
                 Method      = method,
                 Email       = user?.Email,
-                Description = $"Пополнение Steam: {bonusedDisplay} ({orderNumber})",
+                // Generic neutral description (see note in CreateExternal-
+                // PaymentOrderAsync above).
+                Description = $"Пополнение №{order.Id}",
                 OrderId     = order.Id,
                 SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
                 CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",

@@ -94,8 +94,10 @@ public class OverpayPaymentProvider : IPaymentProvider
             return PaymentResult.Failed("Overpay: не заданы ApiKey + SecretKey (Basic auth).");
 
         // merchantTransactionId - наш внутренний txn-id, который Overpay вернёт
-        // в webhook; ищем PaymentTransaction по нему.
-        var ourTransactionId = "kz-" + Guid.NewGuid().ToString("N");
+        // в webhook; ищем PaymentTransaction по нему. Rotating 2-letter prefix
+        // via TxnIdHelper avoids antifraud/aggregator fingerprinting on a
+        // fixed brand-prefix.
+        var ourTransactionId = TxnIdHelper.Generate(maxLength: 34);
 
         // Map our high-level method to Overpay's paymentMethods enum:
         //   Card → "card"

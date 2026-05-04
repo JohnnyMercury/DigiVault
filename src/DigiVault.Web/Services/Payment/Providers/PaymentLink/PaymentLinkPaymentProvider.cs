@@ -94,8 +94,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             return PaymentResult.Failed("PaymentLink: не заданы секретные ключи (ApiKey + SecretKey).");
 
         // Number must be ≤ 32 chars; allowed: 0-9 a-z A-Z а-я А-Я . - / space.
-        // We use a short uuid to stay within budget and fit the alphabet.
-        var ourTransactionId = "kz" + Guid.NewGuid().ToString("N").Substring(0, 24);
+        // Rotating prefix via TxnIdHelper avoids antifraud/aggregator
+        // fingerprinting on a fixed brand-prefix.
+        var ourTransactionId = TxnIdHelper.Generate(maxLength: 28);
 
         var algo = ReadAlgo(cfg.Settings);
         var trtype = 1;
@@ -126,12 +127,30 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
         // PaymentLink LK setting "Contact data are required" + their test
         // server reject the form with errorcode 311 ("There are no required
-        // contact fields (phone, email)") if neither field is present. Ensure
-        // we always send a non-empty email — fall back to a no-reply address
-        // for guest checkouts where request.Email is null.
+        // contact fields (phone, email)") if neither field is present. We
+        // need to send BOTH email and phone. Use the real values from the
+        // user's profile when available (best for antifraud and fiscal
+        // receipts) and fall back to safe placeholders otherwise.
         var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
             ? request.Email
             : "noreply@key-zona.com";
+
+        // Strip non-digit chars from a stored phone (DB rows may contain
+        // formatting like "+7 (999) 123-45-67"); spec wants raw digits only,
+        // country code first, no leading plus, e.g. 79991234567.
+        string customerPhone;
+        if (!string.IsNullOrWhiteSpace(request.Phone))
+        {
+            var digits = new string(request.Phone.Where(char.IsDigit).ToArray());
+            // Treat as RU number if it starts with 8 (legacy domestic format).
+            if (digits.Length == 11 && digits.StartsWith("8"))
+                digits = "7" + digits.Substring(1);
+            customerPhone = string.IsNullOrEmpty(digits) ? "79000000000" : digits;
+        }
+        else
+        {
+            customerPhone = "79000000000";
+        }
 
         // Form fields the redirect page will POST to PaymentLink. Stored as
         // JSON in ProviderData so the page can rebuild them by transactionId.

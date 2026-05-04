@@ -22,6 +22,9 @@ public class PaymentRequest
     /// <summary>Email пользователя для чека</summary>
     public string? Email { get; set; }
 
+    /// <summary>Телефон пользователя для чека / antifraud / 3DS</summary>
+    public string? Phone { get; set; }
+
     /// <summary>Описание платежа</summary>
     public string? Description { get; set; }
 

@@ -38,8 +38,29 @@ public class WebhooksController : ControllerBase
     [HttpPost("{provider}")]
     public async Task<IActionResult> HandleWebhook(string provider)
     {
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
+        // ASP.NET Core auto-parses application/x-www-form-urlencoded bodies
+        // into Request.Form during model binding, leaving Request.Body empty
+        // by the time the action runs. PaymentLink (and most "form-style"
+        // PSPs) post webhooks with that content type, so reading Request.Body
+        // yields zero bytes — webhook validators then fail signature checks
+        // and the PSP marks the payment as unconfirmed (errcode=130 in
+        // PaymentLink's case).
+        //
+        // Reconstruct the original `key=value&key=value` body from Request.
+        // Form when present; fall back to Request.Body for JSON-style PSPs.
+        string body;
+        if (Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync();
+            body = string.Join("&", form.SelectMany(kv =>
+                kv.Value.Select(v =>
+                    $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(v ?? "")}")));
+        }
+        else
+        {
+            using var reader = new StreamReader(Request.Body);
+            body = await reader.ReadToEndAsync();
+        }
 
         var headers = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
 

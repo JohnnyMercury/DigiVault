@@ -124,6 +124,15 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             secretKey2:  cfg.SecretKey,
             algo:        algo);
 
+        // PaymentLink LK setting "Contact data are required" + their test
+        // server reject the form with errorcode 311 ("There are no required
+        // contact fields (phone, email)") if neither field is present. Ensure
+        // we always send a non-empty email — fall back to a no-reply address
+        // for guest checkouts where request.Email is null.
+        var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
+            ? request.Email
+            : "noreply@key-zona.com";
+
         // Form fields the redirect page will POST to PaymentLink. Stored as
         // JSON in ProviderData so the page can rebuild them by transactionId.
         var formFields = new Dictionary<string, string?>
@@ -137,7 +146,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["trtype"]      = trtype.ToString(),
             ["account"]     = cfg.MerchantId,
             ["backURL"]     = request.SuccessUrl,
-            ["email"]       = request.Email,
+            ["email"]       = customerEmail,
             ["lang"]        = "ru",
             ["cf1"]         = request.OrderId?.ToString(),
             ["cf2"]         = request.UserId,

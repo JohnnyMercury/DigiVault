@@ -148,7 +148,30 @@ if (builder.Configuration.GetValue<bool>("Storage:UseMinIO", false))
     builder.Services.AddHostedService<DigiVault.Web.Services.MinioImageSeeder>();
 }
 
+// Trust X-Forwarded-* headers from the reverse proxy (nginx/Cloudflare) so
+// Request.Scheme reflects the public protocol (https) rather than the proxy→
+// app hop (http). Without this, every Url.Action / $"{Request.Scheme}://..."
+// produces http:// links — which then trip browser warnings, mixed-content
+// blocks, and PaymentLink/Enot/Overpay returning users via insecure URLs.
+builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(opts =>
+{
+    opts.ForwardedHeaders =
+        Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+        Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto |
+        Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
+    // The default known-network / known-proxy lists exclude Docker bridge IPs
+    // and Cloudflare ranges, so the headers from nginx-in-the-same-compose
+    // would be ignored. Clear the lists to trust whatever the proxy injects;
+    // safe because the app port (8082) is not exposed to the public internet.
+    opts.KnownNetworks.Clear();
+    opts.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+// Must run before anything that reads Request.Scheme/Host (auth cookies,
+// HTTPS redirect, generated URLs in views, payment-provider callback URLs).
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

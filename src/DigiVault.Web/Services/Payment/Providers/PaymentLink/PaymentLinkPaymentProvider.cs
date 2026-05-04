@@ -135,6 +135,10 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
         // Form fields the redirect page will POST to PaymentLink. Stored as
         // JSON in ProviderData so the page can rebuild them by transactionId.
+        // Both email AND phone are included to satisfy PaymentLink's "311 -
+        // There are no required contact fields" validator: their LK has a
+        // "Contact data are required" toggle and the test server appears to
+        // enforce both fields regardless of the toggle state.
         var formFields = new Dictionary<string, string?>
         {
             ["amount"]      = request.Amount.ToString("0.##",
@@ -147,11 +151,22 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["account"]     = cfg.MerchantId,
             ["backURL"]     = request.SuccessUrl,
             ["email"]       = customerEmail,
+            // Placeholder phone in international RU format (spec example:
+            // 79991234567 — country code + 10 digits, no plus). Real phone is
+            // not collected today; this is enough to pass the validator.
+            ["phone"]       = "79000000000",
             ["lang"]        = "ru",
             ["cf1"]         = request.OrderId?.ToString(),
             ["cf2"]         = request.UserId,
             ["signature"]   = signature,
         };
+
+        // Log everything except signature so we can debug rejections against
+        // the LK without leaking the secret-derived hash.
+        _log.LogInformation(
+            "PaymentLink form fields: {Fields}",
+            string.Join(", ", formFields.Where(kv => kv.Key != "signature")
+                                        .Select(kv => $"{kv.Key}={kv.Value}")));
 
         var providerData = JsonSerializer.Serialize(new
         {

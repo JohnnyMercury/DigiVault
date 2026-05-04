@@ -25,6 +25,15 @@ public class WebhookValidationResult
     /// <summary>Сырые данные webhook (для логирования)</summary>
     public string? RawData { get; set; }
 
+    /// <summary>
+    /// Provider-specific plain-text response that must be written back to the
+    /// HTTP response when sending 200 OK. PaymentLink, for example, requires
+    /// the response body to be the literal transID value to confirm acceptance
+    /// of the payment - any other body causes them to abort the charge.
+    /// When null, the controller uses its default JSON envelope.
+    /// </summary>
+    public string? ResponseBody { get; set; }
+
     public static WebhookValidationResult Valid(string transactionId, PaymentStatus status, decimal amount)
     {
         return new WebhookValidationResult

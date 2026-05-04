@@ -17,8 +17,16 @@ public interface IPaymentService
     Task<PaymentResult> CreateDepositAsync(string userId, decimal amount, PaymentMethod method,
         string? clientIp = null, string? siteBaseUrl = null, string? providerName = null);
 
-    /// <summary>Обработать webhook от провайдера</summary>
-    Task<bool> ProcessWebhookAsync(string providerName, Dictionary<string, string> headers, string body);
+    /// <summary>
+    /// Обработать webhook от провайдера. Возвращает <see cref="WebhookValidationResult"/>
+    /// чтобы контроллер мог:
+    ///   • вернуть <see cref="WebhookValidationResult.ResponseBody"/> как plain-text
+    ///     (PaymentLink требует raw transID в ответе, не JSON);
+    ///   • найти OrderId по <see cref="WebhookValidationResult.TransactionId"/>
+    ///     для запуска фулфилмента сразу же.
+    /// Возвращает null, если провайдер не зарегистрирован.
+    /// </summary>
+    Task<WebhookValidationResult?> ProcessWebhookAsync(string providerName, Dictionary<string, string> headers, string body);
 
     /// <summary>Получить статус платежа</summary>
     Task<PaymentStatusResult?> GetPaymentStatusAsync(string transactionId);
@@ -153,7 +161,7 @@ public class PaymentService : IPaymentService
         return result;
     }
 
-    public async Task<bool> ProcessWebhookAsync(
+    public async Task<WebhookValidationResult?> ProcessWebhookAsync(
         string providerName,
         Dictionary<string, string> headers,
         string body)
@@ -164,7 +172,7 @@ public class PaymentService : IPaymentService
         if (provider == null)
         {
             _logger.LogWarning("Unknown provider in webhook: {Provider}", providerName);
-            return false;
+            return null;
         }
 
         var validationResult = await provider.ValidateWebhookAsync(headers, body);
@@ -174,13 +182,13 @@ public class PaymentService : IPaymentService
             _logger.LogWarning(
                 "Webhook validation failed for {Provider}: {Error}",
                 providerName, validationResult.ErrorMessage);
-            return false;
+            return validationResult;
         }
 
         if (string.IsNullOrEmpty(validationResult.TransactionId))
         {
             _logger.LogWarning("No transaction ID in webhook from {Provider}", providerName);
-            return false;
+            return validationResult;
         }
 
         // Обновляем статус транзакции
@@ -193,7 +201,7 @@ public class PaymentService : IPaymentService
             _logger.LogWarning(
                 "Transaction not found for webhook: {TransactionId}",
                 validationResult.TransactionId);
-            return false;
+            return validationResult;
         }
 
         if (validationResult.NewStatus.HasValue)
@@ -204,6 +212,20 @@ public class PaymentService : IPaymentService
             if (validationResult.NewStatus == PaymentStatus.Completed)
             {
                 transaction.CompletedAt = DateTime.UtcNow;
+
+                // Bump linked Order from Pending → Processing so the Fulfilment
+                // Sweep safety-net (which runs every 30s and now only picks
+                // Processing orders) will deliver the goods even if the inline
+                // DeliverOrderAsync call from WebhooksController fails.
+                if (transaction.OrderId.HasValue)
+                {
+                    var order = await _context.Orders.FindAsync(transaction.OrderId.Value);
+                    if (order != null && order.Status == OrderStatus.Pending)
+                    {
+                        order.Status = OrderStatus.Processing;
+                    }
+                }
+
                 await CompletePaymentInternalAsync(transaction);
             }
 
@@ -214,7 +236,7 @@ public class PaymentService : IPaymentService
             "Webhook processed for {TransactionId}, new status: {Status}",
             transaction.TransactionId, transaction.Status);
 
-        return true;
+        return validationResult;
     }
 
     public async Task<PaymentStatusResult?> GetPaymentStatusAsync(string transactionId)

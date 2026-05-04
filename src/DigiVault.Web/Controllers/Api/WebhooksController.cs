@@ -49,42 +49,52 @@ public class WebhooksController : ControllerBase
         // 1. Hand off to PaymentService — it validates the signature, finds the
         //    PaymentTransaction by id, updates its status, and (for top-ups)
         //    credits the user's balance.
-        var processed = await _paymentService.ProcessWebhookAsync(provider, headers, body);
+        var result = await _paymentService.ProcessWebhookAsync(provider, headers, body);
 
-        if (!processed)
+        if (result == null)
         {
-            // Signature failed / unknown transaction / unsupported provider —
-            // PaymentService logged the reason. Return 200 so the provider
-            // doesn't retry indefinitely (most providers stop on 200).
-            return Ok(new { status = "rejected", provider });
+            return Ok(new { status = "rejected", error = "unknown provider", provider });
+        }
+
+        if (!result.IsValid)
+        {
+            // Signature failed / parse failed. Return 200 so the provider
+            // doesn't retry indefinitely; most stop on 200.
+            return Ok(new { status = "rejected", error = result.ErrorMessage, provider });
         }
 
         // 2. If this webhook closed an order-linked payment, kick off fulfilment
         //    immediately. The background sweeper would also catch it within 30 s,
         //    but doing it inline gets the customer their product faster.
-        try
+        if (result.NewStatus == Core.Enums.PaymentStatus.Completed
+            && !string.IsNullOrEmpty(result.TransactionId))
         {
-            var txQuery = _db.PaymentTransactions
-                .Where(t => t.Status == Core.Enums.PaymentStatus.Completed
-                         && t.OrderId != null)
-                .OrderByDescending(t => t.UpdatedAt);
-
-            // Pick the most recently updated order-linked completed transaction
-            // for this provider — there's no clean way to thread the specific
-            // transaction from PaymentService.ProcessWebhookAsync today, so we
-            // best-effort find it.
-            var recent = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
-                .FirstOrDefaultAsync(txQuery);
-
-            if (recent?.OrderId is int orderId)
+            try
             {
-                _logger.LogInformation("Webhook → triggering fulfilment for Order {OrderId}", orderId);
-                await _fulfilment.DeliverOrderAsync(orderId);
+                var tx = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions
+                    .FirstOrDefaultAsync(_db.PaymentTransactions
+                        .Where(t => t.TransactionId == result.TransactionId
+                                 || t.ProviderTransactionId == result.TransactionId));
+
+                if (tx?.OrderId is int orderId)
+                {
+                    _logger.LogInformation("Webhook → triggering fulfilment for Order {OrderId}", orderId);
+                    await _fulfilment.DeliverOrderAsync(orderId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Inline fulfilment after webhook failed; safety-net sweeper will retry");
             }
         }
-        catch (Exception ex)
+
+        // 3. Provider-specific response. PaymentLink REQUIRES the body to be
+        //    exactly the transID value (plain text). Any other body causes them
+        //    to abort the operation. Other providers (Enot, Overpay) accept
+        //    arbitrary 200 OK so the JSON envelope is fine.
+        if (!string.IsNullOrEmpty(result.ResponseBody))
         {
-            _logger.LogError(ex, "Inline fulfilment after webhook failed; safety-net sweeper will retry");
+            return Content(result.ResponseBody, "text/plain");
         }
 
         return Ok(new { status = "accepted", provider });

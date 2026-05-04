@@ -212,25 +212,42 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
         var algo = ReadAlgo(cfg.Settings);
 
-        if (!PaymentLinkSignatureHelper.Verify(form, cfg.ApiKey, cfg.SecretKey, algo))
+        if (!PaymentLinkSignatureHelper.VerifyConfirmationWebhook(form, cfg.ApiKey, cfg.SecretKey, algo))
         {
             _log.LogWarning("PaymentLink webhook signature mismatch. Body: {Body}", body);
             return WebhookValidationResult.Invalid("Неверная подпись webhook");
         }
 
-        var number = form.GetValueOrDefault("number") ?? "";
-        var resultRaw = (form.GetValueOrDefault("result") ?? "").ToLowerInvariant();
-        var statusRaw = (form.GetValueOrDefault("status") ?? "").ToLowerInvariant();
+        var number   = form.GetValueOrDefault("number") ?? "";
+        var transId  = form.GetValueOrDefault("transID") ?? "";
+        var opertype = (form.GetValueOrDefault("opertype") ?? "").ToLowerInvariant();
 
-        // PaymentLink uses several status conventions across endpoints. The
-        // webhook typically carries `result=ok|fail` plus a textual `status`;
-        // we map either form to our PaymentStatus enum below.
-        var newStatus = MapStatus(resultRaw, statusRaw);
+        // Map Payment Confirmation Request URL operations:
+        //   pay         → payment is being approved, treat as Completed
+        //   reversal    → refund / cancellation
+        //   terminate   → capture of pre-authorised amount → Completed
+        //   unblock     → release of held funds (effectively cancel)
+        //   recurring   → scheduled recurring charge → Completed
+        // PaymentLink expects us to respond with the `transID` value to
+        // approve - any other body aborts the operation.
+        var newStatus = opertype switch
+        {
+            "pay"       => PaymentStatus.Completed,
+            "terminate" => PaymentStatus.Completed,
+            "recurring" => PaymentStatus.Completed,
+            "reversal"  => PaymentStatus.Refunded,
+            "unblock"   => PaymentStatus.Cancelled,
+            _           => PaymentStatus.Pending,
+        };
 
         decimal amount = 0;
         decimal.TryParse(form.GetValueOrDefault("amount"),
             System.Globalization.NumberStyles.Any,
             System.Globalization.CultureInfo.InvariantCulture, out amount);
+
+        _log.LogInformation(
+            "PaymentLink webhook accepted: txn={Number} transID={TransId} opertype={OpType} → {Status}",
+            number, transId, opertype, newStatus);
 
         return new WebhookValidationResult
         {
@@ -239,6 +256,11 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             NewStatus     = newStatus,
             Amount        = amount,
             RawData       = body,
+            // CRITICAL: PaymentLink requires the response body to be exactly the
+            // transID value (plain text, no JSON, no quotes). Any other body
+            // causes them to abort the operation. The controller honors
+            // ResponseBody when it sees a 200 OK with valid signature.
+            ResponseBody  = transId,
         };
     }
 
@@ -286,15 +308,4 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         return cfg.IsTestMode ? TestTargetUrl : TargetUrl;
     }
 
-    private static PaymentStatus MapStatus(string result, string status)
-    {
-        if (result == "ok" || status == "ok" || status == "authorise" || status == "completed")
-            return PaymentStatus.Completed;
-        if (result == "fail" || status == "fail" || status == "failed" || status == "error")
-            return PaymentStatus.Failed;
-        if (status == "expired" || status == "timeout") return PaymentStatus.Expired;
-        if (status == "cancelled" || status == "canceled") return PaymentStatus.Cancelled;
-        if (status == "refund" || status == "refunded") return PaymentStatus.Refunded;
-        return PaymentStatus.Pending;
-    }
 }

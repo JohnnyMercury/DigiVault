@@ -63,9 +63,11 @@ public class PaymentProvidersController : AdminBaseController
         provider.IsEnabled = model.IsEnabled;
         provider.IsTestMode = model.IsTestMode;
         provider.Priority = model.Priority;
-        provider.ApiKey = model.ApiKey;
-        provider.SecretKey = model.SecretKey;
-        provider.MerchantId = model.MerchantId;
+        // Don't overwrite secrets with empty string — password inputs aren't
+        // pre-filled by browsers, so an unchanged field arrives as null/empty.
+        if (!string.IsNullOrWhiteSpace(model.ApiKey))    provider.ApiKey    = model.ApiKey;
+        if (!string.IsNullOrWhiteSpace(model.SecretKey)) provider.SecretKey = model.SecretKey;
+        if (!string.IsNullOrWhiteSpace(model.MerchantId)) provider.MerchantId = model.MerchantId;
         provider.Commission = model.Commission;
         provider.MinAmount = model.MinAmount;
         provider.MaxAmount = model.MaxAmount;

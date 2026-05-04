@@ -301,15 +301,21 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
     private static string ReadAlgo(string? settingsJson)
     {
-        if (string.IsNullOrWhiteSpace(settingsJson)) return "hmac_sha256";
+        // PaymentLink LK has a "HMAC Signature Hash" checkbox; UNCHECKED (the
+        // default) means MD5 with keys appended to the canonical string. Most
+        // merchants leave it off, so default to md5 here. Override via
+        // Settings JSON {"algo":"hmac_sha256"} when the merchant ticks the
+        // box (verifiable: their failure response shows a `control_string`
+        // ending in `:key1:key2` for md5 vs no trailing keys for hmac).
+        if (string.IsNullOrWhiteSpace(settingsJson)) return "md5";
         try
         {
             using var doc = JsonDocument.Parse(settingsJson);
             if (doc.RootElement.TryGetProperty("algo", out var a))
-                return a.GetString() ?? "hmac_sha256";
+                return a.GetString() ?? "md5";
         }
         catch { /* fall through */ }
-        return "hmac_sha256";
+        return "md5";
     }
 
     internal static string ReadTargetUrl(PaymentProviderConfig cfg)

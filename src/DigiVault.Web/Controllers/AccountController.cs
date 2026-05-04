@@ -455,12 +455,25 @@ public class AccountController : Controller
     /// seconds via the fulfilment background sweeper). We just route the
     /// user to the order details page.
     /// </summary>
-    [Authorize]
-    [HttpGet]
+    [HttpGet, HttpPost]
+    [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
     public async Task<IActionResult> PaymentSuccess(int orderId)
     {
+        // PaymentLink (and some other PSPs) POST the user back to backURL
+        // with form-data containing the payment result. We deliberately don't
+        // trust that body — webhook is the source of truth — and just route
+        // the user to a friendly destination. [Authorize] is intentionally
+        // omitted: a top-level cross-site POST often arrives without our
+        // SameSite=Lax auth cookie, so requiring auth here would bounce the
+        // user to /Login and lose the orderId context.
         var user = await _userManager.GetUserAsync(User);
-        if (user == null) return RedirectToAction("Login");
+        if (user == null)
+        {
+            // Public-facing "we got your payment" landing — they can log back
+            // in and find the order in their cabinet.
+            TempData["SuccessMessage"] = "Оплата прошла успешно. Войдите в аккаунт чтобы увидеть товар.";
+            return RedirectToAction(nameof(Login));
+        }
 
         var order = await _orderService.GetOrderAsync(user.Id, orderId);
         if (order == null) return RedirectToAction(nameof(Orders));
@@ -471,13 +484,18 @@ public class AccountController : Controller
 
     /// <summary>
     /// Landing after a cancelled/failed external payment.
+    /// Accepts POST too — same reasoning as <see cref="PaymentSuccess"/>.
     /// </summary>
-    [Authorize]
-    [HttpGet]
+    [HttpGet, HttpPost]
+    [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
     public async Task<IActionResult> PaymentFail(int orderId)
     {
         var user = await _userManager.GetUserAsync(User);
-        if (user == null) return RedirectToAction("Login");
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "Платёж не был завершён. Войдите чтобы попробовать снова.";
+            return RedirectToAction(nameof(Login));
+        }
 
         var order = await _orderService.GetOrderAsync(user.Id, orderId);
         TempData["ErrorMessage"] = "Платёж не был завершён. Попробуйте ещё раз или свяжитесь с поддержкой.";

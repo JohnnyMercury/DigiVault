@@ -65,6 +65,15 @@ builder.Services.AddHostedService<DigiVault.Web.Services.Fulfilment.OrderFulfilm
 
 // Payment infrastructure
 builder.Services.AddHttpClient(); // for Enot/other providers' outbound HTTP
+
+// Email/phone/IP substitution for whitelisted internal-test accounts. Singleton
+// because it's stateless after construction (just reads the option list once
+// into a HashSet for O(1) lookups). Used by every PSP integration so the
+// antifraud-bypass logic stays in one place.
+builder.Services.Configure<DigiVault.Web.Services.Payment.PaymentAnonymizationOptions>(
+    builder.Configuration.GetSection(
+        DigiVault.Web.Services.Payment.PaymentAnonymizationOptions.SectionName));
+builder.Services.AddSingleton<DigiVault.Web.Services.Payment.PaymentAnonymizer>();
 // NOTE: TestPaymentProvider is NOT registered. It auto-approves payments and
 // would shadow Enot for Card / SBP since IPaymentProviderFactory.GetProviderForMethod
 // just returns the first match. Bring it back only inside `if (env.IsDevelopment())`

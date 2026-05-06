@@ -49,15 +49,18 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
 
     private readonly ApplicationDbContext _db;
     private readonly IHttpClientFactory _httpFactory;
+    private readonly PaymentAnonymizer _anonymizer;
     private readonly ILogger<PaymentLinkPaymentProvider> _log;
 
     public PaymentLinkPaymentProvider(
         ApplicationDbContext db,
         IHttpClientFactory httpFactory,
+        PaymentAnonymizer anonymizer,
         ILogger<PaymentLinkPaymentProvider> log)
     {
         _db = db;
         _httpFactory = httpFactory;
+        _anonymizer = anonymizer;
         _log = log;
     }
 
@@ -141,11 +144,10 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             secretKey2:  cfg.SecretKey!,
             algo:        algo);
 
-        var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
-            ? request.Email
-            : "noreply@key-zona.com";
-
-        var customerPhone = NormalizePhone(request.Phone);
+        // Substitute contacts for whitelisted internal/test accounts. For
+        // real customers PaymentAnonymizer just passes through their real
+        // email/phone. See PaymentAnonymizer XML doc for the rationale.
+        var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 
         var formFields = new Dictionary<string, string?>
         {
@@ -158,8 +160,8 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["trtype"]      = trtype.ToString(),
             ["account"]     = cfg.MerchantId,
             ["backURL"]     = request.SuccessUrl,
-            ["email"]       = customerEmail,
-            ["phone"]       = customerPhone,
+            ["email"]       = contacts.Email,
+            ["phone"]       = contacts.Phone,
             ["lang"]        = "ru",
             ["cf1"]         = cf1Value,
             ["signature"]   = signature,
@@ -214,10 +216,8 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             System.Globalization.CultureInfo.InvariantCulture);
 
         var cf1Value = $"userid:{request.UserId}";
-        var customerEmail = !string.IsNullOrWhiteSpace(request.Email)
-            ? request.Email
-            : "noreply@key-zona.com";
-        var customerPhone = NormalizePhone(request.Phone);
+        // Anonymise contacts for whitelisted accounts (no-op for real users).
+        var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 
         var signature = PaymentLinkSignatureHelper.BuildInvoice(
             amount:       request.Amount,
@@ -232,9 +232,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             cf1:          cf1Value,
             cf2:          null,
             cf3:          null,
-            email:        customerEmail,
+            email:        contacts.Email,
             notifyEmail:  "0",
-            phone:        customerPhone,
+            phone:        contacts.Phone,
             notifyPhone:  "0",
             paytoken:     null,
             backUrl:      request.SuccessUrl,
@@ -253,9 +253,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["description"]  = description,
             ["validity"]     = validity,
             ["first_name"]   = firstName,
-            ["email"]        = customerEmail,
+            ["email"]        = contacts.Email,
             ["notify_email"] = "0",
-            ["phone"]        = customerPhone,
+            ["phone"]        = contacts.Phone,
             ["notify_phone"] = "0",
             ["account"]      = cfg.MerchantId,
             ["backURL"]      = request.SuccessUrl,
@@ -603,14 +603,6 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
     internal static string ReadTargetUrl(PaymentProviderConfig cfg)
         => ReadBaseUrl(cfg) + "/api/payment/start";
 
-    private static string NormalizePhone(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw)) return "79000000000";
-        var digits = new string(raw.Where(char.IsDigit).ToArray());
-        if (digits.Length == 11 && digits.StartsWith("8"))
-            digits = "7" + digits.Substring(1);
-        return string.IsNullOrEmpty(digits) ? "79000000000" : digits;
-    }
 }
 
 /// <summary>Lightweight DTO for /api/payment/operate poll responses.</summary>

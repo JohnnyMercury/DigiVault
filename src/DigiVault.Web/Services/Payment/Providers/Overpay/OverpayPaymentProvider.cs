@@ -45,13 +45,16 @@ public class OverpayPaymentProvider : IPaymentProvider
 
     private readonly ApplicationDbContext _db;
     private readonly IHttpClientFactory _httpFactory;
+    private readonly DigiVault.Web.Services.Payment.PaymentAnonymizer _anonymizer;
     private readonly ILogger<OverpayPaymentProvider> _log;
 
     public OverpayPaymentProvider(ApplicationDbContext db, IHttpClientFactory httpFactory,
+        DigiVault.Web.Services.Payment.PaymentAnonymizer anonymizer,
         ILogger<OverpayPaymentProvider> log)
     {
         _db = db;
         _httpFactory = httpFactory;
+        _anonymizer = anonymizer;
         _log = log;
     }
 
@@ -120,9 +123,10 @@ public class OverpayPaymentProvider : IPaymentProvider
             ["livetimeMinutes"]       = 60,
             ["description"]           = request.Description ?? $"Order {ourTransactionId}",
             ["returnUrl"]             = request.SuccessUrl,
-            ["client"]                = string.IsNullOrEmpty(request.Email)
-                                            ? null
-                                            : new Dictionary<string, string?> { ["email"] = request.Email },
+            // Anonymise email for whitelisted internal/test accounts so
+            // Overpay's antifraud doesn't cluster them. Real users keep
+            // their actual email (used for fiscal receipts on their side).
+            ["client"]                = BuildClientObject(request),
         };
 
         // Strip nulls so the validator stays clean.
@@ -316,6 +320,21 @@ public class OverpayPaymentProvider : IPaymentProvider
     private async Task<PaymentProviderConfig?> LoadConfigAsync(CancellationToken ct)
         => await _db.PaymentProviderConfigs.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Name == Name, ct);
+
+    /// <summary>
+    /// Builds Overpay's optional client.* sub-object. We anonymise the email
+    /// for whitelisted internal accounts (per PaymentAnonymizer policy) and
+    /// pass through real user email otherwise. Overpay's preflight schema
+    /// only exposes <c>client.email</c> for our use; phone/IP aren't body
+    /// fields here, but the anonymiser still computes them so future Overpay
+    /// API expansions can pick them up without re-touching this code.
+    /// </summary>
+    private Dictionary<string, string?>? BuildClientObject(PaymentRequest request)
+    {
+        var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
+        if (string.IsNullOrEmpty(contacts.Email)) return null;
+        return new Dictionary<string, string?> { ["email"] = contacts.Email };
+    }
 
     /// <summary>
     /// Builds an HttpClient with Basic auth header preset. The mTLS client

@@ -64,6 +64,30 @@ public class TelegramController : AdminBaseController
         return RedirectToAction(nameof(Index));
     }
 
+    // Hide/show the entire Telegram Premium card on the public site. The
+    // catalog/home views filter by GiftCard.IsActive, so flipping this flag
+    // removes the card (and all its tariffs) from listings without deleting
+    // anything.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleCard()
+    {
+        var premiumCard = await _context.GiftCards.FirstOrDefaultAsync(g => g.Slug == "telegram-premium");
+        if (premiumCard == null)
+        {
+            TempData["ErrorMessage"] = "Карточка Telegram Premium не найдена";
+            return RedirectToAction(nameof(Index));
+        }
+
+        premiumCard.IsActive = !premiumCard.IsActive;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = premiumCard.IsActive
+            ? "Telegram Premium снова виден на сайте"
+            : "Telegram Premium полностью скрыт с сайта";
+        return RedirectToAction(nameof(Index));
+    }
+
     // === Premium Products Management ===
 
     public async Task<IActionResult> CreateProduct()

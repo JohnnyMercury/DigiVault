@@ -17,6 +17,45 @@
     </a>
 </div>
 
+@if (premiumCard != null)
+{
+    <div class="data-card mb-4" style="border: 1px solid @(premiumCard.IsActive ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.45)");">
+        <div class="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                @if (premiumCard.IsActive)
+                {
+                    <div style="font-weight: 600; color: #22c55e;">
+                        <i class="bi bi-eye-fill me-1"></i>Товар виден на сайте
+                    </div>
+                    <small class="text-muted">Карточка «Telegram Premium» отображается в каталоге и на главной.</small>
+                }
+                else
+                {
+                    <div style="font-weight: 600; color: #ef4444;">
+                        <i class="bi bi-eye-slash-fill me-1"></i>Товар скрыт с сайта
+                    </div>
+                    <small class="text-muted">Карточка и все тарифы недоступны клиентам. Данные сохранены — можно вернуть одной кнопкой.</small>
+                }
+            </div>
+            <form asp-action="ToggleCard" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                @if (premiumCard.IsActive)
+                {
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Полностью скрыть Telegram Premium с сайта?');">
+                        <i class="bi bi-eye-slash me-1"></i>Скрыть с сайта
+                    </button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-eye me-1"></i>Показать на сайте
+                    </button>
+                }
+            </form>
+        </div>
+    </div>
+}
+
 <!-- Stats -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">

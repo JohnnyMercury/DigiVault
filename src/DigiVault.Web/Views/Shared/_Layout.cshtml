@@ -19,6 +19,11 @@
     // by Site:ShowLegalInfo so it can be flipped without a redeploy via the
     // env var Site__ShowLegalInfo. Default true: normal mode shows it.
     var showLegalInfo = Configuration.GetValue<bool>("Site:ShowLegalInfo", true);
+
+    // Public Telegram-channel link (footer icon + Поддержка section + mobile
+    // menu). Same flag pattern as ShowLegalInfo — flip Site:ShowTelegramChannel
+    // (or env Site__ShowTelegramChannel) to hide every entry point at once.
+    var showTelegramChannel = Configuration.GetValue<bool>("Site:ShowTelegramChannel", true);
 }
 <!DOCTYPE html>
 <html lang="ru" data-bs-theme="dark">
@@ -885,9 +890,12 @@
                 <a href="/Catalog/GiftCards" class="mobile-nav-item">
                     <i class="bi bi-gift"></i>Подарочные карты
                 </a>
-                <a href="https://t.me/keyzonacom" target="_blank" rel="noopener" class="mobile-nav-item">
-                    <i class="bi bi-megaphone"></i>Наш Telegram-канал
-                </a>
+                @if (showTelegramChannel)
+                {
+                    <a href="https://t.me/keyzonacom" target="_blank" rel="noopener" class="mobile-nav-item">
+                        <i class="bi bi-megaphone"></i>Наш Telegram-канал
+                    </a>
+                }
             </nav>
 
             @if (SignInManager.IsSignedIn(User))
@@ -949,7 +957,10 @@
                     </h5>
                     <p class="text-muted mb-3">Надёжная платформа для покупки цифровых товаров. Мгновенная доставка, безопасные платежи.</p>
                     <div class="d-flex gap-3">
-                        <a href="https://t.me/keyzonacom" target="_blank" rel="noopener" class="text-muted fs-5" title="Наш Telegram-канал"><i class="bi bi-megaphone"></i></a>
+                        @if (showTelegramChannel)
+                        {
+                            <a href="https://t.me/keyzonacom" target="_blank" rel="noopener" class="text-muted fs-5" title="Наш Telegram-канал"><i class="bi bi-megaphone"></i></a>
+                        }
                         <a href="https://t.me/key_zona_support" target="_blank" rel="noopener" class="text-muted fs-5" title="Поддержка в Telegram"><i class="bi bi-telegram"></i></a>
                         <a href="mailto:helper.user.post@gmail.com" class="text-muted fs-5" title="Email поддержки"><i class="bi bi-envelope"></i></a>
                     </div>
@@ -978,7 +989,10 @@
                 <div class="col-lg-2 col-md-4">
                     <h6 class="mb-3 text-white">Поддержка</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="https://t.me/keyzonacom" target="_blank" rel="noopener"><i class="bi bi-megaphone me-1"></i>Наш Telegram-канал</a></li>
+                        @if (showTelegramChannel)
+                        {
+                            <li class="mb-2"><a href="https://t.me/keyzonacom" target="_blank" rel="noopener"><i class="bi bi-megaphone me-1"></i>Наш Telegram-канал</a></li>
+                        }
                         <li class="mb-2"><a href="https://t.me/key_zona_support" target="_blank" rel="noopener">Связаться с нами</a></li>
                         <li class="mb-2"><a asp-controller="Home" asp-action="UserAgreement">Пользовательское соглашение</a></li>
                         <li class="mb-2"><a asp-controller="Home" asp-action="Privacy">Политика конфиденциальности</a></li>

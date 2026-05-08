@@ -241,6 +241,16 @@ public class GamesController : AdminBaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateProduct(GameProduct product, IFormFile? imageFile)
     {
+        // The form is posted to /Admin/Games/CreateProduct/{id} where {id}
+        // is the parent GameId. ASP.NET's complex-type model binder also
+        // matches the route value "id" against the entity's Id property
+        // (case-insensitive), so product.Id gets seeded with the GameId
+        // and EF tries to INSERT a row at that primary-key, which already
+        // exists. Force the identity column back to its CLR default so
+        // Postgres generates the next value from the sequence.
+        product.Id = 0;
+        ModelState.Remove("Id");
+
         // Remove navigation property validation errors
         ModelState.Remove("Game");
         ModelState.Remove("ProductKeys");

@@ -244,6 +244,13 @@ public class VpnProvidersController : AdminBaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateProduct(GameProduct product, IFormFile? imageFile)
     {
+        // Route is /Admin/VpnProviders/CreateProduct/{id} where {id} is the
+        // parent VpnProviderId — model binder also writes that value into
+        // product.Id, causing duplicate-PK on INSERT. Reset so identity
+        // generates a fresh Id.
+        product.Id = 0;
+        ModelState.Remove("Id");
+
         ModelState.Remove("Game");
         ModelState.Remove("GiftCard");
         ModelState.Remove("VpnProvider");

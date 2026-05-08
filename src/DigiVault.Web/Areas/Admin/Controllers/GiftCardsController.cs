@@ -257,6 +257,14 @@ public class GiftCardsController : AdminBaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateProduct(GameProduct product, IFormFile? imageFile)
     {
+        // Route is /Admin/GiftCards/CreateProduct/{id} where {id} is the
+        // parent GiftCardId — but the model binder also writes that value
+        // into product.Id, so EF then tries to INSERT a row at an already-
+        // occupied PK. Reset to 0 so the identity column generates a new
+        // value from the sequence.
+        product.Id = 0;
+        ModelState.Remove("Id");
+
         ModelState.Remove("Game");
         ModelState.Remove("GiftCard");
         ModelState.Remove("ProductKeys");

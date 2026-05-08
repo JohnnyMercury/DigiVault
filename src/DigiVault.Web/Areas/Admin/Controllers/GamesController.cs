@@ -273,7 +273,10 @@ public class GamesController : AdminBaseController
             catch (Exception ex)
             {
                 _logger.LogError(ex, "CreateProduct failed for Game {Id}", product.GameId);
-                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+                // EF wraps the actual DB error in InnerException; surface its
+                // message in the UI so the admin doesn't have to grep logs.
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {detail}");
             }
         }
 

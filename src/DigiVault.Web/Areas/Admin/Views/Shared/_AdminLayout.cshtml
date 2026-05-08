@@ -514,6 +514,14 @@
                 display: none;
             }
         }
+
+        /* asp-validation-summary always renders the wrapper div even when
+           there are no errors (just adds the .validation-summary-valid
+           class). On every clean GET that produced an empty red banner —
+           hide the wrapper and any inner empty list when valid. */
+        .validation-summary-valid {
+            display: none !important;
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>

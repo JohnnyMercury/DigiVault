@@ -277,7 +277,8 @@ public class VpnProvidersController : AdminBaseController
             catch (Exception ex)
             {
                 _logger.LogError(ex, "CreateProduct failed for VPN {Id}", product.VpnProviderId);
-                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {detail}");
             }
         }
 

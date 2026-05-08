@@ -290,7 +290,8 @@ public class GiftCardsController : AdminBaseController
             catch (Exception ex)
             {
                 _logger.LogError(ex, "CreateProduct failed for GiftCard {Id}", product.GiftCardId);
-                ModelState.AddModelError("", $"Не удалось сохранить товар: {ex.Message}");
+                var detail = ex.InnerException?.Message ?? ex.Message;
+                ModelState.AddModelError("", $"Не удалось сохранить товар: {detail}");
             }
         }
 

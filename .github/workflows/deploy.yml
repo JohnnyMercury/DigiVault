@@ -8,6 +8,12 @@ concurrency:
   group: deploy
   cancel-in-progress: true
 
+# Production server (SERVER_HOST = 145.223.90.75) drops SSH from arbitrary
+# public IPs — only a small allow-list (the cyborg-games box at 104.207.66.247)
+# can hit port 22. So we route every SSH through that allow-listed host as a
+# jump box (PROXY_*) and treat SERVER_* as the final destination only the
+# proxy can reach. If the firewall ever opens up again, drop the proxy_*
+# fields and the action behaves as before.
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,6 +27,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          proxy_host: ${{ secrets.PROXY_HOST }}
+          proxy_username: ${{ secrets.PROXY_USER }}
+          proxy_password: ${{ secrets.PROXY_PASSWORD }}
           timeout: 60s
           command_timeout: 20m
           script: |
@@ -39,6 +48,9 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          proxy_host: ${{ secrets.PROXY_HOST }}
+          proxy_username: ${{ secrets.PROXY_USER }}
+          proxy_password: ${{ secrets.PROXY_PASSWORD }}
           timeout: 120s
           command_timeout: 20m
           script: |

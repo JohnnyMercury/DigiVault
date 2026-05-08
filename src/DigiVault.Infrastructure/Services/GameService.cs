@@ -164,7 +164,10 @@ public class GameService : IGameService
             },
             new Game
             {
-                Name = "Roblox",
+                // Brand-renamed to «Robux» (the in-game currency) per support
+                // request. Slug stays «roblox» so existing URLs / seed-by-slug
+                // lookups / image paths keep working.
+                Name = "Robux",
                 Slug = "roblox",
                 Currency = "Robux",
                 CurrencyShort = "Robux",
@@ -245,12 +248,12 @@ public class GameService : IGameService
         var roblox = games.First(g => g.Slug == "roblox");
         var robloxProducts = new List<GameProduct>
         {
-            new() { GameId = roblox.Id, Name = "100 Robux", Amount = "100", TotalDisplay = "100 Робуксов", Price = 267, ImageUrl = "/minio/digivault-images/products/roblox/100-robux.webp", ProductType = GameProductType.Currency, SortOrder = 1 },
-            new() { GameId = roblox.Id, Name = "400 Robux", Amount = "400", TotalDisplay = "400 Робуксов", Price = 489, ImageUrl = "/minio/digivault-images/products/roblox/400-robux.webp", ProductType = GameProductType.Currency, SortOrder = 2 },
-            new() { GameId = roblox.Id, Name = "800 Robux", Amount = "800", TotalDisplay = "800 Робуксов", Price = 815, ImageUrl = "/minio/digivault-images/products/roblox/800-robux.webp", ProductType = GameProductType.Currency, SortOrder = 3 },
-            new() { GameId = roblox.Id, Name = "1700 Robux", Amount = "1700", TotalDisplay = "1700 Робуксов", Price = 1976, ImageUrl = "/minio/digivault-images/products/roblox/1700-robux.webp", ProductType = GameProductType.Currency, SortOrder = 4 },
-            new() { GameId = roblox.Id, Name = "4500 Robux", Amount = "4500", TotalDisplay = "4500 Робуксов", Price = 4110, ImageUrl = "/minio/digivault-images/products/roblox/4500-robux.webp", ProductType = GameProductType.Currency, SortOrder = 5 },
-            new() { GameId = roblox.Id, Name = "10000 Robux", Amount = "10000", TotalDisplay = "10000 Робуксов", Price = 8243, ImageUrl = "/minio/digivault-images/products/roblox/10000-robux.webp", ProductType = GameProductType.Currency, SortOrder = 6 }
+            new() { GameId = roblox.Id, Name = "100 Robux", Amount = "100", TotalDisplay = "100 Robux", Price = 267, ImageUrl = "/minio/digivault-images/products/roblox/100-robux.webp", ProductType = GameProductType.Currency, SortOrder = 1 },
+            new() { GameId = roblox.Id, Name = "400 Robux", Amount = "400", TotalDisplay = "400 Robux", Price = 489, ImageUrl = "/minio/digivault-images/products/roblox/400-robux.webp", ProductType = GameProductType.Currency, SortOrder = 2 },
+            new() { GameId = roblox.Id, Name = "800 Robux", Amount = "800", TotalDisplay = "800 Robux", Price = 815, ImageUrl = "/minio/digivault-images/products/roblox/800-robux.webp", ProductType = GameProductType.Currency, SortOrder = 3 },
+            new() { GameId = roblox.Id, Name = "1700 Robux", Amount = "1700", TotalDisplay = "1700 Robux", Price = 1976, ImageUrl = "/minio/digivault-images/products/roblox/1700-robux.webp", ProductType = GameProductType.Currency, SortOrder = 4 },
+            new() { GameId = roblox.Id, Name = "4500 Robux", Amount = "4500", TotalDisplay = "4500 Robux", Price = 4110, ImageUrl = "/minio/digivault-images/products/roblox/4500-robux.webp", ProductType = GameProductType.Currency, SortOrder = 5 },
+            new() { GameId = roblox.Id, Name = "10000 Robux", Amount = "10000", TotalDisplay = "10000 Robux", Price = 8243, ImageUrl = "/minio/digivault-images/products/roblox/10000-robux.webp", ProductType = GameProductType.Currency, SortOrder = 6 }
         };
 
         // Seed PUBG products

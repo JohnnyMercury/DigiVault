@@ -484,7 +484,7 @@ public class CatalogController : Controller
         return slug.ToLower() switch
         {
             "fortnite" => "Fortnite",
-            "roblox" => "Roblox",
+            "roblox" => "Robux",
             "pubg" => "PUBG Mobile",
             "brawlstars" or "brawl" => "Brawl Stars",
             "genshin" => "Genshin Impact",

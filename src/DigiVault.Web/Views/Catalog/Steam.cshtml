@@ -587,10 +587,14 @@
                 <div>
                     <div class="modal-label">Способ оплаты:</div>
                     @{
+                        var __stmAuth = User.Identity?.IsAuthenticated == true;
+                        var __stmBal  = ViewBag.UserBalance is decimal __sb ? __sb : 0m;
                         var __steamTiles = new DigiVault.Web.Models.Payment.PaymentTilesViewModel
                         {
-                            ShowBalance  = false,
-                            SelectedCode = "card",
+                            // Balance only for logged-in users (guests can't have one).
+                            ShowBalance  = __stmAuth,
+                            Balance      = __stmBal,
+                            SelectedCode = __stmAuth ? "balance" : "card",
                             OnSelectJs   = "selectModalPayment"
                         };
                     }
@@ -730,10 +734,10 @@
         }
 
         const selectedMethod = document.querySelector('.modal-pay-method.selected')?.dataset.method || 'card';
-        if (selectedMethod === 'balance')
-            return showModalError('Пополнение Steam доступно только через карту или СБП');
+        if (selectedMethod === 'balance' && !isAuth)
+            return showModalError('Оплата с баланса доступна только в личном кабинете');
 
-        // For card / sbp - proceed straight (single PSP). qr / p2p - open step 2
+        // For card / sbp / balance - proceed straight. qr / p2p - open step 2
         // which will surface the «Скоро» empty-state.
         if (selectedMethod === 'qr' || selectedMethod === 'p2p') {
             window.lastSelectedPrice = currentAmount;
@@ -763,9 +767,18 @@
         })
         .then(r => r.json())
         .then(data => {
-            if (data.success && data.redirectUrl) {
-                window.location.href = data.redirectUrl;
-                return;
+            if (data.success) {
+                if (data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                    return;
+                }
+                // Balance path: server already deducted + scheduled fulfilment.
+                // Send the user to the order page so they see the «принято
+                // оператором» banner with their order number and Telegram link.
+                if (data.orderNumber) {
+                    window.location.href = '/Account/OrderDetails?orderNumber=' + encodeURIComponent(data.orderNumber);
+                    return;
+                }
             }
             showModalError(data.errorMessage || 'Ошибка при оформлении');            if (typeof window.resetStep2PayButton === "function") window.resetStep2PayButton(data.errorMessage || 'Ошибка при оформлении');
             btn.disabled = false;

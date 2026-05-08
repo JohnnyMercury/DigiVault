@@ -375,6 +375,70 @@ public class OrderService : IOrderService
             // customAmount * bonusMult on Steam side.
             var bonusedDisplay = $"{Math.Round(customAmount * bonusMult, 0):N0} ₽ на Steam";
 
+            // Balance branch: pay from the in-app wallet, skip the PSP entirely.
+            // Mirrors the regular CreatePurchaseAsync flow (deduct → Processing
+            // → DeliverOrderAsync); the Steam fulfilment branch produces a
+            // ContactSupport credential just like the PSP-paid path.
+            if (string.Equals(paymentMethod, "balance", StringComparison.OrdinalIgnoreCase))
+            {
+                var bal = await _balanceService.GetBalanceAsync(userId);
+                if (bal < customAmount)
+                    return new PurchaseResult { Success = false,
+                        ErrorMessage = $"Недостаточно средств. Необходимо: {customAmount:N0} ₽, на балансе: {bal:N0} ₽" };
+
+                var deducted = await _balanceService.DeductFundsAsync(userId, customAmount,
+                    $"Пополнение Steam ({steamLogin.Trim()})");
+                if (!deducted)
+                    return new PurchaseResult { Success = false, ErrorMessage = "Ошибка при списании средств" };
+
+                var steamOrderNumber = GenerateOrderNumber();
+                var steamOrder = new Order
+                {
+                    UserId       = userId,
+                    OrderNumber  = steamOrderNumber,
+                    TotalAmount  = customAmount,
+                    Status       = OrderStatus.Processing,
+                    CreatedAt    = DateTime.UtcNow,
+                    DeliveryInfo = $"Steam: {steamLogin.Trim()}; Зачислить: {bonusedDisplay}",
+                };
+                _context.Orders.Add(steamOrder);
+                await _context.SaveChangesAsync();
+
+                _context.OrderItems.Add(new OrderItem
+                {
+                    OrderId       = steamOrder.Id,
+                    GameProductId = anchor.Id,
+                    Quantity      = 1,
+                    UnitPrice     = customAmount,
+                    TotalPrice    = customAmount,
+                });
+                _context.Transactions.Add(new Transaction
+                {
+                    UserId      = userId,
+                    Amount      = customAmount,
+                    Type        = TransactionType.Purchase,
+                    Description = $"Пополнение Steam ({steamLogin.Trim()})",
+                    OrderId     = steamOrder.Id,
+                    CreatedAt   = DateTime.UtcNow,
+                });
+                await _context.SaveChangesAsync();
+
+                await _fulfilment.DeliverOrderAsync(steamOrder.Id);
+                var newBalance = await _balanceService.GetBalanceAsync(userId);
+
+                _logger.LogInformation(
+                    "Steam Wallet purchase via balance: Order {OrderNumber}, User {UserId}, Amount {Amount} → {Bonused}",
+                    steamOrderNumber, userId, customAmount, bonusedDisplay);
+
+                return new PurchaseResult
+                {
+                    Success     = true,
+                    OrderNumber = steamOrderNumber,
+                    OrderId     = steamOrder.Id,
+                    NewBalance  = newBalance,
+                };
+            }
+
             var method = MapPaymentMethod(paymentMethod);
             DigiVault.Core.Interfaces.IPaymentProvider? provider = null;
             if (!string.IsNullOrWhiteSpace(providerName))

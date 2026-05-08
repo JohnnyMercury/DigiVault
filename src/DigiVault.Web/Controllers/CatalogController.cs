@@ -208,13 +208,17 @@ public class CatalogController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PurchaseSteam([FromBody] PurchaseSteamRequest request)
     {
-        if (request.PaymentMethod == "balance")
-            return Json(new PurchaseResult { Success = false,
-                ErrorMessage = "Пополнение Steam доступно только через карту или СБП" });
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
+            // Balance can only belong to a real authenticated account — guests
+            // don't have one. Reject early with a clear message instead of
+            // silently auto-creating a zero-balance ghost user that would then
+            // fail the deduct check.
+            if (request.PaymentMethod == "balance")
+                return Json(new PurchaseResult { Success = false,
+                    ErrorMessage = "Оплата с баланса доступна только в личном кабинете" });
+
             var guestEmail = (request.Email ?? "").Trim();
             if (string.IsNullOrWhiteSpace(guestEmail))
                 return Json(new PurchaseResult { Success = false, ErrorMessage = "Введите Email для оформления заказа" });

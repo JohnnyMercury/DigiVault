@@ -1,7 +1,12 @@
 @model DigiVault.Web.Models.CatalogViewModel
 @using DigiVault.Core.Entities
+@using Microsoft.EntityFrameworkCore
+@inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
 @{
     ViewData["Title"] = "Каталог";
+    var telegramPremiumVisible = await DbContext.GiftCards
+        .AsNoTracking()
+        .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
     // Рандомный порядок для верхнего блока "Популярные"
     var rng = new Random();
     var popularItems = (Model.Items ?? Enumerable.Empty<DigiVault.Web.Models.CatalogItemViewModel>())
@@ -510,16 +515,19 @@
                     </div>
                     <i class="bi bi-chevron-right category-card-arrow"></i>
                 </a>
-                <a href="/Catalog/Telegram" class="category-card">
-                    <div class="category-card-icon telegram" style="background: linear-gradient(135deg, #2AABEE, #229ED9);">
-                        <i class="bi bi-send-fill"></i>
-                    </div>
-                    <div class="category-card-content">
-                        <h3>Telegram Premium</h3>
-                        <p>Подписки на 3, 6 и 12 месяцев</p>
-                    </div>
-                    <i class="bi bi-chevron-right category-card-arrow"></i>
-                </a>
+                @if (telegramPremiumVisible)
+                {
+                    <a href="/Catalog/Telegram" class="category-card">
+                        <div class="category-card-icon telegram" style="background: linear-gradient(135deg, #2AABEE, #229ED9);">
+                            <i class="bi bi-send-fill"></i>
+                        </div>
+                        <div class="category-card-content">
+                            <h3>Telegram Premium</h3>
+                            <p>Подписки на 3, 6 и 12 месяцев</p>
+                        </div>
+                        <i class="bi bi-chevron-right category-card-arrow"></i>
+                    </a>
+                }
             </div>
         </div>
     </section>

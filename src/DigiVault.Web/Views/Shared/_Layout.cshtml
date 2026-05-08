@@ -1,7 +1,19 @@
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using DigiVault.Core.Entities
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
+@{
+    // Visibility of the Telegram Premium card across the entire site is
+    // driven by GiftCards.IsActive on slug telegram-premium (toggled from
+    // /Admin/Telegram). The links here, in Home/Index, and in Catalog/Index
+    // are hardcoded routes (the Telegram page has bespoke layout), so we
+    // gate every one of them on this flag.
+    var telegramPremiumVisible = await DbContext.GiftCards
+        .AsNoTracking()
+        .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+}
 <!DOCTYPE html>
 <html lang="ru" data-bs-theme="dark">
 <head>
@@ -740,7 +752,10 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/Catalog/Steam"><i class="bi bi-controller me-2"></i>Пополнить Steam</a></li>
-                            <li><a class="dropdown-item" href="/Catalog/Telegram"><i class="bi bi-send-fill me-2"></i>Telegram Premium</a></li>
+                            @if (telegramPremiumVisible)
+                            {
+                                <li><a class="dropdown-item" href="/Catalog/Telegram"><i class="bi bi-send-fill me-2"></i>Telegram Premium</a></li>
+                            }
                             <li><a class="dropdown-item" href="/Catalog/Vpn"><i class="bi bi-shield-check me-2"></i>VPN подписки</a></li>
                             <li><a class="dropdown-item" href="/Catalog/GameCurrency"><i class="bi bi-controller me-2"></i>Игровая валюта</a></li>
                             <li><a class="dropdown-item" href="/Catalog/GiftCards"><i class="bi bi-gift me-2"></i>Подарочные карты</a></li>
@@ -749,9 +764,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/Catalog/Steam"><i class="bi bi-controller"></i>Пополнить Steam</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/Catalog/Telegram"><i class="bi bi-send-fill"></i>Telegram Premium</a>
-                    </li>
+                    @if (telegramPremiumVisible)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Catalog/Telegram"><i class="bi bi-send-fill"></i>Telegram Premium</a>
+                        </li>
+                    }
                 </ul>
                 <ul class="navbar-nav align-items-center">
                     @if (SignInManager.IsSignedIn(User))
@@ -836,9 +854,12 @@
                 <a href="/Catalog/Steam" class="mobile-nav-item">
                     <i class="bi bi-controller"></i>Пополнить Steam
                 </a>
-                <a href="/Catalog/Telegram" class="mobile-nav-item">
-                    <i class="bi bi-send-fill"></i>Telegram Premium
-                </a>
+                @if (telegramPremiumVisible)
+                {
+                    <a href="/Catalog/Telegram" class="mobile-nav-item">
+                        <i class="bi bi-send-fill"></i>Telegram Premium
+                    </a>
+                }
                 <a href="/Catalog/Vpn" class="mobile-nav-item">
                     <i class="bi bi-shield-check"></i>VPN подписки
                 </a>
@@ -920,7 +941,10 @@
                         <li class="mb-2"><a href="/Catalog/GameCurrency">Игровая валюта</a></li>
                         <li class="mb-2"><a href="/Catalog/GiftCards">Подарочные карты</a></li>
                         <li class="mb-2"><a href="/Catalog/Steam">Пополнить Steam</a></li>
-                        <li class="mb-2"><a href="/Catalog/Telegram">Telegram Premium</a></li>
+                        @if (telegramPremiumVisible)
+                        {
+                            <li class="mb-2"><a href="/Catalog/Telegram">Telegram Premium</a></li>
+                        }
                     </ul>
                 </div>
                 <div class="col-lg-2 col-md-4">

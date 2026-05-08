@@ -4,6 +4,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     // Visibility of the Telegram Premium card across the entire site is
     // driven by GiftCards.IsActive on slug telegram-premium (toggled from
@@ -13,6 +14,11 @@
     var telegramPremiumVisible = await DbContext.GiftCards
         .AsNoTracking()
         .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+
+    // Footer legal-entity block (organisation / director / contacts) — gated
+    // by Site:ShowLegalInfo so it can be flipped without a redeploy via the
+    // env var Site__ShowLegalInfo. Default true: normal mode shows it.
+    var showLegalInfo = Configuration.GetValue<bool>("Site:ShowLegalInfo", true);
 }
 <!DOCTYPE html>
 <html lang="ru" data-bs-theme="dark">
@@ -972,46 +978,49 @@
                     </div>
                 </div>
             </div>
-            <hr class="my-4" style="border-color: var(--card-border);">
+            @if (showLegalInfo)
+            {
+                <hr class="my-4" style="border-color: var(--card-border);">
 
-            <!-- Юридическая информация -->
-            <div class="row g-4 py-3">
-                <div class="col-lg-4 col-md-6">
-                    <h6 class="mb-3 text-white">
-                        <i class="bi bi-building me-2" style="color: #667eea;"></i>Юридическая информация
-                    </h6>
-                    <div class="small">
-                        <p class="mb-1"><span class="text-muted">Организация:</span><br><span class="text-white">ОсОО "ТИАМАТ"</span></p>
-                        <p class="mb-1"><span class="text-muted">ИНН:</span> <span class="text-white">00509202210110</span></p>
-                        <p class="mb-1"><span class="text-muted">Код ОКПО:</span> <span class="text-white">31564096</span></p>
-                        <p class="mb-1"><span class="text-muted">Рег. номер:</span> <span class="text-white">209163-3301-ООО</span></p>
-                        <p class="mb-0"><span class="text-muted">Дата регистрации:</span> <span class="text-white">05.09.2022</span></p>
+                <!-- Юридическая информация -->
+                <div class="row g-4 py-3">
+                    <div class="col-lg-4 col-md-6">
+                        <h6 class="mb-3 text-white">
+                            <i class="bi bi-building me-2" style="color: #667eea;"></i>Юридическая информация
+                        </h6>
+                        <div class="small">
+                            <p class="mb-1"><span class="text-muted">Организация:</span><br><span class="text-white">ОсОО "ТИАМАТ"</span></p>
+                            <p class="mb-1"><span class="text-muted">ИНН:</span> <span class="text-white">00509202210110</span></p>
+                            <p class="mb-1"><span class="text-muted">Код ОКПО:</span> <span class="text-white">31564096</span></p>
+                            <p class="mb-1"><span class="text-muted">Рег. номер:</span> <span class="text-white">209163-3301-ООО</span></p>
+                            <p class="mb-0"><span class="text-muted">Дата регистрации:</span> <span class="text-white">05.09.2022</span></p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <h6 class="mb-3 text-white">
+                            <i class="bi bi-person-badge me-2" style="color: #667eea;"></i>Руководитель
+                        </h6>
+                        <p class="small text-white mb-3">Чайковский Александр Леонтьевич</p>
+                        <h6 class="mb-2 text-white mt-3">
+                            <i class="bi bi-calendar-event me-2" style="color: #667eea;"></i>Дата приказа
+                        </h6>
+                        <p class="small text-white mb-0">05.09.2022</p>
+                    </div>
+                    <div class="col-lg-4 col-md-12">
+                        <h6 class="mb-3 text-white">
+                            <i class="bi bi-geo-alt me-2" style="color: #667eea;"></i>Контакты
+                        </h6>
+                        <p class="small text-muted mb-2">
+                            <i class="bi bi-house me-2" style="color: #667eea;"></i>
+                            <span class="text-white">г. Бишкек, Свердловский р-н,<br>Городок Строителей 9/2</span>
+                        </p>
+                        <p class="small mb-0">
+                            <i class="bi bi-telephone me-2" style="color: #667eea;"></i>
+                            <a href="tel:+996707807507" class="text-white text-decoration-none">0707 807 507</a>
+                        </p>
                     </div>
                 </div>
-                <div class="col-lg-4 col-md-6">
-                    <h6 class="mb-3 text-white">
-                        <i class="bi bi-person-badge me-2" style="color: #667eea;"></i>Руководитель
-                    </h6>
-                    <p class="small text-white mb-3">Чайковский Александр Леонтьевич</p>
-                    <h6 class="mb-2 text-white mt-3">
-                        <i class="bi bi-calendar-event me-2" style="color: #667eea;"></i>Дата приказа
-                    </h6>
-                    <p class="small text-white mb-0">05.09.2022</p>
-                </div>
-                <div class="col-lg-4 col-md-12">
-                    <h6 class="mb-3 text-white">
-                        <i class="bi bi-geo-alt me-2" style="color: #667eea;"></i>Контакты
-                    </h6>
-                    <p class="small text-muted mb-2">
-                        <i class="bi bi-house me-2" style="color: #667eea;"></i>
-                        <span class="text-white">г. Бишкек, Свердловский р-н,<br>Городок Строителей 9/2</span>
-                    </p>
-                    <p class="small mb-0">
-                        <i class="bi bi-telephone me-2" style="color: #667eea;"></i>
-                        <a href="tel:+996707807507" class="text-white text-decoration-none">0707 807 507</a>
-                    </p>
-                </div>
-            </div>
+            }
 
             <hr class="my-4" style="border-color: var(--card-border);">
             <div class="d-flex flex-wrap justify-content-between align-items-center">

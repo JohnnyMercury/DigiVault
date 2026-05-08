@@ -1615,10 +1615,6 @@
                 </div>
             }
 
-            @if (ViewBag.Reviews != null)
-            {
-                @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
-            }
         </main>
 
         <!-- Payment Sidebar -->
@@ -1691,6 +1687,18 @@
             </div>
         </aside>
     </div>
+
+    @if (ViewBag.Reviews != null)
+    {
+        <!-- Reviews live OUTSIDE .game-page so on mobile (where .game-page
+             stacks vertically) they end up after the payment sidebar
+             instead of being squeezed between products and the buy
+             button. On desktop the block sits full-width under the grid,
+             which reads naturally and gives reviews more room. -->
+        <section class="game-reviews-block">
+            @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
+        </section>
+    }
 </div>
 
 @Html.AntiForgeryToken()

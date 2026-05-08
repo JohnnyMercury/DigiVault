@@ -352,6 +352,16 @@
         footer a:hover .bi-telegram { color: #0088cc; transform: scale(1.2); }
         footer a:hover .bi-envelope { color: #667eea; transform: scale(1.2); }
 
+        /* Reviews block sits below .game-page on every product detail
+           page (Game / GiftCard / VpnProvider / Telegram / Steam) so the
+           order on mobile is products → buy panel → reviews instead of
+           products → reviews → buy panel. Give it some breathing room
+           from whatever comes above. */
+        .game-reviews-block { margin-top: 1.5rem; }
+        @@media (max-width: 768px) {
+            .game-reviews-block { margin-top: 1rem; }
+        }
+
         /* Dropdown */
         .dropdown-menu {
             background: rgba(20, 20, 30, 0.95);

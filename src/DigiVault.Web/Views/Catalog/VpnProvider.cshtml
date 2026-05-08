@@ -728,10 +728,6 @@
                 </div>
             </div>
 
-            @if (ViewBag.Reviews != null)
-            {
-                @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
-            }
         </main>
 
         <!-- Payment Sidebar -->
@@ -799,6 +795,13 @@
             </div>
         </aside>
     </div>
+
+    @if (ViewBag.Reviews != null)
+    {
+        <section class="game-reviews-block">
+            @await Html.PartialAsync("_ProductReviews", (DigiVault.Web.Models.ProductReviewsViewModel)ViewBag.Reviews)
+        </section>
+    }
 </div>
 
 @Html.AntiForgeryToken()

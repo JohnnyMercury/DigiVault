@@ -1,5 +1,7 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Пользовательское соглашение";
+    var showLegalInfo = Configuration.GetValue<bool>("Site:ShowLegalInfo", true);
 }
 
 <div class="container py-5">
@@ -7,15 +9,18 @@
         <h1 class="policy-title"><span class="gradient-text">Пользовательское</span> соглашение</h1>
 
         <div class="policy-card text-policy">
-            <div class="section">
-                <h5>Реквизиты</h5>
-                <p><strong style="color:#fff;">ОсОО «ТИАМАТ»</strong></p>
-                <p>Адрес: г. Бишкек, Свердловский р-н, Городок Строителей 9/2</p>
-                <p>ИНН: 00509202210110</p>
-                <p>Код ОКПО: 31564096</p>
-                <p>Рег. номер: 209163-3301-ООО</p>
-                <p>Директор: Чайковский Александр Леонтьевич</p>
-            </div>
+            @if (showLegalInfo)
+            {
+                <div class="section">
+                    <h5>Реквизиты</h5>
+                    <p><strong style="color:#fff;">ОсОО «ТИАМАТ»</strong></p>
+                    <p>Адрес: г. Бишкек, Свердловский р-н, Городок Строителей 9/2</p>
+                    <p>ИНН: 00509202210110</p>
+                    <p>Код ОКПО: 31564096</p>
+                    <p>Рег. номер: 209163-3301-ООО</p>
+                    <p>Директор: Чайковский Александр Леонтьевич</p>
+                </div>
+            }
 
             <div class="section">
                 <h5>1. Определения и общие положения</h5>

@@ -65,7 +65,10 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
     }
 
     public string Name => "paymentlink";
-    public string DisplayName => "PaymentLink";
+    // Brand name shown to users — fronted by RushPay as the downstream SBP
+    // gateway. Internal Name stays «paymentlink» so routing / DB / log
+    // greps don't shift.
+    public string DisplayName => "RushPay";
 
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {

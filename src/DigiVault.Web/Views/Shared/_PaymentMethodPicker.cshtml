@@ -216,11 +216,11 @@
     const PROVIDERS_BY_METHOD = {
         card: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-front', color: ENOT_BADGE    },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'Visa, MasterCard (тест)',   icon: 'bi-credit-card',         color: PLINK_BADGE   },
+            { code: 'paymentlink', title: 'RushPay', desc: 'Visa, MasterCard (тест)',   icon: 'bi-credit-card',         color: PLINK_BADGE   },
         ],
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
+            { code: 'paymentlink', title: 'RushPay', desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
             { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
         ],
         // QR - только PaymentLink. Enot нативного QR-метода не имеет
@@ -229,7 +229,7 @@
         // там где Enot QR не делает. Overpay тоже скрыт - SBP-через-QR
         // у них живёт под методом «sbp», отдельной QR-плитки нет.
         qr: [
-            { code: 'paymentlink', title: 'PaymentLink', desc: 'Оплата сканированием QR-кода', icon: 'bi-qr-code', color: PLINK_BADGE },
+            { code: 'paymentlink', title: 'RushPay', desc: 'Оплата сканированием QR-кода', icon: 'bi-qr-code', color: PLINK_BADGE },
         ],
         // P2P - заготовка под будущие PSP (BlvckPay / PayPecker).
         p2p: [],

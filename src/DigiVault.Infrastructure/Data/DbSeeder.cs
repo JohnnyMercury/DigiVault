@@ -297,7 +297,7 @@ public static class DbSeeder
             context.PaymentProviderConfigs.Add(new PaymentProviderConfig
             {
                 Name        = "paymentlink",
-                DisplayName = "PaymentLink",
+                DisplayName = "RushPay",
                 IsEnabled   = false,   // until admin enters credentials
                 Priority    = 20,
                 ApiKey      = "",

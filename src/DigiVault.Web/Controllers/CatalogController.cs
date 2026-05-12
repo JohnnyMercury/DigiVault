@@ -580,6 +580,45 @@ public class CatalogController : Controller
         return View("VpnProvider");
     }
 
+    public async Task<IActionResult> Ai()
+    {
+        var aiServices = await _context.AiServices
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder)
+            .ToListAsync();
+
+        ViewBag.AiServices = aiServices;
+        return View("Ai");
+    }
+
+    public async Task<IActionResult> AiService(string slug)
+    {
+        if (string.IsNullOrEmpty(slug))
+            return NotFound();
+
+        var service = await _context.AiServices
+            .Include(s => s.Products.Where(p => p.IsActive).OrderBy(p => p.SortOrder).ThenBy(p => p.Price))
+            .FirstOrDefaultAsync(s => s.Slug == slug.ToLower() && s.IsActive);
+
+        if (service == null)
+            return NotFound();
+
+        var allServices = await _context.AiServices
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder)
+            .ToListAsync();
+
+        ViewBag.AiService = service;
+        ViewBag.AllAiServices = allServices;
+        await SetUserBalanceAsync();
+        // Reviews per-AI-service: ProductReview entity doesn't yet have an
+        // AiServiceId column, so the partial renders with empty Reviews
+        // VM. Adding that column is a follow-up migration once we know if
+        // we'll bucket reviews per service or per parent category.
+        await LoadReviewsViewBagAsync("AiService", service.Slug);
+        return View("AiService");
+    }
+
     /// <summary>
     /// Dedicated Telegram Premium tab. Telegram Stars was removed but this page
     /// remains as the canonical product page for Telegram Premium subscriptions.

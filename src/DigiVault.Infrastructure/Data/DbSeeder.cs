@@ -133,6 +133,110 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed AI services — the top-9 resold subscription brands on the RU
+        // market. Delivery for most of these runs through the existing
+        // operator-confirmation-in-Telegram flow (ContactSupport credential),
+        // because OpenAI/Anthropic don't issue gift codes — resellers either
+        // hand over fresh accounts or add the buyer's email to a paid team
+        // workspace, both manual. Prices are starting points; admin tunes
+        // them via /Admin/AiServices/Products.
+        if (!await context.AiServices.AnyAsync())
+        {
+            context.AiServices.AddRange(
+                new AiService
+                {
+                    Name = "ChatGPT Plus", Slug = "chatgpt",
+                    Tagline = "GPT-4o, DALL-E, расширенный контекст",
+                    Description = "Подписка OpenAI с доступом к GPT-4o и инструментам.",
+                    Icon = "🤖",
+                    Gradient = "linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)",
+                    Features = "[\"Доступ к GPT-4o\",\"Генерация изображений DALL-E\",\"Расширенное окно контекста\",\"Code Interpreter\"]",
+                    SortOrder = 1, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Claude Pro", Slug = "claude",
+                    Tagline = "Claude Sonnet и Opus от Anthropic",
+                    Description = "Подписка Anthropic — повышенные лимиты на Claude Sonnet 4 и Opus.",
+                    Icon = "🧠",
+                    Gradient = "linear-gradient(135deg, #d97706 0%, #92400e 100%)",
+                    Features = "[\"Доступ к Claude Sonnet 4.5\",\"Доступ к Claude Opus\",\"Высокий месячный лимит\",\"Projects + Artifacts\"]",
+                    SortOrder = 2, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Midjourney", Slug = "midjourney",
+                    Tagline = "Генерация изображений по описанию",
+                    Description = "Лучший AI для генерации изображений. Доступ через Discord или веб-приложение.",
+                    Icon = "🎨",
+                    Gradient = "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
+                    Features = "[\"Тарифы Basic / Standard / Pro / Mega\",\"Genertion через Discord и web\",\"Fast / Relax / Stealth режимы\"]",
+                    SortOrder = 3, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Cursor Pro", Slug = "cursor",
+                    Tagline = "AI-редактор кода с Claude и GPT под капотом",
+                    Description = "VS Code-based IDE с глубокой AI-интеграцией. Подписка Pro даёт 500 быстрых запросов в месяц.",
+                    Icon = "⌨️",
+                    Gradient = "linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%)",
+                    Features = "[\"500 fast premium-запросов\",\"Доступ к Claude Sonnet 4.5\",\"Composer, Tab autocomplete\",\"Codebase context\"]",
+                    SortOrder = 4, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Perplexity Pro", Slug = "perplexity",
+                    Tagline = "AI-поисковик с источниками",
+                    Description = "Pro-подписка Perplexity — неограниченные поисковые запросы с моделями GPT-4o, Claude, Sonar.",
+                    Icon = "🔍",
+                    Gradient = "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
+                    Features = "[\"Безлимит Pro-поисков\",\"GPT-4o / Claude / Sonar\",\"Загрузка файлов\",\"Pages — AI-документы\"]",
+                    SortOrder = 5, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Suno AI", Slug = "suno",
+                    Tagline = "Генерация музыки по описанию",
+                    Description = "AI для создания треков с вокалом за минуты. Подписка Pro/Premier.",
+                    Icon = "🎵",
+                    Gradient = "linear-gradient(135deg, #ec4899 0%, #be185d 100%)",
+                    Features = "[\"2500 кредитов в месяц (Pro)\",\"Коммерческие права\",\"Длина трека до 8 минут\",\"v5 модель\"]",
+                    SortOrder = 6, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "ElevenLabs", Slug = "elevenlabs",
+                    Tagline = "AI-озвучка и клонирование голоса",
+                    Description = "Подписка ElevenLabs — синтез речи и клонирование голоса на 30+ языках.",
+                    Icon = "🎙️",
+                    Gradient = "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
+                    Features = "[\"100 000+ символов/месяц\",\"Клонирование голоса\",\"Студийная озвучка\",\"30+ языков\"]",
+                    SortOrder = 7, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "GitHub Copilot", Slug = "github-copilot",
+                    Tagline = "AI-автокомплит для разработчиков",
+                    Description = "Подписка GitHub Copilot — AI-подсказки прямо в IDE (VS Code, JetBrains, Vim).",
+                    Icon = "👨‍💻",
+                    Gradient = "linear-gradient(135deg, #1f2937 0%, #111827 100%)",
+                    Features = "[\"Copilot Individual / Business\",\"Подсказки в IDE\",\"Chat и Slash-команды\",\"GPT-5 / Claude\"]",
+                    SortOrder = 8, IsActive = true, CreatedAt = DateTime.UtcNow,
+                },
+                new AiService
+                {
+                    Name = "Gemini Advanced", Slug = "gemini",
+                    Tagline = "Google Gemini 2 Pro + 2 ТБ Drive",
+                    Description = "Подписка Google One AI Premium — доступ к Gemini 2 Pro и 2 ТБ в Google Drive.",
+                    Icon = "✨",
+                    Gradient = "linear-gradient(135deg, #4285f4 0%, #1a73e8 100%)",
+                    Features = "[\"Gemini 2 Pro\",\"2 ТБ Google Drive\",\"Gemini в Gmail и Docs\",\"Deep Research\"]",
+                    SortOrder = 9, IsActive = true, CreatedAt = DateTime.UtcNow,
+                }
+            );
+            await context.SaveChangesAsync();
+        }
+
         // Seed Steam Wallet (custom-amount top-up via slider, ContactSupport flow).
         // The product is intentionally a single hidden anchor — the per-order
         // amount comes from the user's slider value, not from a fixed catalogue.

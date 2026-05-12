@@ -258,6 +258,11 @@ app.MapControllerRoute(
     defaults: new { controller = "Catalog", action = "VpnProvider" });
 
 app.MapControllerRoute(
+    name: "catalog-aiservice",
+    pattern: "Catalog/AiService/{slug}",
+    defaults: new { controller = "Catalog", action = "AiService" });
+
+app.MapControllerRoute(
     name: "catalog-telegram",
     pattern: "Catalog/Telegram",
     defaults: new { controller = "Catalog", action = "Telegram" });

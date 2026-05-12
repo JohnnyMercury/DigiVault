@@ -29,6 +29,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     // VPN Providers
     public DbSet<VpnProvider> VpnProviders => Set<VpnProvider>();
+    public DbSet<AiService> AiServices => Set<AiService>();
 
     // Hero Banners
     public DbSet<HeroBanner> HeroBanners => Set<HeroBanner>();
@@ -241,9 +242,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.VpnProviderId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.AiService)
+                .WithMany(a => a.Products)
+                .HasForeignKey(e => e.AiServiceId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.GameId);
             entity.HasIndex(e => e.GiftCardId);
             entity.HasIndex(e => e.VpnProviderId);
+            entity.HasIndex(e => e.AiServiceId);
             entity.HasIndex(e => e.ProductType);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => e.SortOrder);
@@ -267,6 +274,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         // VpnProvider configuration
         builder.Entity<VpnProvider>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Slug).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Tagline).HasMaxLength(200);
+            entity.Property(e => e.Features).HasMaxLength(2000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(10);
+            entity.Property(e => e.Gradient).HasMaxLength(200);
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.SortOrder);
+        });
+
+        // AiService configuration — modelled on VpnProvider exactly so the
+        // admin clone (controller + views) ports over with zero changes.
+        builder.Entity<AiService>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();

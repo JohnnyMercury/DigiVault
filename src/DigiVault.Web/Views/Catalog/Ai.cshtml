@@ -79,6 +79,11 @@
         color: white;
         display: block;
         transition: all 0.3s ease;
+        /* min-width:0 lets the inner ellipsis truncation kick in — without
+           it grid auto-sizing lets the link grow to fit the tagline and
+           breaks the row alignment, making one tile visibly taller than
+           its neighbours. */
+        min-width: 0;
     }
 
     .card-item:hover {
@@ -212,7 +217,13 @@
                 {
                     var hasImage = !string.IsNullOrEmpty(provider.ImageUrl);
                     <a href="/Catalog/AiService/@provider.Slug" class="card-item">
-                        <div class="card-item-image" style="background: @provider.Gradient;">
+                        @* When a custom image is uploaded we drop the brand
+                           gradient — PNGs/SVGs with transparent corners
+                           otherwise let the gradient leak around the artwork
+                           and create the ugly «green halo» effect.
+                           A neutral dark background acts as the fallback
+                           behind a transparent image. *@
+                        <div class="card-item-image" style="background: @(hasImage ? "#1a1a1f" : provider.Gradient);">
                             @if (hasImage)
                             {
                                 <img src="@provider.ImageUrl" alt="@provider.Name" />

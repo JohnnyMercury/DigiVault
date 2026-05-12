@@ -620,7 +620,7 @@
                 var hasImg = !string.IsNullOrEmpty(p.ImageUrl);
 
                 <a href="/Catalog/AiService/@p.Slug" class="sidebar-game @(isActive ? "active" : "")">
-                    <div class="sidebar-game-icon" style="background: @p.Gradient;">
+                    <div class="sidebar-game-icon" style="background: @(hasImg ? "#1a1a1f" : p.Gradient);">
                         @if (hasImg)
                         {
                             <img src="@p.ImageUrl" alt="@p.Name" />
@@ -683,7 +683,7 @@
                                     {
                                         <span class="currency-card-bonus">@product.Bonus</span>
                                     }
-                                    <div class="currency-card-image" style="background: @provider.Gradient;">
+                                    <div class="currency-card-image" style="background: @(hasImage ? "#1a1a1f" : provider.Gradient);">
                                         @if (hasImage)
                                         {
                                             <img src="@product.ImageUrl" alt="@product.Name" />

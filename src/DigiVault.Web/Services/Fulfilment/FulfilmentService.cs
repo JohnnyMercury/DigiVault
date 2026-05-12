@@ -51,6 +51,8 @@ public class FulfilmentService : IFulfilmentService
                 .ThenInclude(oi => oi.GameProduct).ThenInclude(p => p!.GiftCard)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.GameProduct).ThenInclude(p => p!.VpnProvider)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.GameProduct).ThenInclude(p => p!.AiService)
             .FirstOrDefaultAsync(o => o.Id == orderId, ct);
 
         if (order == null)

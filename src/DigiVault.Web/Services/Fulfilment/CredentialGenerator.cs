@@ -64,6 +64,12 @@ public class CredentialGenerator : ICredentialGenerator
         if (p.GiftCard != null && p.GiftCard.Slug == "steam-wallet")
             return BuildSteamWalletSupport(p, item);
 
+        // AI services (ChatGPT / Claude / Cursor / Midjourney / …): subscription
+        // is activated by the operator — either a fresh account from the pool
+        // or a team-workspace invite to the buyer's email. No self-service code.
+        if (p.AiService != null)
+            return BuildAiServiceSupport(p, item);
+
         // ── Auto-issued codes ─────────────────────────────────────────────
         // Other gift cards (PSN / Xbox / Nintendo / Apple / Spotify / …):
         // realistic-looking code generated on the fly.
@@ -141,6 +147,26 @@ public class CredentialGenerator : ICredentialGenerator
             Message =
                 $"Платёж получен. {name} выдаём вручную из проверенного пула аккаунтов - " +
                 "напишите нам в Telegram, оператор пришлёт логин, пароль и инструкцию по входу.",
+            SupportUsername = _supportUsername,
+            OrderRef        = OrderRef(item),
+            CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,
+            Recipient       = ResolveRecipient(item),
+            ProductName     = product,
+        };
+    }
+
+    private ContactSupportCredential BuildAiServiceSupport(GameProduct p, OrderItem item)
+    {
+        var name    = p.AiService!.Name;
+        var product = !string.IsNullOrWhiteSpace(p.TotalDisplay) ? p.TotalDisplay! : $"{name} — подписка";
+
+        return new ContactSupportCredential
+        {
+            Title = "Активация AI-подписки",
+            Message =
+                $"Платёж получен. Подписка {name} активируется вручную — оператор либо " +
+                "добавит ваш email/юзернейм в оплаченный рабочее пространство, либо передаст " +
+                "готовый аккаунт. Напишите нам в Telegram, закроем заказ за пару минут.",
             SupportUsername = _supportUsername,
             OrderRef        = OrderRef(item),
             CompletedAt     = item.DeliveredAt ?? DateTime.UtcNow,

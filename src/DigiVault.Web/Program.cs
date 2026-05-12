@@ -81,6 +81,13 @@ builder.Services.AddSingleton<DigiVault.Web.Services.Payment.PaymentAnonymizer>(
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Enot.EnotPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Overpay.OverpayPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Pally.PallyPaymentProvider>();
+
+// Pally HTTP client — plain Bearer-auth, no certs / weird headers.
+// 30 s timeout matches the other PSPs; pal24.pro is fast in practice.
+builder.Services.AddHttpClient(
+    "pally",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // PaymentLink server-to-server HTTP client (used by /api/payment/invoice for
 // SBP and /api/payment/operate for status polling). 30s timeout — their

@@ -346,5 +346,33 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed Pally (pal24.pro / pally.info). Plain Bearer-auth, MD5
+        // postback signatures.
+        //   ApiKey      → Bearer token from Pally LK
+        //   MerchantId  → shop_id (10-char string per shop in LK)
+        //   SecretKey   → unused; postbacks sign with the Bearer token directly
+        //   Settings    → optional JSON: {"baseUrl":"https://pal24.pro"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "pally"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "pally",
+                DisplayName = "Pally",
+                IsEnabled   = false,   // until admin enters Bearer token + shop_id
+                Priority    = 40,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

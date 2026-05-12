@@ -3,6 +3,7 @@ using DigiVault.Core.Interfaces;
 using DigiVault.Infrastructure.Data;
 using DigiVault.Infrastructure.Services;
 using DigiVault.Web.Services.Payment;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Persist ASP.NET Data Protection keys to disk under a path that is mounted
+// from the host (see docker-compose.prod.yml). Default location is
+// /root/.aspnet/DataProtection-Keys inside the container, which is wiped on
+// every `docker compose up --build` — that invalidates every existing
+// antiforgery cookie / Identity auth cookie and surfaces as
+// «The key {guid} was not found in the key ring» on the first POST after a
+// redeploy. Pinning the directory + a stable application name keeps the same
+// ring across container rebuilds. SetApplicationName must match across all
+// instances that should share keys.
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/app/dataprotection-keys"))
+    .SetApplicationName("DigiVault");
 
 // Configure PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")

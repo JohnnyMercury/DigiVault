@@ -20,6 +20,13 @@ services:
       - MinIO__UseRelativeUrls=true
     volumes:
       - digivault-backups:/app/backups
+      # Data Protection key ring — persists antiforgery / Identity cookie
+      # encryption keys across container rebuilds. Without this volume every
+      # `docker compose up --build` invalidates every active session and
+      # antiforgery token, so the first POST after a redeploy returns 400
+      # with «The key {guid} was not found in the key ring». Program.cs
+      # pins PersistKeysToFileSystem to this exact path.
+      - digivault-dataprotection:/app/dataprotection-keys
       # Overpay mTLS client certificate. Drop the .p12 file at
       # /var/www/digivault/secrets/overpay.p12 on the host (chmod 600,
       # owned by the docker user). PaymentProviderConfig.Settings.certPath
@@ -41,4 +48,6 @@ services:
 
 volumes:
   digivault-backups:
+    driver: local
+  digivault-dataprotection:
     driver: local

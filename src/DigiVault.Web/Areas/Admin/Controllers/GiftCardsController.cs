@@ -167,23 +167,37 @@ public class GiftCardsController : AdminBaseController
                 .ThenInclude(p => p.ProductKeys)
             .FirstOrDefaultAsync(g => g.Id == id);
 
-        if (card != null)
+        if (card == null)
+            return RedirectToAction(nameof(Index));
+
+        var productIds = card.Products.Select(p => p.Id).ToList();
+        if (productIds.Count > 0)
         {
-            if (!string.IsNullOrEmpty(card.ImageUrl) && card.ImageUrl.StartsWith("/images/uploads/"))
+            var hasOrders = await _context.OrderItems
+                .AnyAsync(oi => productIds.Contains(oi.GameProductId));
+            if (hasOrders)
             {
-                _fileService.DeleteImage(card.ImageUrl);
+                TempData["ErrorMessage"] =
+                    "Нельзя удалить навсегда — по тарифам этой карты уже есть заказы. " +
+                    "Используйте «Скрыть» — карта исчезнет с сайта, но история заказов сохранится.";
+                return RedirectToAction(nameof(Index));
             }
-            foreach (var product in card.Products)
-            {
-                if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
-                {
-                    _fileService.DeleteImage(product.ImageUrl);
-                }
-            }
-            _context.GiftCards.Remove(card);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Карта полностью удалена";
         }
+
+        if (!string.IsNullOrEmpty(card.ImageUrl) && card.ImageUrl.StartsWith("/images/uploads/"))
+        {
+            _fileService.DeleteImage(card.ImageUrl);
+        }
+        foreach (var product in card.Products)
+        {
+            if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
+            {
+                _fileService.DeleteImage(product.ImageUrl);
+            }
+        }
+        _context.GiftCards.Remove(card);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Карта полностью удалена";
 
         return RedirectToAction(nameof(Index));
     }

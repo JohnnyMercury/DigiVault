@@ -149,23 +149,37 @@ public class GamesController : AdminBaseController
                 .ThenInclude(p => p.ProductKeys)
             .FirstOrDefaultAsync(g => g.Id == id);
 
-        if (game != null)
+        if (game == null)
+            return RedirectToAction(nameof(Index));
+
+        var productIds = game.Products.Select(p => p.Id).ToList();
+        if (productIds.Count > 0)
         {
-            if (!string.IsNullOrEmpty(game.ImageUrl) && game.ImageUrl.StartsWith("/images/uploads/"))
+            var hasOrders = await _context.OrderItems
+                .AnyAsync(oi => productIds.Contains(oi.GameProductId));
+            if (hasOrders)
             {
-                _fileService.DeleteImage(game.ImageUrl);
+                TempData["ErrorMessage"] =
+                    "Нельзя удалить навсегда — по тарифам этой игры уже есть заказы. " +
+                    "Используйте «Скрыть» — игра исчезнет с сайта, но история заказов сохранится.";
+                return RedirectToAction(nameof(Index));
             }
-            foreach (var product in game.Products)
-            {
-                if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
-                {
-                    _fileService.DeleteImage(product.ImageUrl);
-                }
-            }
-            _context.Games.Remove(game);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Игра полностью удалена";
         }
+
+        if (!string.IsNullOrEmpty(game.ImageUrl) && game.ImageUrl.StartsWith("/images/uploads/"))
+        {
+            _fileService.DeleteImage(game.ImageUrl);
+        }
+        foreach (var product in game.Products)
+        {
+            if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
+            {
+                _fileService.DeleteImage(product.ImageUrl);
+            }
+        }
+        _context.Games.Remove(game);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "Игра полностью удалена";
 
         return RedirectToAction(nameof(Index));
     }

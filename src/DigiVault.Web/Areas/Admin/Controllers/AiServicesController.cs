@@ -161,23 +161,42 @@ public class AiServicesController : AdminBaseController
                 .ThenInclude(p => p.ProductKeys)
             .FirstOrDefaultAsync(s => s.Id == id);
 
-        if (service != null)
+        if (service == null)
+            return RedirectToAction(nameof(Index));
+
+        // Postgres blocks hard-delete when any child GameProduct is still
+        // referenced by an OrderItem (FK has no ON DELETE SET NULL because
+        // we never want to lose order history). Check up-front and bounce
+        // the admin to «Скрыть» (soft-delete) with a clear message instead
+        // of letting EF throw a 500.
+        var productIds = service.Products.Select(p => p.Id).ToList();
+        if (productIds.Count > 0)
         {
-            if (!string.IsNullOrEmpty(service.ImageUrl) && service.ImageUrl.StartsWith("/images/uploads/"))
+            var hasOrders = await _context.OrderItems
+                .AnyAsync(oi => productIds.Contains(oi.GameProductId));
+            if (hasOrders)
             {
-                _fileService.DeleteImage(service.ImageUrl);
+                TempData["ErrorMessage"] =
+                    "Нельзя удалить навсегда — по тарифам этого сервиса уже есть заказы. " +
+                    "Используйте «Скрыть» — сервис исчезнет с сайта, но история заказов сохранится.";
+                return RedirectToAction(nameof(Index));
             }
-            foreach (var product in service.Products)
-            {
-                if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
-                {
-                    _fileService.DeleteImage(product.ImageUrl);
-                }
-            }
-            _context.AiServices.Remove(service);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "AI-сервис полностью удалён";
         }
+
+        if (!string.IsNullOrEmpty(service.ImageUrl) && service.ImageUrl.StartsWith("/images/uploads/"))
+        {
+            _fileService.DeleteImage(service.ImageUrl);
+        }
+        foreach (var product in service.Products)
+        {
+            if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
+            {
+                _fileService.DeleteImage(product.ImageUrl);
+            }
+        }
+        _context.AiServices.Remove(service);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "AI-сервис полностью удалён";
 
         return RedirectToAction(nameof(Index));
     }

@@ -153,23 +153,37 @@ public class VpnProvidersController : AdminBaseController
                 .ThenInclude(p => p.ProductKeys)
             .FirstOrDefaultAsync(v => v.Id == id);
 
-        if (provider != null)
+        if (provider == null)
+            return RedirectToAction(nameof(Index));
+
+        var productIds = provider.Products.Select(p => p.Id).ToList();
+        if (productIds.Count > 0)
         {
-            if (!string.IsNullOrEmpty(provider.ImageUrl) && provider.ImageUrl.StartsWith("/images/uploads/"))
+            var hasOrders = await _context.OrderItems
+                .AnyAsync(oi => productIds.Contains(oi.GameProductId));
+            if (hasOrders)
             {
-                _fileService.DeleteImage(provider.ImageUrl);
+                TempData["ErrorMessage"] =
+                    "Нельзя удалить навсегда — по тарифам этого провайдера уже есть заказы. " +
+                    "Используйте «Скрыть» — сервис исчезнет с сайта, но история заказов сохранится.";
+                return RedirectToAction(nameof(Index));
             }
-            foreach (var product in provider.Products)
-            {
-                if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
-                {
-                    _fileService.DeleteImage(product.ImageUrl);
-                }
-            }
-            _context.VpnProviders.Remove(provider);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "VPN провайдер полностью удалён";
         }
+
+        if (!string.IsNullOrEmpty(provider.ImageUrl) && provider.ImageUrl.StartsWith("/images/uploads/"))
+        {
+            _fileService.DeleteImage(provider.ImageUrl);
+        }
+        foreach (var product in provider.Products)
+        {
+            if (!string.IsNullOrEmpty(product.ImageUrl) && product.ImageUrl.StartsWith("/images/uploads/"))
+            {
+                _fileService.DeleteImage(product.ImageUrl);
+            }
+        }
+        _context.VpnProviders.Remove(provider);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = "VPN провайдер полностью удалён";
 
         return RedirectToAction(nameof(Index));
     }

@@ -380,5 +380,33 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed Platega (app.platega.io). Shared-secret headers, no signature.
+        //   MerchantId  → X-MerchantId header (UUID from Platega LK)
+        //   ApiKey      → X-Secret header (the «API ключ»)
+        //   SecretKey   → unused; webhook verification is the same shared
+        //                 secret echoed back by Platega in X-Secret
+        //   Settings    → optional JSON: {"baseUrl":"https://app.platega.io"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "platega"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "platega",
+                DisplayName = "Platega",
+                IsEnabled   = false,   // until admin enters MerchantId + Secret
+                Priority    = 50,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

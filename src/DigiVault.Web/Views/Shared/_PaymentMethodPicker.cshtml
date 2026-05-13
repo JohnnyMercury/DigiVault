@@ -220,14 +220,16 @@
             { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-front', color: ENOT_BADGE    },
             { code: 'paymentlink', title: 'RushPay',     desc: 'Visa, MasterCard (тест)',   icon: 'bi-credit-card',         color: PLINK_BADGE   },
             { code: 'pally',       title: 'Pally',       desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-back',  color: PALLY_BADGE   },
-            { code: 'platega',     title: 'Platega',     desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-fill',    color: PLATEGA_BADGE },
+            // Platega — hidden from picker until credentials are issued.
+            // Provider code + DB row are intact; restore by adding back
+            // the entry { code: 'platega', ... color: PLATEGA_BADGE }.
         ],
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
             { code: 'paymentlink', title: 'RushPay',     desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
             { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
             { code: 'pally',       title: 'Pally',       desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
-            { code: 'platega',     title: 'Platega',     desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
+            // Platega — hidden from picker until credentials are issued.
         ],
         // QR - только PaymentLink. Enot нативного QR-метода не имеет
         // (он умеет SBP, у которого QR это просто отображение формы) -

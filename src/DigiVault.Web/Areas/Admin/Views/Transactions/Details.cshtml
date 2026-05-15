@@ -1,16 +1,61 @@
 @model DigiVault.Core.Entities.PaymentTransaction
 @{
     ViewData["Title"] = $"Транзакция {Model.TransactionId}";
+
     var statuses = Enum.GetValues<DigiVault.Core.Enums.PaymentStatus>();
-    var statusClass = Model.Status switch
+    var statusBadge = Model.Status switch
     {
-        DigiVault.Core.Enums.PaymentStatus.Completed => "success",
-        DigiVault.Core.Enums.PaymentStatus.Pending => "warning",
-        DigiVault.Core.Enums.PaymentStatus.Processing => "info",
-        DigiVault.Core.Enums.PaymentStatus.Failed => "danger",
-        DigiVault.Core.Enums.PaymentStatus.Cancelled => "secondary",
-        _ => "secondary"
+        DigiVault.Core.Enums.PaymentStatus.Completed  => ("bg-success", "Successfully"),
+        DigiVault.Core.Enums.PaymentStatus.Pending    => ("bg-warning text-dark", "Pending"),
+        DigiVault.Core.Enums.PaymentStatus.Processing => ("bg-info text-dark", "Processing"),
+        DigiVault.Core.Enums.PaymentStatus.Failed     => ("bg-danger", "Failed"),
+        DigiVault.Core.Enums.PaymentStatus.Cancelled  => ("bg-secondary", "Cancelled"),
+        DigiVault.Core.Enums.PaymentStatus.Refunded   => ("bg-dark", "Refunded"),
+        DigiVault.Core.Enums.PaymentStatus.Expired    => ("bg-secondary", "Expired"),
+        _ => ("bg-secondary", Model.Status.ToString()),
     };
+
+    // Detect what kind of order this payment paid for. Used both for the
+    // colour-coded «Заказ» badge and for picking which fields to surface
+    // in the Пользователь и заказ section (Steam top-up shows login;
+    // game/giftcard/etc. show the items list).
+    var firstItem    = Model.Order?.OrderItems?.FirstOrDefault();
+    var product      = firstItem?.GameProduct;
+    var isSteamTopUp = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
+    var isGame       = product?.Game != null;
+    var isGiftCard   = product?.GiftCard != null && !isSteamTopUp;
+    var isVpn        = product?.VpnProvider != null;
+    var isAi         = product?.AiService != null;
+
+    var orderTypeLabel = isSteamTopUp ? "Steam"
+                       : isGame       ? "Игра"
+                       : isGiftCard   ? "Подарочная карта"
+                       : isVpn        ? "VPN"
+                       : isAi         ? "AI-сервис"
+                       : Model.OrderId.HasValue ? "Заказ"
+                                                : "Пополнение баланса";
+    var orderTypeColour = isSteamTopUp ? "bg-info text-dark"
+                        : isGame       ? "bg-primary"
+                        : isGiftCard   ? "bg-warning text-dark"
+                        : isVpn        ? "bg-success"
+                        : isAi         ? "bg-success"
+                                       : "bg-secondary";
+
+    // Steam-Wallet flow stores «Steam: {login}; Зачислить: {bonused}» in
+    // Order.DeliveryInfo. Pull the login out so admin can see what account
+    // the operator needs to top up (matches what Cyborg surfaces).
+    string? steamLogin = null;
+    if (isSteamTopUp && !string.IsNullOrEmpty(Model.Order?.DeliveryInfo))
+    {
+        var raw  = Model.Order!.DeliveryInfo!;
+        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
+        if (idx1 >= 0)
+        {
+            var rest = raw[(idx1 + "Steam:".Length)..];
+            var semi = rest.IndexOf(';');
+            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
+        }
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,11 +63,9 @@
         <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm mb-2">
             <i class="bi bi-arrow-left"></i> Назад
         </a>
-        <h1 class="h3 mb-0">
-            <i class="bi bi-credit-card me-2"></i>Транзакция
-        </h1>
+        <h1 class="h3 mb-0"><i class="bi bi-credit-card me-2"></i>Детали транзакции</h1>
     </div>
-    <span class="badge bg-@statusClass fs-6">@Model.Status</span>
+    <span class="badge @statusBadge.Item1 fs-6">@statusBadge.Item2</span>
 </div>
 
 @if (TempData["Success"] != null)
@@ -32,61 +75,157 @@
 
 <div class="row">
     <div class="col-lg-8">
+        <!-- Основная информация -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Информация о платеже</h5>
+                <h5 class="mb-0 text-info"><i class="bi bi-info-circle me-2"></i>Основная информация</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless">
+                <table class="table table-borderless mb-0">
                     <tr>
-                        <th width="200">ID транзакции</th>
-                        <td><code>@Model.TransactionId</code></td>
+                        <th width="200">ID транзакции:</th>
+                        <td><code class="text-pink">@Model.TransactionId</code></td>
                     </tr>
                     <tr>
-                        <th>ID у провайдера</th>
-                        <td><code>@(Model.ProviderTransactionId ?? "-")</code></td>
+                        <th>Provider ID:</th>
+                        <td><code class="text-muted">@(Model.ProviderTransactionId ?? "-")</code></td>
                     </tr>
                     <tr>
-                        <th>Провайдер</th>
+                        <th>Сумма:</th>
+                        <td><strong class="fs-5">@Model.Amount.ToString("N2") @Model.Currency</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td><span class="badge @statusBadge.Item1">@statusBadge.Item2</span></td>
+                    </tr>
+                    <tr>
+                        <th>Провайдер:</th>
                         <td>@Model.ProviderName</td>
                     </tr>
                     <tr>
-                        <th>Метод оплаты</th>
-                        <td>@Model.Method</td>
+                        <th>Метод оплаты:</th>
+                        <td>@Model.Method.ToString().ToLower()</td>
                     </tr>
                     <tr>
-                        <th>Сумма</th>
-                        <td><strong class="fs-4">@Model.Amount.ToString("N2") @Model.Currency</strong></td>
-                    </tr>
-                    <tr>
-                        <th>Описание</th>
-                        <td>@(Model.Description ?? "-")</td>
-                    </tr>
-                    <tr>
-                        <th>IP клиента</th>
-                        <td><code>@(Model.ClientIp ?? "-")</code></td>
+                        <th>Описание:</th>
+                        <td class="text-muted">@(Model.Description ?? "-")</td>
                     </tr>
                 </table>
             </div>
         </div>
 
+        <!-- Пользователь и заказ -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Даты</h5>
+                <h5 class="mb-0 text-info"><i class="bi bi-person me-2"></i>Пользователь и заказ</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless">
+                <table class="table table-borderless mb-0">
                     <tr>
-                        <th width="200">Создана</th>
+                        <th width="200">User ID:</th>
+                        <td>
+                            @if (!string.IsNullOrEmpty(Model.UserId))
+                            {
+                                <a href="/Admin/Users/Details/@Model.UserId" class="text-decoration-none">@Model.UserId</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>
+                            @if (Model.User != null)
+                            {
+                                <a href="mailto:@Model.User.Email" class="text-decoration-none">@Model.User.Email</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Заказ:</th>
+                        <td>
+                            @if (Model.OrderId.HasValue)
+                            {
+                                <a href="/Admin/Orders/Details/@Model.OrderId" class="badge @orderTypeColour text-decoration-none">@orderTypeLabel</a>
+                                if (Model.Order != null)
+                                {
+                                    <span class="text-muted ms-2">@Model.Order.OrderNumber</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge @orderTypeColour">@orderTypeLabel</span>
+                            }
+                        </td>
+                    </tr>
+                    @if (isSteamTopUp && !string.IsNullOrEmpty(steamLogin))
+                    {
+                        <tr>
+                            <th>Steam Login:</th>
+                            <td><code>@steamLogin</code></td>
+                        </tr>
+                    }
+                    @if (Model.Order?.OrderItems != null && Model.Order.OrderItems.Any() && !isSteamTopUp)
+                    {
+                        <tr>
+                            <th>Товар:</th>
+                            <td>
+                                @foreach (var it in Model.Order.OrderItems)
+                                {
+                                    var name = it.GameProduct?.TotalDisplay ?? it.GameProduct?.Name ?? "—";
+                                    <div>@name <span class="text-muted">× @it.Quantity</span></div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Order != null)
+                    {
+                        <tr>
+                            <th>Статус заказа:</th>
+                            <td>
+                                @{
+                                    var orderBadge = Model.Order.Status switch
+                                    {
+                                        DigiVault.Core.Enums.OrderStatus.Completed   => ("bg-success", "Выдан"),
+                                        DigiVault.Core.Enums.OrderStatus.Processing  => ("bg-warning text-dark", "В обработке"),
+                                        DigiVault.Core.Enums.OrderStatus.Pending     => ("bg-secondary", "Ожидает оплаты"),
+                                        DigiVault.Core.Enums.OrderStatus.Cancelled   => ("bg-dark", "Отменён"),
+                                        DigiVault.Core.Enums.OrderStatus.Refunded    => ("bg-info text-dark", "Возврат"),
+                                        _ => ("bg-secondary", Model.Order.Status.ToString()),
+                                    };
+                                }
+                                <span class="badge @orderBadge.Item1">@orderBadge.Item2</span>
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        <!-- Временные метки -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0 text-info"><i class="bi bi-clock me-2"></i>Временные метки</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th width="200">Создана:</th>
                         <td>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
                     </tr>
                     <tr>
-                        <th>Обновлена</th>
+                        <th>Обновлена:</th>
                         <td>@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm:ss")</td>
                     </tr>
                     <tr>
-                        <th>Завершена</th>
-                        <td>@(Model.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "-")</td>
+                        <th>Завершена:</th>
+                        <td>@(Model.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")</td>
                     </tr>
                 </table>
             </div>
@@ -96,10 +235,10 @@
         {
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Данные провайдера</h5>
+                    <h5 class="mb-0 text-muted small">Данные провайдера (raw)</h5>
                 </div>
                 <div class="card-body">
-                    <pre class="mb-0 bg-dark text-light p-3 rounded"><code>@Model.ProviderData</code></pre>
+                    <pre class="mb-0 bg-dark text-light p-3 rounded small"><code>@Model.ProviderData</code></pre>
                 </div>
             </div>
         }
@@ -118,39 +257,6 @@
     </div>
 
     <div class="col-lg-4">
-        <!-- Пользователь -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Пользователь</h5>
-            </div>
-            <div class="card-body">
-                @if (Model.User != null)
-                {
-                    <p class="mb-1"><strong>@Model.User.Email</strong></p>
-                    <p class="text-muted small mb-2">ID: @Model.UserId</p>
-                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-person"></i> Профиль
-                    </a>
-                }
-            </div>
-        </div>
-
-        <!-- Заказ -->
-        @if (Model.OrderId.HasValue)
-        {
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Связанный заказ</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-2">Заказ #@Model.OrderId</p>
-                    <a href="/Admin/Orders/Details/@Model.OrderId" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-bag"></i> Открыть заказ
-                    </a>
-                </div>
-            </div>
-        }
-
         <!-- Действия -->
         <div class="card">
             <div class="card-header">
@@ -172,7 +278,25 @@
                         <i class="bi bi-pencil"></i> Обновить статус
                     </button>
                 </form>
+
+                @if (Model.OrderId.HasValue)
+                {
+                    <hr>
+                    <a href="/Admin/Orders/Details/@Model.OrderId" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-bag"></i> Открыть заказ #@Model.OrderId
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(Model.UserId))
+                {
+                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="bi bi-person"></i> Открыть профиль клиента
+                    </a>
+                }
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .text-pink { color: #ec4899; }
+</style>

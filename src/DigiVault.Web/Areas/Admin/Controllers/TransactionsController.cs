@@ -87,6 +87,21 @@ public class TransactionsController : AdminBaseController
         var transaction = await _context.PaymentTransactions
             .Include(t => t.User)
             .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.Game)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.GiftCard)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.VpnProvider)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.AiService)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (transaction == null)

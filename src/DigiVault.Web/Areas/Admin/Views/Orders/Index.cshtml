@@ -312,42 +312,61 @@
         font-size: 0.88rem;
         font-weight: 500;
     }
+    /* Inputs look like plain inline text by default — no border, no
+       background, just typography. Per support request: «всё должно
+       быть одного цвета, не надо всяких прямоугольников». Editing
+       capability is hinted only when the user actually clicks/focuses
+       a value (subtle pink underline + faint bg). */
     .tx-input {
         flex: 1;
-        min-width: 0;            /* lets long IDs ellipse-shrink inside grid */
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 0.4rem 0.7rem;
-        font-size: 0.92rem;
+        min-width: 0;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.95rem;
         color: #e5e7eb;
         border-radius: 6px;
         transition: border-color 0.15s, background-color 0.15s;
         font-family: inherit;
     }
-    .tx-input:hover { border-color: rgba(236, 72, 153, 0.35); }
+    .tx-input:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
     .tx-input:focus {
-        border-color: #ec4899;
-        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(236, 72, 153, 0.5);
+        background: rgba(255, 255, 255, 0.05);
         outline: none;
     }
-    .tx-input-link { color: #06b6d4; font-family: monospace; font-size: 0.85rem; }
+    .tx-input-link { color: #06b6d4; font-family: monospace; font-size: 0.88rem; }
     .tx-input-bold { font-weight: 700; font-size: 1.05rem; }
     .tx-input-muted { color: #94a3b8; }
+    /* Status pill is always green by request — it's a brand element,
+       not a state indicator. The actual status string still varies
+       (Successfully / Pending / Failed / …) so the operator can read it. */
     .tx-input-status {
-        color: #fff;
+        background: #22c55e !important;
+        color: #fff !important;
         font-weight: 600;
-        max-width: 180px;
+        max-width: 200px;
         text-align: center;
         border-color: transparent !important;
     }
+    .tx-input-status:hover, .tx-input-status:focus {
+        background: #22c55e !important;
+        border-color: transparent !important;
+    }
     .tx-input-badge {
-        background: #06b6d4;
-        color: #0a0a0f;
+        background: #06b6d4 !important;
+        color: #0a0a0f !important;
         font-weight: 600;
         max-width: 320px;
         padding: 0.4rem 0.9rem;
         border-radius: 16px;
-        border-color: transparent;
+        border-color: transparent !important;
+    }
+    .tx-input-badge:hover, .tx-input-badge:focus {
+        background: #06b6d4 !important;
+        border-color: transparent !important;
     }
 
     @@media (max-width: 768px) {

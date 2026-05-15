@@ -22,6 +22,10 @@
                        : Model.OrderId.HasValue     ? "Заказ"
                                                     : "Пополнение баланса";
 
+    // Status label is just the human-readable name of the actual status,
+    // but the badge background is fixed green per support's request — the
+    // modal is meant to look like a uniform info card with one accent
+    // colour, not a status-colour-coded summary.
     var statusText = Model.Status switch
     {
         DigiVault.Core.Enums.PaymentStatus.Completed  => "Successfully",
@@ -33,10 +37,6 @@
         DigiVault.Core.Enums.PaymentStatus.Expired    => "Expired",
         _ => Model.Status.ToString(),
     };
-    var statusBg = Model.Status == DigiVault.Core.Enums.PaymentStatus.Completed ? "#22c55e"
-                 : Model.Status == DigiVault.Core.Enums.PaymentStatus.Pending   ? "#f59e0b"
-                 : Model.Status == DigiVault.Core.Enums.PaymentStatus.Failed    ? "#ef4444"
-                                                                                : "#6b7280";
 }
 <div class="row g-4">
     <div class="col-md-6">
@@ -58,7 +58,7 @@
         </div>
         <div class="tx-row">
             <label class="tx-label">Статус:</label>
-            <input type="text" class="tx-input tx-input-status" style="background: @statusBg;" value="@statusText"/>
+            <input type="text" class="tx-input tx-input-status" value="@statusText"/>
         </div>
         <div class="tx-row">
             <label class="tx-label">Провайдер:</label>

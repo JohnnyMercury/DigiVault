@@ -84,7 +84,28 @@ public class TransactionsController : AdminBaseController
 
     public async Task<IActionResult> Details(int id)
     {
-        var transaction = await _context.PaymentTransactions
+        var transaction = await LoadFullTransactionAsync(id);
+        if (transaction == null) return NotFound();
+        return View(transaction);
+    }
+
+    /// <summary>
+    /// AJAX endpoint that returns just the modal body markup for a single
+    /// transaction. The Transactions/Index page wires its «eye» button to
+    /// fetch this and inject it into a Bootstrap modal — exactly like the
+    /// pop-up admin on the Cyborg site, so support sees all the info on
+    /// one screen without leaving the list.
+    /// </summary>
+    public async Task<IActionResult> DetailsPartial(int id)
+    {
+        var transaction = await LoadFullTransactionAsync(id);
+        if (transaction == null) return NotFound();
+        return PartialView("_DetailsModal", transaction);
+    }
+
+    private async Task<DigiVault.Core.Entities.PaymentTransaction?> LoadFullTransactionAsync(int id)
+    {
+        return await _context.PaymentTransactions
             .Include(t => t.User)
             .Include(t => t.Order)
                 .ThenInclude(o => o!.OrderItems)
@@ -103,11 +124,6 @@ public class TransactionsController : AdminBaseController
                     .ThenInclude(oi => oi.GameProduct)
                         .ThenInclude(p => p!.AiService)
             .FirstOrDefaultAsync(t => t.Id == id);
-
-        if (transaction == null)
-            return NotFound();
-
-        return View(transaction);
     }
 
     [HttpPost]

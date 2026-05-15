@@ -14,7 +14,8 @@ public class OrdersController : AdminBaseController
         _context = context;
     }
 
-    public async Task<IActionResult> Index(OrderStatus? status = null, string? search = null, int page = 1)
+    public async Task<IActionResult> Index(OrderStatus? status = null, string? search = null,
+        string? txQuery = null, int page = 1)
     {
         const int pageSize = 20;
 
@@ -42,6 +43,38 @@ public class OrdersController : AdminBaseController
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
+
+        // Transaction-search widget — mirrors the Cyborg admin: user pastes
+        // any of {transaction ID, provider ID, order number} → we return the
+        // single matching PaymentTransaction with full nav-loads so the
+        // preview card + modal can render inline without a second roundtrip.
+        ViewBag.TxQuery = txQuery;
+        if (!string.IsNullOrWhiteSpace(txQuery))
+        {
+            var q = txQuery.Trim();
+            ViewBag.SearchedTransaction = await _context.PaymentTransactions
+                .Include(t => t.User)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o!.OrderItems)
+                        .ThenInclude(oi => oi.GameProduct)
+                            .ThenInclude(p => p!.Game)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o!.OrderItems)
+                        .ThenInclude(oi => oi.GameProduct)
+                            .ThenInclude(p => p!.GiftCard)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o!.OrderItems)
+                        .ThenInclude(oi => oi.GameProduct)
+                            .ThenInclude(p => p!.VpnProvider)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o!.OrderItems)
+                        .ThenInclude(oi => oi.GameProduct)
+                            .ThenInclude(p => p!.AiService)
+                .Where(t => t.TransactionId == q
+                         || t.ProviderTransactionId == q
+                         || (t.Order != null && t.Order.OrderNumber == q))
+                .FirstOrDefaultAsync();
+        }
 
         return View(orders);
     }

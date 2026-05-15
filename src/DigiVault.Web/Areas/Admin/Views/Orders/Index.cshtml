@@ -1,7 +1,125 @@
 @model List<Order>
+@using DigiVault.Core.Entities
 @{
     ViewData["Title"] = "Orders";
+    var searchedTx = ViewBag.SearchedTransaction as DigiVault.Core.Entities.PaymentTransaction;
+    var txQuery    = (string?)ViewBag.TxQuery;
 }
+
+@* ─────────────────────────────────────────────────────────────────────
+   Transaction-search widget — mirrors the Cyborg admin: paste any of
+   {transaction-id, provider-id, order-number} and get the matching
+   PaymentTransaction back as a preview card + a «Подробнее» modal.
+   ───────────────────────────────────────────────────────────────────── *@
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <h5 class="mb-3" style="color: #ec4899;"><i class="bi bi-search me-2"></i>Поиск транзакций</h5>
+        <form method="get" class="d-flex gap-2 mb-2">
+            <input type="hidden" name="status" value="@ViewBag.Status"/>
+            <input type="hidden" name="search" value="@ViewBag.Search"/>
+            <input type="text"
+                   name="txQuery"
+                   value="@txQuery"
+                   class="form-control bg-dark border-secondary text-light"
+                   placeholder="Введите номер транзакции, заказа или ID провайдера…"
+                   autocomplete="off"/>
+            <button type="submit" class="btn btn-pink"><i class="bi bi-search me-1"></i>Найти</button>
+            @if (!string.IsNullOrWhiteSpace(txQuery))
+            {
+                <a class="btn btn-outline-secondary" asp-action="Index"
+                   asp-route-status="@ViewBag.Status" asp-route-search="@ViewBag.Search">
+                    <i class="bi bi-x-lg me-1"></i>Сбросить
+                </a>
+            }
+        </form>
+        <small class="text-muted">Поиск по: номеру транзакции, ID провайдера, номеру заказа</small>
+
+        @if (!string.IsNullOrWhiteSpace(txQuery))
+        {
+            if (searchedTx == null)
+            {
+                <div class="alert alert-danger mt-3 mb-0">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Транзакция не найдена
+                </div>
+            }
+            else
+            {
+                var statusBadge = searchedTx.Status switch
+                {
+                    DigiVault.Core.Enums.PaymentStatus.Completed  => ("bg-success", "Подтвержден"),
+                    DigiVault.Core.Enums.PaymentStatus.Pending    => ("bg-warning text-dark", "Ожидание"),
+                    DigiVault.Core.Enums.PaymentStatus.Processing => ("bg-info text-dark", "В обработке"),
+                    DigiVault.Core.Enums.PaymentStatus.Failed     => ("bg-danger", "Ошибка"),
+                    DigiVault.Core.Enums.PaymentStatus.Cancelled  => ("bg-secondary", "Отменён"),
+                    DigiVault.Core.Enums.PaymentStatus.Refunded   => ("bg-dark", "Возврат"),
+                    DigiVault.Core.Enums.PaymentStatus.Expired    => ("bg-secondary", "Истёк"),
+                    _ => ("bg-secondary", searchedTx.Status.ToString()),
+                };
+
+                <div class="alert alert-success mt-3 mb-0" style="border-left: 4px solid #22c55e;">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-check-circle-fill me-2 text-success fs-4"></i>
+                        <strong>Транзакция найдена!</strong>
+                    </div>
+                    <div class="row g-3 text-light">
+                        <div class="col-md-6">
+                            <div class="small text-muted">ID транзакции:</div>
+                            <div><code style="color: #06b6d4;">@searchedTx.TransactionId</code></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Пользователь:</div>
+                            <div>@(searchedTx.User?.Email ?? $"User #{searchedTx.UserId}")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Сумма:</div>
+                            <div><strong>@searchedTx.Amount.ToString("N0") @searchedTx.Currency</strong></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Создана:</div>
+                            <div>@searchedTx.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Статус:</div>
+                            <div><span class="badge @statusBadge.Item1">@statusBadge.Item2</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Завершена:</div>
+                            <div>@(searchedTx.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "-")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Провайдер:</div>
+                            <div>@searchedTx.ProviderName</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Заказ:</div>
+                            <div>
+                                @if (searchedTx.Order != null)
+                                {
+                                    <span class="badge" style="background:#06b6d4;color:#000;">@searchedTx.Order.OrderNumber</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Метод оплаты:</div>
+                            <div>@searchedTx.Method.ToString().ToLower()</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="small text-muted">Provider ID:</div>
+                            <div><code class="small">@(searchedTx.ProviderTransactionId ?? "-")</code></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-info mt-3" data-bs-toggle="modal" data-bs-target="#txDetailsModal">
+                        <i class="bi bi-info-circle me-1"></i>Подробнее
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <form method="get" class="d-flex gap-2">
@@ -74,3 +192,151 @@
         </ul>
     </nav>
 }
+
+@* ─────────────────────────────────────────────────────────────────────
+   Transaction-details modal (Cyborg style). Rendered only when search
+   actually found a transaction, so we don't ship a 500-line markup
+   blob on every plain Index hit. Inputs are intentionally bare text
+   fields with no name attribute — edits stay in DOM, nothing posts.
+   ───────────────────────────────────────────────────────────────────── *@
+@if (searchedTx != null)
+{
+    var product   = searchedTx.Order?.OrderItems?.FirstOrDefault()?.GameProduct;
+    var isSteam   = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
+    string? steamLogin = null;
+    if (isSteam && !string.IsNullOrEmpty(searchedTx.Order?.DeliveryInfo))
+    {
+        var raw  = searchedTx.Order!.DeliveryInfo!;
+        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
+        if (idx1 >= 0)
+        {
+            var rest = raw[(idx1 + "Steam:".Length)..];
+            var semi = rest.IndexOf(';');
+            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
+        }
+    }
+    var orderType = product?.Game != null      ? "Игра"
+                  : isSteam                    ? "Steam"
+                  : product?.GiftCard != null  ? "Подарочная карта"
+                  : product?.VpnProvider != null ? "VPN"
+                  : product?.AiService != null ? "AI-сервис"
+                  : searchedTx.OrderId.HasValue ? "Заказ"
+                                                : "Пополнение баланса";
+
+    <div class="modal fade" id="txDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content tx-modal">
+                <div class="modal-header tx-modal-header">
+                    <h5 class="modal-title mb-0">Детали транзакции</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body tx-modal-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="tx-section-title">Основная информация</h6>
+                            <div class="tx-row">
+                                <label class="tx-label">ID транзакции:</label>
+                                <input type="text" class="tx-input tx-input-link" value="@searchedTx.TransactionId"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Provider ID:</label>
+                                <input type="text" class="tx-input" value="@(searchedTx.ProviderTransactionId ?? "")"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Сумма:</label>
+                                <div class="d-flex gap-2">
+                                    <input type="text" class="tx-input tx-input-bold" style="max-width: 100px;" value="@searchedTx.Amount.ToString("N0")"/>
+                                    <input type="text" class="tx-input tx-input-muted" style="max-width: 60px;" value="@searchedTx.Currency"/>
+                                </div>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Статус:</label>
+                                <input type="text" class="tx-input tx-input-status-ok" value="@(searchedTx.Status == DigiVault.Core.Enums.PaymentStatus.Completed ? "Successfully" : searchedTx.Status.ToString())"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Провайдер:</label>
+                                <input type="text" class="tx-input" value="@searchedTx.ProviderName"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Метод оплаты:</label>
+                                <input type="text" class="tx-input" value="@searchedTx.Method.ToString().ToLower()"/>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="tx-section-title">Пользователь и заказ</h6>
+                            <div class="tx-row">
+                                <label class="tx-label">User ID:</label>
+                                <input type="text" class="tx-input" value="@searchedTx.UserId"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Email:</label>
+                                <input type="text" class="tx-input" value="@(searchedTx.User?.Email ?? "")"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Заказ:</label>
+                                <input type="text" class="tx-input tx-input-badge" value="@(searchedTx.Order?.OrderNumber ?? orderType)"/>
+                            </div>
+                            @if (isSteam && !string.IsNullOrEmpty(steamLogin))
+                            {
+                                <div class="tx-row">
+                                    <label class="tx-label">Steam Login:</label>
+                                    <input type="text" class="tx-input" value="@steamLogin"/>
+                                </div>
+                            }
+
+                            <h6 class="tx-section-title mt-4">Временные метки</h6>
+                            <div class="tx-row">
+                                <label class="tx-label">Создана:</label>
+                                <input type="text" class="tx-input" value="@searchedTx.CreatedAt.ToString("dd.MM.yyyy, HH:mm:ss")"/>
+                            </div>
+                            <div class="tx-row">
+                                <label class="tx-label">Завершена:</label>
+                                <input type="text" class="tx-input" value="@(searchedTx.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "-")"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .btn-pink { background: #ec4899; color: white; border: none; }
+    .btn-pink:hover { background: #db2777; color: white; }
+
+    .tx-modal { background: #1f2937; color: #fff; border-radius: 12px; overflow: hidden; }
+    .tx-modal-header {
+        background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        color: #fff;
+        border-bottom: none;
+        padding: 1rem 1.25rem;
+    }
+    .tx-modal-body { background: #fff; color: #1f2937; padding: 1.5rem; }
+    .tx-section-title { color: #ec4899; font-weight: 700; margin-bottom: 0.75rem; }
+    .tx-row { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb; }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-label { min-width: 130px; color: #6b7280; margin: 0; font-size: 0.9rem; }
+    .tx-input {
+        flex: 1;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.95rem;
+        color: #1f2937;
+        border-radius: 6px;
+        transition: border-color 0.15s;
+    }
+    .tx-input:hover, .tx-input:focus { border-color: #d1d5db; outline: none; }
+    .tx-input-link { color: #06b6d4; }
+    .tx-input-bold { font-weight: 700; }
+    .tx-input-muted { color: #6b7280; }
+    .tx-input-status-ok {
+        background: #22c55e; color: #fff; font-weight: 600;
+        max-width: 180px; padding: 0.4rem 0.75rem;
+    }
+    .tx-input-badge {
+        background: #06b6d4; color: #000; font-weight: 600;
+        max-width: 280px; padding: 0.4rem 0.75rem; border-radius: 16px;
+    }
+</style>

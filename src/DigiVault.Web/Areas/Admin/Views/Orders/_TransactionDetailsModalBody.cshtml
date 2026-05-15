@@ -1,0 +1,104 @@
+@model DigiVault.Core.Entities.PaymentTransaction
+@{
+    var product = Model.Order?.OrderItems?.FirstOrDefault()?.GameProduct;
+    var isSteam = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
+    string? steamLogin = null;
+    if (isSteam && !string.IsNullOrEmpty(Model.Order?.DeliveryInfo))
+    {
+        var raw  = Model.Order!.DeliveryInfo!;
+        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
+        if (idx1 >= 0)
+        {
+            var rest = raw[(idx1 + "Steam:".Length)..];
+            var semi = rest.IndexOf(';');
+            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
+        }
+    }
+    var orderTypeLabel = product?.Game != null      ? "Игра"
+                       : isSteam                    ? "Steam"
+                       : product?.GiftCard != null  ? "Подарочная карта"
+                       : product?.VpnProvider != null ? "VPN"
+                       : product?.AiService != null ? "AI-сервис"
+                       : Model.OrderId.HasValue     ? "Заказ"
+                                                    : "Пополнение баланса";
+
+    var statusText = Model.Status switch
+    {
+        DigiVault.Core.Enums.PaymentStatus.Completed  => "Successfully",
+        DigiVault.Core.Enums.PaymentStatus.Pending    => "Pending",
+        DigiVault.Core.Enums.PaymentStatus.Processing => "Processing",
+        DigiVault.Core.Enums.PaymentStatus.Failed     => "Failed",
+        DigiVault.Core.Enums.PaymentStatus.Cancelled  => "Cancelled",
+        DigiVault.Core.Enums.PaymentStatus.Refunded   => "Refunded",
+        DigiVault.Core.Enums.PaymentStatus.Expired    => "Expired",
+        _ => Model.Status.ToString(),
+    };
+    var statusBg = Model.Status == DigiVault.Core.Enums.PaymentStatus.Completed ? "#22c55e"
+                 : Model.Status == DigiVault.Core.Enums.PaymentStatus.Pending   ? "#f59e0b"
+                 : Model.Status == DigiVault.Core.Enums.PaymentStatus.Failed    ? "#ef4444"
+                                                                                : "#6b7280";
+}
+<div class="row g-4">
+    <div class="col-md-6">
+        <h6 class="tx-section-title">Основная информация</h6>
+        <div class="tx-row">
+            <label class="tx-label">ID транзакции:</label>
+            <input type="text" class="tx-input tx-input-link" value="@Model.TransactionId"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Provider ID:</label>
+            <input type="text" class="tx-input" value="@(Model.ProviderTransactionId ?? "")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Сумма:</label>
+            <div class="d-flex gap-2 flex-grow-1">
+                <input type="text" class="tx-input tx-input-bold" style="max-width: 120px;" value="@Model.Amount.ToString("N2")"/>
+                <input type="text" class="tx-input tx-input-muted" style="max-width: 80px;" value="@Model.Currency"/>
+            </div>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Статус:</label>
+            <input type="text" class="tx-input tx-input-status" style="background: @statusBg;" value="@statusText"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Провайдер:</label>
+            <input type="text" class="tx-input" value="@Model.ProviderName"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Метод оплаты:</label>
+            <input type="text" class="tx-input" value="@Model.Method.ToString().ToLower()"/>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h6 class="tx-section-title">Пользователь и заказ</h6>
+        <div class="tx-row">
+            <label class="tx-label">User ID:</label>
+            <input type="text" class="tx-input" value="@Model.UserId"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Email:</label>
+            <input type="text" class="tx-input" value="@(Model.User?.Email ?? "")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Заказ:</label>
+            <input type="text" class="tx-input tx-input-badge" value="@(Model.Order?.OrderNumber ?? orderTypeLabel)"/>
+        </div>
+        @if (isSteam && !string.IsNullOrEmpty(steamLogin))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Steam Login:</label>
+                <input type="text" class="tx-input" value="@steamLogin"/>
+            </div>
+        }
+
+        <h6 class="tx-section-title mt-4">Временные метки</h6>
+        <div class="tx-row">
+            <label class="tx-label">Создана:</label>
+            <input type="text" class="tx-input" value="@Model.CreatedAt.ToString("dd.MM.yyyy, HH:mm:ss")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Завершена:</label>
+            <input type="text" class="tx-input" value="@(Model.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "-")"/>
+        </div>
+    </div>
+</div>

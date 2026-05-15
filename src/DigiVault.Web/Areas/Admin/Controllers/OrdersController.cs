@@ -79,6 +79,50 @@ public class OrdersController : AdminBaseController
         return View(orders);
     }
 
+    /// <summary>
+    /// AJAX endpoint used by the «View» button in the orders table. Looks up
+    /// the most recent PaymentTransaction associated with the order and
+    /// renders the same modal partial used by the search widget above the
+    /// list. Returns just the modal-body markup; the host page already owns
+    /// the modal shell + script that opens it.
+    /// </summary>
+    public async Task<IActionResult> TransactionPartial(int id)
+    {
+        var transaction = await _context.PaymentTransactions
+            .Include(t => t.User)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.Game)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.GiftCard)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.VpnProvider)
+            .Include(t => t.Order)
+                .ThenInclude(o => o!.OrderItems)
+                    .ThenInclude(oi => oi.GameProduct)
+                        .ThenInclude(p => p!.AiService)
+            .Where(t => t.OrderId == id)
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (transaction == null)
+        {
+            return Content(
+                "<div class='alert alert-warning m-3'>" +
+                "Платёжная транзакция для этого заказа не найдена. " +
+                "Возможно, заказ оплачен с баланса — у такого заказа нет PSP-транзакции." +
+                "</div>",
+                "text/html");
+        }
+
+        return PartialView("_TransactionDetailsModalBody", transaction);
+    }
+
     public async Task<IActionResult> Details(int id)
     {
         var order = await _context.Orders

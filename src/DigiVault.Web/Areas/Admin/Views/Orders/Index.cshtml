@@ -112,7 +112,7 @@
                             <div><code class="small">@(searchedTx.ProviderTransactionId ?? "-")</code></div>
                         </div>
                     </div>
-                    <button class="btn btn-info mt-3" data-bs-toggle="modal" data-bs-target="#txDetailsModal">
+                    <button class="btn btn-info mt-3 tx-search-detail-btn" data-bs-toggle="modal" data-bs-target="#txDetailsModal">
                         <i class="bi bi-info-circle me-1"></i>Подробнее
                     </button>
                 </div>
@@ -168,9 +168,13 @@
                         <td><span class="badge bg-@statusClass">@order.Status</span></td>
                         <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
                         <td>
-                            <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary tx-view-btn"
+                                    data-order-id="@order.Id"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#txDetailsModal">
                                 <i class="bi bi-eye"></i> View
-                            </a>
+                            </button>
                         </td>
                     </tr>
                 }
@@ -194,149 +198,161 @@
 }
 
 @* ─────────────────────────────────────────────────────────────────────
-   Transaction-details modal (Cyborg style). Rendered only when search
-   actually found a transaction, so we don't ship a 500-line markup
-   blob on every plain Index hit. Inputs are intentionally bare text
-   fields with no name attribute — edits stay in DOM, nothing posts.
+   Single modal shell — body content gets injected on demand. Search at
+   top of page pre-renders the body when it found a transaction; the
+   «View» buttons in the orders table load it via AJAX from
+   /Admin/Orders/TransactionPartial/{id}.
    ───────────────────────────────────────────────────────────────────── *@
-@if (searchedTx != null)
-{
-    var product   = searchedTx.Order?.OrderItems?.FirstOrDefault()?.GameProduct;
-    var isSteam   = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
-    string? steamLogin = null;
-    if (isSteam && !string.IsNullOrEmpty(searchedTx.Order?.DeliveryInfo))
-    {
-        var raw  = searchedTx.Order!.DeliveryInfo!;
-        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
-        if (idx1 >= 0)
-        {
-            var rest = raw[(idx1 + "Steam:".Length)..];
-            var semi = rest.IndexOf(';');
-            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
-        }
-    }
-    var orderType = product?.Game != null      ? "Игра"
-                  : isSteam                    ? "Steam"
-                  : product?.GiftCard != null  ? "Подарочная карта"
-                  : product?.VpnProvider != null ? "VPN"
-                  : product?.AiService != null ? "AI-сервис"
-                  : searchedTx.OrderId.HasValue ? "Заказ"
-                                                : "Пополнение баланса";
-
-    <div class="modal fade" id="txDetailsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content tx-modal">
-                <div class="modal-header tx-modal-header">
-                    <h5 class="modal-title mb-0">Детали транзакции</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body tx-modal-body">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <h6 class="tx-section-title">Основная информация</h6>
-                            <div class="tx-row">
-                                <label class="tx-label">ID транзакции:</label>
-                                <input type="text" class="tx-input tx-input-link" value="@searchedTx.TransactionId"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Provider ID:</label>
-                                <input type="text" class="tx-input" value="@(searchedTx.ProviderTransactionId ?? "")"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Сумма:</label>
-                                <div class="d-flex gap-2">
-                                    <input type="text" class="tx-input tx-input-bold" style="max-width: 100px;" value="@searchedTx.Amount.ToString("N0")"/>
-                                    <input type="text" class="tx-input tx-input-muted" style="max-width: 60px;" value="@searchedTx.Currency"/>
-                                </div>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Статус:</label>
-                                <input type="text" class="tx-input tx-input-status-ok" value="@(searchedTx.Status == DigiVault.Core.Enums.PaymentStatus.Completed ? "Successfully" : searchedTx.Status.ToString())"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Провайдер:</label>
-                                <input type="text" class="tx-input" value="@searchedTx.ProviderName"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Метод оплаты:</label>
-                                <input type="text" class="tx-input" value="@searchedTx.Method.ToString().ToLower()"/>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="tx-section-title">Пользователь и заказ</h6>
-                            <div class="tx-row">
-                                <label class="tx-label">User ID:</label>
-                                <input type="text" class="tx-input" value="@searchedTx.UserId"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Email:</label>
-                                <input type="text" class="tx-input" value="@(searchedTx.User?.Email ?? "")"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Заказ:</label>
-                                <input type="text" class="tx-input tx-input-badge" value="@(searchedTx.Order?.OrderNumber ?? orderType)"/>
-                            </div>
-                            @if (isSteam && !string.IsNullOrEmpty(steamLogin))
-                            {
-                                <div class="tx-row">
-                                    <label class="tx-label">Steam Login:</label>
-                                    <input type="text" class="tx-input" value="@steamLogin"/>
-                                </div>
-                            }
-
-                            <h6 class="tx-section-title mt-4">Временные метки</h6>
-                            <div class="tx-row">
-                                <label class="tx-label">Создана:</label>
-                                <input type="text" class="tx-input" value="@searchedTx.CreatedAt.ToString("dd.MM.yyyy, HH:mm:ss")"/>
-                            </div>
-                            <div class="tx-row">
-                                <label class="tx-label">Завершена:</label>
-                                <input type="text" class="tx-input" value="@(searchedTx.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "-")"/>
-                            </div>
-                        </div>
+<div class="modal fade" id="txDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content tx-modal">
+            <div class="modal-header tx-modal-header">
+                <h5 class="modal-title mb-0"><i class="bi bi-credit-card me-2"></i>Детали транзакции</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body tx-modal-body" id="txDetailsModalBody">
+                @if (searchedTx != null)
+                {
+                    @await Html.PartialAsync("_TransactionDetailsModalBody", searchedTx)
+                }
+                else
+                {
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border text-info" role="status"></div>
+                        <div class="mt-2">Загрузка…</div>
                     </div>
-                </div>
+                }
             </div>
         </div>
     </div>
-}
+</div>
+
+<script>
+    (function () {
+        const modalBody = document.getElementById('txDetailsModalBody');
+        const initialBody = modalBody.innerHTML;
+
+        // «View» buttons in the orders table fetch the transaction partial
+        // on demand and inject it into the shared modal body. Reset to the
+        // loading spinner on every open so stale data from a previous order
+        // never leaks into a fresh click.
+        document.querySelectorAll('.tx-view-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const orderId = this.getAttribute('data-order-id');
+                modalBody.innerHTML =
+                    '<div class="text-center text-muted py-5">' +
+                    '  <div class="spinner-border text-info" role="status"></div>' +
+                    '  <div class="mt-2">Загрузка…</div>' +
+                    '</div>';
+                fetch('/Admin/Orders/TransactionPartial/' + orderId)
+                    .then(r => r.text())
+                    .then(html => { modalBody.innerHTML = html; })
+                    .catch(() => {
+                        modalBody.innerHTML =
+                            '<div class="alert alert-danger m-3">Не удалось загрузить детали.</div>';
+                    });
+            });
+        });
+
+        // «Подробнее» on the search result restores the pre-rendered body
+        // (avoids an extra roundtrip for data the server already shipped).
+        document.querySelectorAll('.tx-search-detail-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                modalBody.innerHTML = initialBody;
+            });
+        });
+    })();
+</script>
 
 <style>
-    .btn-pink { background: #ec4899; color: white; border: none; }
-    .btn-pink:hover { background: #db2777; color: white; }
+    /* Pink search button matches the Cyborg accent. */
+    .btn-pink { background: #ec4899; color: #fff; border: none; }
+    .btn-pink:hover { background: #db2777; color: #fff; }
 
-    .tx-modal { background: #1f2937; color: #fff; border-radius: 12px; overflow: hidden; }
+    /* Modal frame — dark to match the rest of /Admin/* surfaces. The pink
+       header is preserved from the Cyborg reference so support sees the
+       same visual anchor between the two sites. */
+    .tx-modal {
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        overflow: hidden;
+    }
     .tx-modal-header {
         background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
         color: #fff;
         border-bottom: none;
-        padding: 1rem 1.25rem;
+        padding: 1rem 1.5rem;
     }
-    .tx-modal-body { background: #fff; color: #1f2937; padding: 1.5rem; }
-    .tx-section-title { color: #ec4899; font-weight: 700; margin-bottom: 0.75rem; }
-    .tx-row { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid #e5e7eb; }
+    .tx-modal-body {
+        background: #0f1623;
+        color: #e5e7eb;
+        padding: 1.75rem;
+    }
+    .tx-section-title {
+        color: #ec4899;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(236, 72, 153, 0.2);
+    }
+    .tx-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
     .tx-row:last-child { border-bottom: none; }
-    .tx-label { min-width: 130px; color: #6b7280; margin: 0; font-size: 0.9rem; }
+    .tx-label {
+        min-width: 140px;
+        color: #94a3b8;
+        margin: 0;
+        font-size: 0.88rem;
+        font-weight: 500;
+    }
     .tx-input {
         flex: 1;
-        background: transparent;
-        border: 1px solid transparent;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.95rem;
-        color: #1f2937;
+        min-width: 0;            /* lets long IDs ellipse-shrink inside grid */
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0.4rem 0.7rem;
+        font-size: 0.92rem;
+        color: #e5e7eb;
         border-radius: 6px;
-        transition: border-color 0.15s;
+        transition: border-color 0.15s, background-color 0.15s;
+        font-family: inherit;
     }
-    .tx-input:hover, .tx-input:focus { border-color: #d1d5db; outline: none; }
-    .tx-input-link { color: #06b6d4; }
-    .tx-input-bold { font-weight: 700; }
-    .tx-input-muted { color: #6b7280; }
-    .tx-input-status-ok {
-        background: #22c55e; color: #fff; font-weight: 600;
-        max-width: 180px; padding: 0.4rem 0.75rem;
+    .tx-input:hover { border-color: rgba(236, 72, 153, 0.35); }
+    .tx-input:focus {
+        border-color: #ec4899;
+        background: rgba(255, 255, 255, 0.07);
+        outline: none;
+    }
+    .tx-input-link { color: #06b6d4; font-family: monospace; font-size: 0.85rem; }
+    .tx-input-bold { font-weight: 700; font-size: 1.05rem; }
+    .tx-input-muted { color: #94a3b8; }
+    .tx-input-status {
+        color: #fff;
+        font-weight: 600;
+        max-width: 180px;
+        text-align: center;
+        border-color: transparent !important;
     }
     .tx-input-badge {
-        background: #06b6d4; color: #000; font-weight: 600;
-        max-width: 280px; padding: 0.4rem 0.75rem; border-radius: 16px;
+        background: #06b6d4;
+        color: #0a0a0f;
+        font-weight: 600;
+        max-width: 320px;
+        padding: 0.4rem 0.9rem;
+        border-radius: 16px;
+        border-color: transparent;
+    }
+
+    @@media (max-width: 768px) {
+        .tx-row { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+        .tx-label { min-width: 0; }
+        .tx-input, .tx-input-badge, .tx-input-status { max-width: 100% !important; width: 100%; }
     }
 </style>

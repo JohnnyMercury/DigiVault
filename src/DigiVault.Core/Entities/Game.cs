@@ -1,13 +1,13 @@
 namespace DigiVault.Core.Entities;
 
 /// <summary>
-/// Represents a game (Fortnite, Roblox, etc.)
+/// Represents a game (Fortnite, Robux, etc.)
 /// </summary>
 public class Game
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty; // fortnite, roblox, pubg, etc.
+    public string Slug { get; set; } = string.Empty; // fortnite, robux, pubg, etc.
     public string? Subtitle { get; set; } // "Bang Bang" for Mobile Legends
     public string Currency { get; set; } = string.Empty; // V-Bucks, Robux, UC, etc.
     public string CurrencyShort { get; set; } = string.Empty;

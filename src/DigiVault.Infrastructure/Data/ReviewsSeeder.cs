@@ -72,7 +72,7 @@ public static class ReviewsSeeder
         ("топ", "взял 2800 vbucks, все пришло за 5 минут. цена приятная"),
     };
 
-    private static readonly (string Title, string Text)[] RobloxPositive =
+    private static readonly (string Title, string Text)[] RobuxPositive =
     {
         ("Robux за минуту", "Купил 1000 Robux, пришли почти сразу. Ребенок счастлив"),
         ("Все ок", "Оплатил, ввел ник аккаунта, через 2 минуты Robux уже на аккаунте."),
@@ -361,8 +361,8 @@ public static class ReviewsSeeder
         var fortnite = games.FirstOrDefault(g => g.Slug == "fortnite");
         if (fortnite != null) AddReviews(25, FortnitePositive, gameId: fortnite.Id);
 
-        var roblox = games.FirstOrDefault(g => g.Slug == "roblox");
-        if (roblox != null) AddReviews(20, RobloxPositive, gameId: roblox.Id);
+        var robux = games.FirstOrDefault(g => g.Slug == "roblox");
+        if (robux != null) AddReviews(20, RobuxPositive, gameId: robux.Id);
 
         var pubg = games.FirstOrDefault(g => g.Slug == "pubg");
         if (pubg != null) AddReviews(15, PubgPositive, gameId: pubg.Id);

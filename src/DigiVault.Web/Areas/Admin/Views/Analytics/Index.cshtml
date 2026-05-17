@@ -596,7 +596,7 @@
         });
 
         // Top products (only real site products)
-        const prodNames=['Telegram Premium','Steam Wallet','Fortnite V-Bucks','Roblox Robux','PUBG Mobile UC','Genshin Genesis','PlayStation Store','Xbox','NordVPN','Surfshark'];
+        const prodNames=['Telegram Premium','Steam Wallet','Fortnite V-Bucks','Robux','PUBG Mobile UC','Genshin Genesis','PlayStation Store','Xbox','NordVPN','Surfshark'];
         const prodRev=prodNames.map(()=>ri(15,200)*1000).sort((a,b)=>b-a);
         charts.products=new Chart(document.getElementById('chartProducts'),{
             type:'bar',

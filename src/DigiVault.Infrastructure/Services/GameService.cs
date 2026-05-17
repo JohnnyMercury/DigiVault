@@ -244,7 +244,7 @@ public class GameService : IGameService
             new() { GameId = fortnite.Id, Name = "13500 V-Bucks", Amount = "13500", TotalDisplay = "13 500 V-Bucks", Price = 5550, ProductType = GameProductType.Currency, SortOrder = 6 }
         };
 
-        // Seed Roblox products
+        // Seed Robux products (slug remains «roblox» for legacy URL/image-path compat)
         var roblox = games.First(g => g.Slug == "roblox");
         var robloxProducts = new List<GameProduct>
         {

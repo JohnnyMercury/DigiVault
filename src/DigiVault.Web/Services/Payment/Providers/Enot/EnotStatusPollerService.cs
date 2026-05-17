@@ -34,11 +34,11 @@ public class EnotStatusPollerService : BackgroundService
     private static readonly TimeSpan SweepInterval  = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan InitialGrace   = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan PerTxnInterval = TimeSpan.FromMinutes(5);
-    // 7-day window is intentionally wide — Enot's invoice itself only expires
-    // after ~5 h, but we've previously seen weeks of paid-but-uncredited tx
-    // accumulate when the webhook silently broke. Wide window + 5-min per-txn
-    // throttle still bounds outbound load (≤ 12 calls/hr/tx).
-    private static readonly TimeSpan MaxPollWindow  = TimeSpan.FromDays(7);
+    // 2-hour window — covers the typical Enot invoice lifetime (5 h) but
+    // intentionally narrow so the poller only fixes _new_ flaps going
+    // forward, never reaches back into historical pendings (admins should
+    // handle those manually if needed).
+    private static readonly TimeSpan MaxPollWindow  = TimeSpan.FromHours(2);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EnotStatusPollerService> _log;

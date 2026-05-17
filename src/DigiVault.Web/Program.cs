@@ -129,6 +129,12 @@ builder.Services.AddHttpClient(
 // failures and the SBP wait→error flow only surface via /api/payment/operate.
 builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.PaymentLink.PaymentLinkStatusPollerService>();
 
+// Background poller for Enot.io — same safety-net pattern as PaymentLink.
+// Recovers payments whose webhook either wasn't delivered or was rejected
+// (e.g. «Дополнительный ключ» rotated in Enot LK without DB sync). Polls
+// /invoice/info every minute and applies the standard completion pipeline.
+builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.Enot.EnotStatusPollerService>();
+
 // Named HttpClient for Overpay - it requires mTLS (client certificate). The
 // p12 file path + passphrase are read from PaymentProviderConfig.Settings
 // (admin-editable). When admin doesn't supply a cert, the handler falls back

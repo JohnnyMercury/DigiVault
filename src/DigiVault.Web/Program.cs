@@ -135,6 +135,16 @@ builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.Payme
 // /invoice/info every minute and applies the standard completion pipeline.
 builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.Enot.EnotStatusPollerService>();
 
+// Same safety-net for Pally (pal24.pro). Their webhook delivery to our
+// /api/webhooks/pally has been silent in production despite real customer
+// payments — poll their /api/v1/bill/status to keep balances in sync.
+builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.Pally.PallyStatusPollerService>();
+
+// Same safety-net for Overpay. Their webhooks haven't been hitting our
+// nginx either; we poll GET /orders/{id} (mTLS) and apply the standard
+// completion pipeline if status flips to «success».
+builder.Services.AddHostedService<DigiVault.Web.Services.Payment.Providers.Overpay.OverpayStatusPollerService>();
+
 // Named HttpClient for Overpay - it requires mTLS (client certificate). The
 // p12 file path + passphrase are read from PaymentProviderConfig.Settings
 // (admin-editable). When admin doesn't supply a cert, the handler falls back

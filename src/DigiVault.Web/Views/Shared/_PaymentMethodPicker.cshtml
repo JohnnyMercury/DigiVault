@@ -230,13 +230,10 @@
             { code: 'pally',          title: 'Pally',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
             { code: 'platega',        title: 'Platega',        desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
         ],
-        // QR - PaymentLink + IntellectMoney. Enot нативного QR-метода не
-        // имеет (он умеет SBP, у которого QR это просто отображение формы) -
-        // не примешиваем его сюда. Overpay тоже скрыт - SBP-через-QR
-        // у них живёт под методом «sbp», отдельной QR-плитки нет.
+        // QR - только IntellectMoney. RushPay/Enot/Overpay их SBP-через-QR
+        // отображают под методом «sbp», отдельной QR-плитки не имеют.
         qr: [
-            { code: 'paymentlink',    title: 'RushPay',        desc: 'Оплата сканированием QR-кода', icon: 'bi-qr-code',          color: PLINK_BADGE  },
-            { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП QR-код банка',             icon: 'bi-qr-code-scan',     color: IMONEY_BADGE },
+            { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: IMONEY_BADGE },
         ],
         // P2P - заготовка под будущие PSP (BlvckPay / PayPecker).
         p2p: [],

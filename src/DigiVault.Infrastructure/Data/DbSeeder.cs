@@ -408,5 +408,34 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed IntellectMoney (api.intellectmoney.ru). Form-encoded POSTs
+        // with an MD5 Hash field in the body.
+        //   MerchantId  → EshopId (6-digit shop id from LK)
+        //   ApiKey      → SecretKey (feeds the Hash field)
+        //   SecretKey   → optional Bearer token (advanced-access tier);
+        //                 leave empty on Basic tier
+        //   Settings    → optional JSON: {"baseUrl":"https://api.intellectmoney.ru"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "intellectmoney"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "intellectmoney",
+                DisplayName = "IntellectMoney",
+                IsEnabled   = false,
+                Priority    = 60,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

@@ -213,21 +213,24 @@
     const OVERPAY_BADGE  = 'linear-gradient(135deg, #2e6cdf, #0f3a8a)';
     const PALLY_BADGE    = 'linear-gradient(135deg, #22c55e, #15803d)';
     const PLATEGA_BADGE  = 'linear-gradient(135deg, #a855f7, #6b21a8)';
+    const IMONEY_BADGE   = 'linear-gradient(135deg, #f59e0b, #b45309)';
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
         card: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-front', color: ENOT_BADGE    },
             { code: 'paymentlink', title: 'RushPay',     desc: 'Visa, MasterCard (тест)',   icon: 'bi-credit-card',         color: PLINK_BADGE   },
-            { code: 'pally',       title: 'Pally',       desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-back',  color: PALLY_BADGE   },
-            { code: 'platega',     title: 'Platega',     desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-fill',    color: PLATEGA_BADGE },
+            { code: 'pally',          title: 'Pally',          desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-back',  color: PALLY_BADGE   },
+            { code: 'platega',        title: 'Platega',        desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-fill',    color: PLATEGA_BADGE },
+            { code: 'intellectmoney', title: 'IntellectMoney', desc: 'Visa, MasterCard, МИР',     icon: 'bi-credit-card-2-front', color: IMONEY_BADGE  },
         ],
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
             { code: 'paymentlink', title: 'RushPay',     desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
             { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
-            { code: 'pally',       title: 'Pally',       desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
-            { code: 'platega',     title: 'Platega',     desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
+            { code: 'pally',          title: 'Pally',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
+            { code: 'platega',        title: 'Platega',        desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
+            { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: IMONEY_BADGE  },
         ],
         // QR - только PaymentLink. Enot нативного QR-метода не имеет
         // (он умеет SBP, у которого QR это просто отображение формы) -

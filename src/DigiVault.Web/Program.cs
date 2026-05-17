@@ -97,6 +97,7 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Overpay.OverpayPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Pally.PallyPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Platega.PlategaPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.IntellectMoney.IntellectMoneyPaymentProvider>();
 
 // Pally HTTP client — plain Bearer-auth, no certs / weird headers.
 // 30 s timeout matches the other PSPs; pal24.pro is fast in practice.
@@ -108,6 +109,12 @@ builder.Services.AddHttpClient(
 // shared-secret auth (set per-request by the provider).
 builder.Services.AddHttpClient(
     "platega",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
+
+// IntellectMoney HTTP client — form-encoded POSTs, MD5 hash field in
+// body, optional Bearer header on advanced-access tier.
+builder.Services.AddHttpClient(
+    "intellectmoney",
     client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // PaymentLink server-to-server HTTP client (used by /api/payment/invoice for

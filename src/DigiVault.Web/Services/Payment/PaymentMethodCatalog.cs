@@ -57,8 +57,7 @@ public static class PaymentMethodCatalog
             IconClass: "bi-qr-code",
             Gradient: "linear-gradient(135deg, #f59e0b, #d97706)",
             EnumValue: PaymentMethod.SBP,
-            Available: false,
-            UnavailableHint: "Скоро"),
+            Available: true),
 
         new PaymentMethodOption(
             Code: "p2p",

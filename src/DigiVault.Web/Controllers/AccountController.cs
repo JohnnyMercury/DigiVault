@@ -329,22 +329,30 @@ public class AccountController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return RedirectToAction("Login");
 
+        // «История пополнений» — Cyborg-style page: only balance top-ups
+        // (Type=Deposit), drawn from the unified Transactions ledger which
+        // both webhook handlers and pollers write to. We deliberately do
+        // NOT use the WalletTransactions table here — that one is sparse
+        // (only poller writes) and would hide most of the user's history.
         const int pageSize = 20;
-        var query = _context.Set<WalletTransaction>()
-            .Where(t => t.UserId == user.Id)
+        var query = _context.Transactions
+            .Where(t => t.UserId == user.Id && t.Type == TransactionType.Deposit)
             .OrderByDescending(t => t.CreatedAt);
 
         var total = await query.CountAsync();
-        var transactions = await query
+        var deposits = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        ViewBag.Balance = user.Balance;
-        ViewBag.Transactions = transactions;
-        ViewBag.CurrentPage = page;
-        ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
-        ViewBag.TotalCount = total;
+        ViewBag.Balance      = user.Balance;
+        ViewBag.Deposits     = deposits;
+        ViewBag.CurrentPage  = page;
+        ViewBag.TotalPages   = (int)Math.Ceiling(total / (double)pageSize);
+        ViewBag.TotalCount   = total;
+        ViewBag.TotalDeposited = await _context.Transactions
+            .Where(t => t.UserId == user.Id && t.Type == TransactionType.Deposit)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0m;
         return View();
     }
 

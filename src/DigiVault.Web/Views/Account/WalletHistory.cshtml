@@ -1,108 +1,90 @@
 @using DigiVault.Core.Entities
 @{
-    ViewData["Title"] = "История кошелька";
-    var balance = (decimal)(ViewBag.Balance ?? 0m);
-    var transactions = ViewBag.Transactions as List<WalletTransaction> ?? new();
-    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
-    var totalPages = (int)(ViewBag.TotalPages ?? 1);
-    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+    ViewData["Title"] = "История пополнений";
+    var balance          = (decimal)(ViewBag.Balance ?? 0m);
+    var deposits         = ViewBag.Deposits as List<Transaction> ?? new();
+    var currentPage      = (int)(ViewBag.CurrentPage ?? 1);
+    var totalPages       = (int)(ViewBag.TotalPages ?? 1);
+    var totalCount       = (int)(ViewBag.TotalCount ?? 0);
+    var totalDeposited   = (decimal)(ViewBag.TotalDeposited ?? 0m);
 }
 
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h3 class="mb-1">История кошелька</h3>
-                    <span class="text-muted">Баланс: <strong style="color: #22c55e;">@balance.ToString("N2") ₽</strong> | Всего операций: @totalCount</span>
+        <div class="col-lg-9">
+
+            <!-- Header card: balance + totals -->
+            <div class="wh-header">
+                <div class="wh-header-text">
+                    <h3 class="wh-title">История пополнений</h3>
+                    <div class="wh-sub">
+                        Текущий баланс:
+                        <span class="wh-balance">@balance.ToString("N2") ₽</span>
+                        <span class="wh-dot">·</span>
+                        Всего пополнений: <strong>@totalCount</strong>
+                        <span class="wh-dot">·</span>
+                        На сумму: <strong>@totalDeposited.ToString("N2") ₽</strong>
+                    </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <a asp-action="Balance" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-wallet2 me-1"></i>Баланс
+                <div class="wh-header-actions">
+                    <a asp-action="Dashboard" class="wh-btn-ghost">
+                        <i class="bi bi-arrow-left"></i> В кабинет
                     </a>
-                    <a asp-action="Deposit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-circle me-1"></i>Пополнить
+                    <a asp-action="Deposit" class="wh-btn-primary">
+                        <i class="bi bi-plus-circle"></i> Пополнить
                     </a>
                 </div>
             </div>
 
-            @if (transactions.Any())
+            @if (deposits.Any())
             {
-                <div class="card bg-dark border-secondary" style="border-radius: 16px;">
-                    <div class="list-group list-group-flush" style="border-radius: 16px;">
-                        @foreach (var tx in transactions)
+                <div class="wh-list">
+                    @foreach (var tx in deposits)
+                    {
+                        // Description format from PSP webhook handlers is like
+                        // «Пополнение баланса [kz-abcd…]». Strip the ref tail
+                        // for the headline and show the ref separately as a
+                        // monospace badge so users can quote it to support.
+                        var description = tx.Description ?? "Пополнение баланса";
+                        string? reference = null;
+                        var leftBracket = description.LastIndexOf('[');
+                        var rightBracket = description.LastIndexOf(']');
+                        if (leftBracket > 0 && rightBracket > leftBracket)
                         {
-                            var isPositive = tx.Amount > 0;
-                            <div class="list-group-item bg-dark border-secondary px-4 py-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            @switch (tx.Type)
-                                            {
-                                                case WalletTransactionType.Deposit:
-                                                    <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
-                                                        <i class="bi bi-arrow-down-circle me-1"></i>Пополнение
-                                                    </span>
-                                                    break;
-                                                case WalletTransactionType.Purchase:
-                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                                                        <i class="bi bi-cart me-1"></i>Покупка
-                                                    </span>
-                                                    break;
-                                                case WalletTransactionType.Refund:
-                                                    <span class="badge" style="background: rgba(79, 172, 254, 0.15); color: #4facfe;">
-                                                        <i class="bi bi-arrow-return-left me-1"></i>Возврат
-                                                    </span>
-                                                    break;
-                                                case WalletTransactionType.Bonus:
-                                                    <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">
-                                                        <i class="bi bi-gift me-1"></i>Бонус
-                                                    </span>
-                                                    break;
-                                                case WalletTransactionType.Withdrawal:
-                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                                                        <i class="bi bi-arrow-up-circle me-1"></i>Вывод
-                                                    </span>
-                                                    break;
-                                                default:
-                                                    <span class="badge bg-secondary">@tx.Type</span>
-                                                    break;
-                                            }
-                                            @if (tx.Status != WalletTransactionStatus.Completed)
-                                            {
-                                                <span class="badge" style="background: rgba(251, 191, 36, 0.15); color: #fbbf24;">@tx.Status</span>
-                                            }
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(tx.Description))
-                                        {
-                                            <div class="small text-white-50">@tx.Description</div>
-                                        }
-                                        <div class="small text-muted mt-1">
-                                            @tx.CreatedAt.ToString("dd.MM.yyyy HH:mm:ss")
-                                            @if (!string.IsNullOrEmpty(tx.Reference))
-                                            {
-                                                <span class="ms-2">Ref: <code style="color: #4facfe; font-size: 0.75rem;">@tx.Reference</code></span>
-                                            }
-                                        </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <div style="font-weight: 700; font-size: 1.15rem; color: @(isPositive ? "#22c55e" : "#ef4444");">
-                                            @(isPositive ? "+" : "")@tx.Amount.ToString("N2") ₽
-                                        </div>
-                                        <div class="small text-muted">
-                                            Баланс: @tx.BalanceAfterTransaction.ToString("N2") ₽
-                                        </div>
-                                    </div>
+                            reference = description.Substring(leftBracket + 1, rightBracket - leftBracket - 1);
+                            description = description.Substring(0, leftBracket).TrimEnd();
+                            if (string.IsNullOrWhiteSpace(description))
+                                description = "Пополнение баланса";
+                        }
+
+                        <div class="wh-item">
+                            <div class="wh-item-main">
+                                <span class="wh-badge">
+                                    <i class="bi bi-arrow-down-circle"></i> Пополнение
+                                </span>
+                                <div class="wh-item-desc">@description</div>
+                                <div class="wh-item-meta">
+                                    <i class="bi bi-clock"></i>
+                                    @tx.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    @if (!string.IsNullOrEmpty(reference))
+                                    {
+                                        <span class="wh-ref">
+                                            <i class="bi bi-hash"></i><code>@reference</code>
+                                        </span>
+                                    }
                                 </div>
                             </div>
-                        }
-                    </div>
+                            <div class="wh-item-amount">
+                                +@tx.Amount.ToString("N2") ₽
+                            </div>
+                        </div>
+                    }
                 </div>
 
                 @if (totalPages > 1)
                 {
                     <nav class="mt-4 d-flex justify-content-center">
-                        <ul class="pagination pagination-sm">
+                        <ul class="pagination pagination-sm wh-pagination">
                             @if (currentPage > 1)
                             {
                                 <li class="page-item"><a class="page-link" asp-action="WalletHistory" asp-route-page="@(currentPage - 1)">&laquo;</a></li>
@@ -123,12 +105,130 @@
             }
             else
             {
-                <div class="text-center py-5 text-muted">
-                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
-                    <p class="mt-2">Транзакций пока нет</p>
-                    <a asp-action="Deposit" class="btn btn-primary">Пополнить баланс</a>
+                <div class="wh-empty">
+                    <div class="wh-empty-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h5 class="wh-empty-title">Пополнений пока нет</h5>
+                    <p class="wh-empty-desc">Когда вы пополните баланс — операция появится здесь.</p>
+                    <a asp-action="Deposit" class="wh-btn-primary">
+                        <i class="bi bi-plus-circle"></i> Пополнить баланс
+                    </a>
                 </div>
             }
         </div>
     </div>
 </div>
+
+<style>
+    .wh-header {
+        background: linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.12));
+        border: 1px solid rgba(102,126,234,0.25);
+        border-radius: 16px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 1.25rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .wh-title { color: #fff; font-weight: 700; margin: 0 0 0.25rem 0; font-size: 1.5rem; }
+    .wh-sub { color: rgba(255,255,255,0.65); font-size: 0.9rem; }
+    .wh-sub strong { color: #fff; }
+    .wh-balance { color: #22c55e; font-weight: 700; }
+    .wh-dot { color: rgba(255,255,255,0.3); margin: 0 0.4rem; }
+
+    .wh-header-actions { display: flex; gap: 0.5rem; }
+    .wh-btn-ghost, .wh-btn-primary {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.55rem 1rem;
+        border-radius: 10px;
+        font-size: 0.88rem; font-weight: 600;
+        text-decoration: none;
+        transition: background 0.18s, transform 0.1s;
+    }
+    .wh-btn-ghost {
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.85);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .wh-btn-ghost:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .wh-btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        border: none;
+    }
+    .wh-btn-primary:hover { color: #fff; transform: translateY(-1px); }
+
+    .wh-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .wh-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem;
+        transition: border-color 0.18s, background 0.18s;
+    }
+    .wh-item:hover {
+        border-color: rgba(102,126,234,0.4);
+        background: rgba(102,126,234,0.05);
+    }
+    .wh-item-main { flex: 1; min-width: 0; }
+    .wh-badge {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        background: rgba(34,197,94,0.15); color: #22c55e;
+        font-size: 0.75rem; font-weight: 600;
+        padding: 0.25rem 0.6rem; border-radius: 6px;
+        margin-bottom: 0.45rem;
+    }
+    .wh-item-desc { color: #fff; font-weight: 500; margin-bottom: 0.25rem; }
+    .wh-item-meta {
+        color: rgba(255,255,255,0.5); font-size: 0.8rem;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
+    }
+    .wh-ref code {
+        color: #4facfe; font-size: 0.75rem;
+        background: rgba(79,172,254,0.08);
+        padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+    .wh-item-amount {
+        color: #22c55e; font-weight: 700; font-size: 1.25rem;
+        white-space: nowrap;
+    }
+
+    .wh-empty {
+        text-align: center; padding: 3rem 1rem;
+        background: rgba(255,255,255,0.03);
+        border: 1px dashed rgba(255,255,255,0.12);
+        border-radius: 16px;
+    }
+    .wh-empty-icon {
+        width: 64px; height: 64px;
+        border-radius: 16px; margin: 0 auto 1rem;
+        background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+        color: #a5b4fc;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem;
+    }
+    .wh-empty-title { color: #fff; font-weight: 700; margin-bottom: 0.4rem; }
+    .wh-empty-desc { color: rgba(255,255,255,0.55); margin-bottom: 1.2rem; }
+
+    .wh-pagination .page-link {
+        background: rgba(255,255,255,0.04);
+        border-color: rgba(255,255,255,0.1);
+        color: rgba(255,255,255,0.75);
+    }
+    .wh-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-color: transparent;
+        color: #fff;
+    }
+
+    @@media (max-width: 575.98px) {
+        .wh-header { padding: 1.1rem 1.2rem; }
+        .wh-item { flex-direction: column; align-items: flex-start; }
+        .wh-item-amount { align-self: flex-end; }
+    }
+</style>

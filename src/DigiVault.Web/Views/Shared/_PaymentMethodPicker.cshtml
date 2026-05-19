@@ -217,11 +217,11 @@
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
-        // Card-метод: оставляем только Enot. Остальные PSP подключали
-        // изначально под СБП — карточные плитки у них уберём, чтобы не
-        // путать пользователя дублями.
+        // Card-метод: Enot + RushPay. У RushPay подключён еком-терминал МИР
+        // (ACC1175428), карточный flow идёт через /api/payment/start.
         card: [
-            { code: 'enot', title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE },
+            { code: 'enot',        title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE  },
+            { code: 'paymentlink', title: 'RushPay',  desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card',         color: PLINK_BADGE },
         ],
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },

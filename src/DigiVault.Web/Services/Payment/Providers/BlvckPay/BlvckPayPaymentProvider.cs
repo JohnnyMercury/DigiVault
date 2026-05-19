@@ -36,7 +36,10 @@ namespace DigiVault.Web.Services.Payment.Providers.BlvckPay;
 /// </summary>
 public class BlvckPayPaymentProvider : IPaymentProvider
 {
-    private const string DefaultBaseUrl = "https://payment.blvckpay.com/api/v1";
+    // Prod API serves endpoints at the root (/sbp/order/create, …). The
+    // OpenAPI «servers: /api/v1» prefix only applies to the test host
+    // (test.blvckpay.com/api/v1). Override per-env via Settings.baseUrl.
+    private const string DefaultBaseUrl = "https://payment.blvckpay.com";
     private const string HttpClientName = "blvckpay";
 
     private readonly ApplicationDbContext _db;
@@ -158,15 +161,18 @@ public class BlvckPayPaymentProvider : IPaymentProvider
             using var doc = JsonDocument.Parse(raw);
             var root = doc.RootElement;
 
-            var topStatus = root.TryGetProperty("status", out var ts) ? ts.GetString() : null;
-            if (!string.Equals(topStatus, "ok", StringComparison.OrdinalIgnoreCase))
-                return PaymentResult.Failed($"BlvckPay: неуспешный ответ. {raw}");
+            // Actual responses are flat — url/order_id/status sit at the root,
+            // not under a "message" wrapper (the OpenAPI examples are
+            // idealised). Be defensive: use "message" if present, else root.
+            var data = root.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.Object
+                ? m : root;
 
-            if (!root.TryGetProperty("message", out var msg))
-                return PaymentResult.Failed($"BlvckPay: нет message в ответе. {raw}");
+            // Surface explicit error envelopes (e.g. {"detail":"Merchant will not find"}).
+            if (root.TryGetProperty("detail", out var det))
+                return PaymentResult.Failed($"BlvckPay: {det}", "detail");
 
-            var payUrl  = msg.TryGetProperty("url", out var u) ? u.GetString() : null;
-            var orderId = ReadOrderId(msg);
+            var payUrl  = data.TryGetProperty("url", out var u) ? u.GetString() : null;
+            var orderId = ReadOrderId(data);
 
             if (string.IsNullOrEmpty(payUrl))
                 return PaymentResult.Failed($"BlvckPay: пустой url для редиректа. {raw}");

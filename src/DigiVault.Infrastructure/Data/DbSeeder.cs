@@ -437,5 +437,32 @@ public static class DbSeeder
             });
             await context.SaveChangesAsync();
         }
+
+        // Seed BlvckPay (payment.blvckpay.com). JSON REST gateway — СБП +
+        // cards (МИР) + Steam, static signature token per method.
+        //   ApiKey      → signature token for СБП
+        //   SecretKey   → signature token for cards (fallback to ApiKey)
+        //   Settings    → optional JSON: {"baseUrl":"https://payment.blvckpay.com/api/v1"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "blvckpay"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "blvckpay",
+                DisplayName = "BlvckPay",
+                IsEnabled   = false,
+                Priority    = 70,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 100,
+                MaxAmount   = 100_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
     }
 }

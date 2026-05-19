@@ -232,10 +232,10 @@
             { code: 'platega',        title: 'Platega',        desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
             { code: 'blvckpay',       title: 'BlvckPay',       desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: BLVCK_BADGE   },
         ],
-        // QR - только IntellectMoney. RushPay/Enot/Overpay их SBP-через-QR
-        // отображают под методом «sbp», отдельной QR-плитки не имеют.
+        // QR - IntellectMoney + BlvckPay (оба отдают QR для оплаты в банке).
         qr: [
             { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: IMONEY_BADGE },
+            { code: 'blvckpay',       title: 'BlvckPay',       desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: BLVCK_BADGE  },
         ],
         // P2P - заготовка под будущие PSP (BlvckPay / PayPecker).
         p2p: [],

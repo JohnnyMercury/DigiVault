@@ -9,6 +9,17 @@
         `window.submitPurchaseWithService(method, serviceCode, tile)` which
         the host page (Game/GiftCard/VpnProvider/Telegram) defines.
 *@
+@inject DigiVault.Infrastructure.Data.ApplicationDbContext PspDbContext
+@{
+    // Provider tiles below are a static catalogue, but their visibility must
+    // track the admin toggle (PaymentProviderConfigs.IsEnabled). We emit the
+    // set of currently-enabled provider names and filter the tiles against it
+    // client-side, so flipping «Выключить» in admin removes the tile.
+    var enabledProviderNames = PspDbContext.PaymentProviderConfigs
+        .Where(p => p.IsEnabled)
+        .Select(p => p.Name)
+        .ToList();
+}
 
 <div id="paymentStep2" class="ps2" style="display:none;">
     <div class="ps2-top">
@@ -247,11 +258,16 @@
         p2p:  'P2P перевод',
     };
 
+    // Provider names enabled in admin (PaymentProviderConfigs.IsEnabled). Tiles
+    // for disabled providers are hidden so the picker matches the admin toggle.
+    const ENABLED_PROVIDERS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(enabledProviderNames));
+
     let currentMethod  = null;
     let currentProvider = null;
 
     window.openPaymentStep2 = function (method) {
-        const providers = PROVIDERS_BY_METHOD[method] || [];
+        const providers = (PROVIDERS_BY_METHOD[method] || [])
+            .filter(p => ENABLED_PROVIDERS.includes(p.code));
         const grid    = document.getElementById('paymentStep2Grid');
         const label   = document.getElementById('paymentStep2MethodLabel');
         const count   = document.getElementById('paymentStep2Count');

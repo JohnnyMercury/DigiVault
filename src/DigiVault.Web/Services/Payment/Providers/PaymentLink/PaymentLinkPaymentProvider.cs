@@ -127,6 +127,12 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ? $"Order {ourTransactionId}"
             : request.Description;
 
+        // Card payments run through a dedicated ecom/acquiring terminal that
+        // RushPay provisions separately from the SBP account. If Settings
+        // carries {"cardAccount":"ACC…"} we use it for the card flow only;
+        // SBP (CreateInvoicePaymentAsync) keeps cfg.MerchantId untouched.
+        var cardAccount = ReadCardAccount(cfg);
+
         // cf1 carries the buyer id in PaymentLink's expected format.
         var cf1Value = $"userid:{request.UserId}";
 
@@ -137,7 +143,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             number:      ourTransactionId,
             description: description,
             trtype:      trtype,
-            account:     cfg.MerchantId!,
+            account:     cardAccount,
             paytoken:    null,
             backUrl:     request.SuccessUrl,
             cf1:         cf1Value,
@@ -161,7 +167,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["number"]      = ourTransactionId,
             ["description"] = description,
             ["trtype"]      = trtype.ToString(),
-            ["account"]     = cfg.MerchantId,
+            ["account"]     = cardAccount,
             ["backURL"]     = request.SuccessUrl,
             ["email"]       = contacts.Email,
             ["phone"]       = contacts.Phone,
@@ -567,6 +573,31 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         }
         catch { /* fall through */ }
         return "md5";
+    }
+
+    /// <summary>
+    /// Account used for the CARD flow. RushPay issues a separate ecom/acquiring
+    /// terminal for bank cards (MIR) than the SBP account. Reads Settings JSON
+    /// <c>{"cardAccount":"ACC…"}</c>; falls back to <see cref="PaymentProviderConfig.MerchantId"/>
+    /// when not set (so behaviour is unchanged until the second terminal is
+    /// configured).
+    /// </summary>
+    private static string ReadCardAccount(PaymentProviderConfig cfg)
+    {
+        if (!string.IsNullOrWhiteSpace(cfg.Settings))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(cfg.Settings);
+                if (doc.RootElement.TryGetProperty("cardAccount", out var c))
+                {
+                    var v = c.GetString();
+                    if (!string.IsNullOrWhiteSpace(v)) return v.Trim();
+                }
+            }
+            catch { /* malformed Settings — fall back to MerchantId */ }
+        }
+        return cfg.MerchantId!;
     }
 
     /// <summary>

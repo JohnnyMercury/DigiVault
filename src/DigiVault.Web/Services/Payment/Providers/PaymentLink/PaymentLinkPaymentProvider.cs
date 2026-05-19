@@ -128,10 +128,12 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             : request.Description;
 
         // Card payments run through a dedicated ecom/acquiring terminal that
-        // RushPay provisions separately from the SBP account. If Settings
-        // carries {"cardAccount":"ACC…"} we use it for the card flow only;
-        // SBP (CreateInvoicePaymentAsync) keeps cfg.MerchantId untouched.
+        // RushPay provisions separately from the SBP account, WITH ITS OWN
+        // keys. If Settings carries {"cardAccount":"ACC…","cardKey1":"…",
+        // "cardKey2":"…"} we use them for the card flow only; SBP
+        // (CreateInvoicePaymentAsync) keeps cfg.MerchantId + cfg.ApiKey/SecretKey.
         var cardAccount = ReadCardAccount(cfg);
+        var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 
         // cf1 carries the buyer id in PaymentLink's expected format.
         var cf1Value = $"userid:{request.UserId}";
@@ -149,8 +151,8 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             cf1:         cf1Value,
             cf2:         null,
             cf3:         null,
-            secretKey1:  cfg.ApiKey!,
-            secretKey2:  cfg.SecretKey!,
+            secretKey1:  cardKey1,
+            secretKey2:  cardKey2,
             algo:        algo);
 
         // Substitute contacts for whitelisted internal/test accounts. For
@@ -376,8 +378,14 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
 
         var algo = ReadAlgo(cfg.Settings);
+        var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 
-        if (!PaymentLinkSignatureHelper.VerifyConfirmationWebhook(form, cfg.ApiKey, cfg.SecretKey, algo))
+        // Try SBP keys first, then the card-terminal keys — a confirmation can
+        // come from either the SBP account or the card ecom terminal, each
+        // signing with its own key pair.
+        var sigOk = PaymentLinkSignatureHelper.VerifyConfirmationWebhook(form, cfg.ApiKey, cfg.SecretKey, algo)
+                 || PaymentLinkSignatureHelper.VerifyConfirmationWebhook(form, cardKey1, cardKey2, algo);
+        if (!sigOk)
         {
             _log.LogWarning("PaymentLink confirmation webhook signature mismatch. Body: {Body}", body);
             return WebhookValidationResult.Invalid("Неверная подпись webhook");
@@ -435,8 +443,12 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
 
         var algo = ReadAlgo(cfg.Settings);
+        var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 
-        if (!PaymentLinkSignatureHelper.VerifyStatusWebhook(form, cfg.ApiKey, cfg.SecretKey, algo))
+        // Accept either the SBP-account or card-terminal key pair.
+        var sigOk = PaymentLinkSignatureHelper.VerifyStatusWebhook(form, cfg.ApiKey, cfg.SecretKey, algo)
+                 || PaymentLinkSignatureHelper.VerifyStatusWebhook(form, cardKey1, cardKey2, algo);
+        if (!sigOk)
         {
             _log.LogWarning("PaymentLink status webhook signature mismatch. Body: {Body}", body);
             return WebhookValidationResult.Invalid("Неверная подпись status-webhook");
@@ -598,6 +610,39 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             catch { /* malformed Settings — fall back to MerchantId */ }
         }
         return cfg.MerchantId!;
+    }
+
+    /// <summary>
+    /// Secret-key pair for the CARD terminal. The card ecom terminal has its
+    /// own keys, distinct from the SBP account. Reads Settings JSON
+    /// <c>{"cardKey1":"…","cardKey2":"…"}</c>; each falls back independently to
+    /// <see cref="PaymentProviderConfig.ApiKey"/> / <see cref="PaymentProviderConfig.SecretKey"/>
+    /// so leaving them unset keeps the previous (SBP-key) behaviour.
+    /// </summary>
+    private static (string key1, string key2) ReadCardKeys(PaymentProviderConfig cfg)
+    {
+        string k1 = cfg.ApiKey ?? "";
+        string k2 = cfg.SecretKey ?? "";
+        if (!string.IsNullOrWhiteSpace(cfg.Settings))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(cfg.Settings);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("cardKey1", out var c1))
+                {
+                    var v = c1.GetString();
+                    if (!string.IsNullOrWhiteSpace(v)) k1 = v.Trim();
+                }
+                if (root.TryGetProperty("cardKey2", out var c2))
+                {
+                    var v = c2.GetString();
+                    if (!string.IsNullOrWhiteSpace(v)) k2 = v.Trim();
+                }
+            }
+            catch { /* malformed Settings — fall back to ApiKey/SecretKey */ }
+        }
+        return (k1, k2);
     }
 
     /// <summary>

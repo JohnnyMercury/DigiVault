@@ -31,6 +31,34 @@
 
     .game-main { flex-grow: 1; min-width: 0; }
 
+    /* Left categories sidebar (same look as the game pages) */
+    .game-sidebar { width: 280px; flex-shrink: 0; }
+    @@media (max-width: 1200px) { .game-sidebar { display: none; } }
+    .sidebar-title {
+        font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
+        color: rgba(255,255,255,0.4); font-weight: 600;
+        padding: 0 0.75rem; margin-bottom: 0.6rem;
+    }
+    .sidebar-game {
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 0.6rem 0.75rem; border-radius: 12px;
+        text-decoration: none; color: white;
+        transition: all 0.25s ease; margin-bottom: 0.25rem; background: transparent;
+    }
+    .sidebar-game:hover, .sidebar-game.active { background: rgba(255,255,255,0.05); color: white; }
+    .sidebar-game.active { background: rgba(102,126,234,0.15); }
+    .sidebar-game-icon {
+        width: 42px; height: 42px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: #fff; flex-shrink: 0;
+    }
+    .sidebar-game-info { display: flex; flex-direction: column; min-width: 0; }
+    .sidebar-game-name {
+        font-weight: 500; font-size: 0.9rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sidebar-game-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
     /* Steam-логин - точно как .uid-section у Telegram, только цвет другой */
     .uid-section {
         background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
@@ -356,6 +384,7 @@
 
 <div class="container container-wide">
     <div class="d-flex gap-4">
+        <div class="game-sidebar-spacer"></div>
         <div class="tg-hero">
             <div class="tg-hero-badges">
                 <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
@@ -366,6 +395,38 @@
     </div>
 
     <div class="game-page">
+        <aside class="game-sidebar">
+            <div class="sidebar-title">Категории</div>
+            <a href="/Catalog/Steam" class="sidebar-game active">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #1b2838, #66c0f4);"><i class="bi bi-controller"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">Пополнение Steam</span></div>
+            </a>
+            <a href="/Catalog?category=games" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: #0a0a0f;"><i class="bi bi-coin"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">Игровая валюта</span><span class="sidebar-game-subtitle">V-Bucks, UC, Robux</span></div>
+            </a>
+            <a href="/Catalog?category=giftcards" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);"><i class="bi bi-gift-fill"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">Подарочные карты</span><span class="sidebar-game-subtitle">PSN, Xbox, Netflix</span></div>
+            </a>
+            <a href="/Catalog/Ai" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #10b981, #047857);"><i class="bi bi-robot"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">AI-сервисы</span><span class="sidebar-game-subtitle">ChatGPT, Claude</span></div>
+            </a>
+            <a href="/Catalog?category=vpn" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-shield-lock-fill"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">VPN подписки</span><span class="sidebar-game-subtitle">NordVPN, Surfshark</span></div>
+            </a>
+            <a href="/Catalog/Telegram" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #2AABEE, #229ED9);"><i class="bi bi-send-fill"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">Telegram Premium</span><span class="sidebar-game-subtitle">3 / 6 / 12 месяцев</span></div>
+            </a>
+            <a href="/Catalog" class="sidebar-game">
+                <div class="sidebar-game-icon" style="background: rgba(255,255,255,0.08);"><i class="bi bi-grid-3x3-gap"></i></div>
+                <div class="sidebar-game-info"><span class="sidebar-game-name">Весь каталог</span></div>
+            </a>
+        </aside>
+
         <main class="game-main">
             <!-- Steam login -->
             <div class="uid-section">
@@ -473,6 +534,7 @@
 
     <!-- FAQ Section -->
     <div class="d-flex" style="gap: 1.5rem;">
+        <div class="game-sidebar-spacer"></div>
         <div class="faq-section flex-grow-1" style="min-width: 0;">
             <h2 class="faq-title">Ответы на вопросы</h2>
 

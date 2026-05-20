@@ -59,6 +59,33 @@
     }
     .sidebar-game-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
 
+    /* «Как пополнить» block — fills the space under the slider */
+    .steam-section-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin: 1.5rem 0 0.85rem; }
+    .steam-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.85rem; }
+    @@media (max-width: 600px) { .steam-steps { grid-template-columns: 1fr; } }
+    .steam-step {
+        display: flex; gap: 0.85rem; align-items: flex-start;
+        background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px; padding: 1rem 1.1rem;
+    }
+    .steam-step-num {
+        width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: #fff;
+        background: linear-gradient(135deg, #1b2838, #66c0f4);
+    }
+    .steam-step-title { font-weight: 600; color: #fff; font-size: 0.92rem; margin-bottom: 0.2rem; }
+    .steam-step-desc { font-size: 0.82rem; color: rgba(255,255,255,0.55); line-height: 1.4; }
+    .steam-advantages { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+    .steam-adv {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px; padding: 0.55rem 0.9rem;
+        font-size: 0.83rem; color: rgba(255,255,255,0.8);
+    }
+    .steam-adv i { color: #66c0f4; }
+
     /* Steam-логин - точно как .uid-section у Telegram, только цвет другой */
     .uid-section {
         background: linear-gradient(145deg, #1f1f3a 0%, #161630 100%);
@@ -383,17 +410,6 @@
 </style>
 
 <div class="container container-wide">
-    <div class="d-flex gap-4">
-        <div class="game-sidebar-spacer"></div>
-        <div class="tg-hero">
-            <div class="tg-hero-badges">
-                <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
-                <span class="tg-hero-badge green"><i class="bi bi-stars"></i>Бонус +10% всегда</span>
-            </div>
-            <h1 class="tg-hero-title">Пополнение Steam</h1>
-        </div>
-    </div>
-
     <div class="game-page">
         <aside class="game-sidebar">
             <div class="sidebar-title">Категории</div>
@@ -428,6 +444,15 @@
         </aside>
 
         <main class="game-main">
+            <!-- Hero -->
+            <div class="tg-hero" style="margin-bottom: 1rem;">
+                <div class="tg-hero-badges">
+                    <span class="tg-hero-badge blue"><i class="bi bi-lightning-charge-fill"></i>Лучшие цены</span>
+                    <span class="tg-hero-badge green"><i class="bi bi-stars"></i>Бонус +10% всегда</span>
+                </div>
+                <h1 class="tg-hero-title">Пополнение Steam</h1>
+            </div>
+
             <!-- Steam login -->
             <div class="uid-section">
                 <span class="uid-prefix-icon"><i class="bi bi-controller"></i></span>
@@ -463,6 +488,46 @@
                 </div>
 
                 <div class="amount-error" id="amountError"></div>
+            </div>
+
+            <!-- How it works -->
+            <div class="steam-section-title">Как пополнить Steam</div>
+            <div class="steam-steps">
+                <div class="steam-step">
+                    <div class="steam-step-num">1</div>
+                    <div>
+                        <div class="steam-step-title">Введите логин</div>
+                        <div class="steam-step-desc">Укажите логин вашего Steam-аккаунта в поле выше</div>
+                    </div>
+                </div>
+                <div class="steam-step">
+                    <div class="steam-step-num">2</div>
+                    <div>
+                        <div class="steam-step-title">Выберите сумму</div>
+                        <div class="steam-step-desc">Двигайте ползунок или нажмите готовую сумму, бонус +10% начислится автоматически</div>
+                    </div>
+                </div>
+                <div class="steam-step">
+                    <div class="steam-step-num">3</div>
+                    <div>
+                        <div class="steam-step-title">Оплатите</div>
+                        <div class="steam-step-desc">Картой, через СБП или с баланса аккаунта - как удобно</div>
+                    </div>
+                </div>
+                <div class="steam-step">
+                    <div class="steam-step-num">4</div>
+                    <div>
+                        <div class="steam-step-title">Получите деньги</div>
+                        <div class="steam-step-desc">Средства поступят на ваш Steam-кошелёк за 5-10 минут</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="steam-advantages">
+                <span class="steam-adv"><i class="bi bi-shield-check"></i> Безопасная оплата</span>
+                <span class="steam-adv"><i class="bi bi-lightning-charge-fill"></i> Зачисление 5-10 минут</span>
+                <span class="steam-adv"><i class="bi bi-stars"></i> Бонус +10% всегда</span>
+                <span class="steam-adv"><i class="bi bi-headset"></i> Поддержка 24/7</span>
             </div>
 
         </main>

@@ -1,6 +1,14 @@
 @using DigiVault.Core.Entities
+@using Microsoft.EntityFrameworkCore
+@inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
 @{
     ViewData["Title"] = "Пополнение Steam - Key Zona";
+
+    // Telegram Premium category is gated site-wide on this flag (same as
+    // catalog / home) — hide the sidebar link when it's switched off.
+    var telegramPremiumVisible = await DbContext.GiftCards
+        .AsNoTracking()
+        .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
 
     // Admin-editable via /Admin/Steam (AppSettings: steam:* keys).
     var card          = ViewBag.SteamCard as GiftCard;
@@ -433,10 +441,13 @@
                 <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-shield-lock-fill"></i></div>
                 <div class="sidebar-game-info"><span class="sidebar-game-name">VPN подписки</span><span class="sidebar-game-subtitle">NordVPN, Surfshark</span></div>
             </a>
-            <a href="/Catalog/Telegram" class="sidebar-game">
-                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #2AABEE, #229ED9);"><i class="bi bi-send-fill"></i></div>
-                <div class="sidebar-game-info"><span class="sidebar-game-name">Telegram Premium</span><span class="sidebar-game-subtitle">3 / 6 / 12 месяцев</span></div>
-            </a>
+            @if (telegramPremiumVisible)
+            {
+                <a href="/Catalog/Telegram" class="sidebar-game">
+                    <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #2AABEE, #229ED9);"><i class="bi bi-send-fill"></i></div>
+                    <div class="sidebar-game-info"><span class="sidebar-game-name">Telegram Premium</span><span class="sidebar-game-subtitle">3 / 6 / 12 месяцев</span></div>
+                </a>
+            }
             <a href="/Catalog" class="sidebar-game">
                 <div class="sidebar-game-icon" style="background: rgba(255,255,255,0.08);"><i class="bi bi-grid-3x3-gap"></i></div>
                 <div class="sidebar-game-info"><span class="sidebar-game-name">Весь каталог</span></div>

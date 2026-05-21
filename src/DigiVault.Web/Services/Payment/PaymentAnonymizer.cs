@@ -41,6 +41,7 @@ public sealed record AnonymizedContacts(
     string Email,
     string Phone,
     string Ip,
+    string Name,
     bool Anonymized);
 
 /// <summary>
@@ -178,6 +179,7 @@ public class PaymentAnonymizer
                 Email: GenerateRussianEmail(),
                 Phone: GenerateRussianMobilePhone(),
                 Ip:    GenerateRussianIp(),
+                Name:  GenerateRussianName(),
                 Anonymized: true);
         }
 
@@ -196,7 +198,9 @@ public class PaymentAnonymizer
             ? originalIp!
             : GenerateRussianIp();
 
-        return new AnonymizedContacts(email, phone, ip, false);
+        // Real users: we don't have their name in this call, so leave it
+        // empty — providers keep their own placeholder (e.g. «Покупатель»).
+        return new AnonymizedContacts(email, phone, ip, "", false);
     }
 
     // ──────────────────────────────────────────────────────────────────
@@ -244,6 +248,21 @@ public class PaymentAnonymizer
         var d = Random.Shared.Next(1, 255);
         return $"{a}.{b}.{c}.{d}";
     }
+
+    /// <summary>
+    /// Returns a realistic RU full name in Title Case, e.g. <c>Dmitry Ivanov</c>.
+    /// Pulled from the same first/last-name pools used for emails so the
+    /// anonymised identity stays internally consistent.
+    /// </summary>
+    private static string GenerateRussianName()
+    {
+        var first = Capitalize(Pick(FirstNames));
+        var last  = Capitalize(Pick(LastNames));
+        return $"{first} {last}";
+    }
+
+    private static string Capitalize(string s) =>
+        string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
 
     private static string NormalizePhone(string? raw)
     {

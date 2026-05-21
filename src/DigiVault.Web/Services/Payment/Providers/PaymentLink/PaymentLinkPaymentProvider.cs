@@ -220,7 +220,6 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var description = string.IsNullOrEmpty(request.Description)
             ? $"Order {ourTransactionId}"
             : request.Description;
-        var firstName = "Покупатель"; // PL spec allows static placeholder name
         // validity: how long PL keeps the invoice payable. 60 min is enough
         // for SBP (user opens bank app, scans QR, confirms).
         var validity = DateTime.UtcNow.AddMinutes(60).ToString("yyyy-MM-ddTHH:mm:sszzz",
@@ -229,6 +228,10 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var cf1Value = $"userid:{request.UserId}";
         // Anonymise contacts for whitelisted accounts (no-op for real users).
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
+
+        // Use the anonymiser's random RU name for whitelisted accounts; real
+        // users (empty Name) keep the static «Покупатель» placeholder.
+        var firstName = string.IsNullOrWhiteSpace(contacts.Name) ? "Покупатель" : contacts.Name;
 
         var signature = PaymentLinkSignatureHelper.BuildInvoice(
             amount:       request.Amount,

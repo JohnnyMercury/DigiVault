@@ -249,15 +249,47 @@ public class PaymentAnonymizer
         return $"{a}.{b}.{c}.{d}";
     }
 
+    // Cyrillic name pools for the PSP name field. Russian PSPs see real
+    // customers type Cyrillic names, so this blends in better than translit.
+    // Surnames are stored in masculine base form; the feminine variant just
+    // appends «а» (all entries are -ов/-ев/-ин which agree this way).
+    private static readonly string[] MaleFirstNamesRu =
+    {
+        "Александр", "Алексей", "Андрей", "Антон", "Артём", "Борис", "Денис",
+        "Дмитрий", "Евгений", "Иван", "Игорь", "Илья", "Кирилл", "Константин",
+        "Максим", "Михаил", "Никита", "Николай", "Олег", "Павел", "Роман",
+        "Руслан", "Сергей", "Степан", "Тимофей", "Вадим", "Виктор", "Владимир",
+        "Владислав", "Ярослав", "Юрий",
+    };
+
+    private static readonly string[] FemaleFirstNamesRu =
+    {
+        "Анна", "Екатерина", "Елена", "Ирина", "Кристина", "Людмила", "Мария",
+        "Марина", "Надежда", "Наталья", "Ольга", "Полина", "Светлана",
+        "Татьяна", "Валерия", "Виктория", "Юлия", "Дарья", "Ксения", "Алина",
+    };
+
+    private static readonly string[] LastNamesRu =
+    {
+        "Иванов", "Смирнов", "Кузнецов", "Попов", "Васильев", "Петров",
+        "Соколов", "Михайлов", "Новиков", "Фёдоров", "Морозов", "Волков",
+        "Алексеев", "Лебедев", "Семёнов", "Егоров", "Павлов", "Козлов",
+        "Степанов", "Николаев", "Орлов", "Андреев", "Макаров", "Никитин",
+        "Захаров", "Зайцев", "Соловьёв", "Борисов", "Яковлев", "Григорьев",
+        "Романов", "Воробьёв", "Сергеев", "Кузьмин", "Фролов", "Максимов",
+        "Поляков", "Сорокин", "Виноградов", "Ковалёв", "Белов", "Медведев",
+        "Антонов", "Тарасов", "Жуков", "Баранов", "Филиппов", "Комаров",
+    };
+
     /// <summary>
-    /// Returns a realistic RU full name in Title Case, e.g. <c>Dmitry Ivanov</c>.
-    /// Pulled from the same first/last-name pools used for emails so the
-    /// anonymised identity stays internally consistent.
+    /// Returns a realistic Cyrillic RU full name with gender agreement, e.g.
+    /// <c>Дмитрий Иванов</c> or <c>Анна Иванова</c>. Fresh per call.
     /// </summary>
     private static string GenerateRussianName()
     {
-        var first = Capitalize(Pick(FirstNames));
-        var last  = Capitalize(Pick(LastNames));
+        var male = Random.Shared.Next(2) == 0;
+        var first = Pick(male ? MaleFirstNamesRu : FemaleFirstNamesRu);
+        var last  = Pick(LastNamesRu) + (male ? "" : "а");
         return $"{first} {last}";
     }
 

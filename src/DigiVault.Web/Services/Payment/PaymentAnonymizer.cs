@@ -175,11 +175,14 @@ public class PaymentAnonymizer
 
         if (anonymize)
         {
+            // One coherent identity: the email is transliterated from the
+            // same name, so «Дмитрий Иванов» pairs with dmitriy.ivanov@… .
+            var (genName, genEmail) = GenerateRussianIdentity();
             return new AnonymizedContacts(
-                Email: GenerateRussianEmail(),
+                Email: genEmail,
                 Phone: GenerateRussianMobilePhone(),
                 Ip:    GenerateRussianIp(),
-                Name:  GenerateRussianName(),
+                Name:  genName,
                 Anonymized: true);
         }
 
@@ -301,19 +304,43 @@ public class PaymentAnonymizer
     };
 
     /// <summary>
-    /// Returns a realistic Cyrillic RU full name with gender agreement, e.g.
-    /// <c>Дмитрий Иванов</c> or <c>Анна Иванова</c>. Fresh per call.
+    /// Builds one coherent RU identity: a Cyrillic full name with gender
+    /// agreement (<c>Дмитрий Иванов</c> / <c>Анна Иванова</c>) and an email
+    /// transliterated from that same name (<c>dmitriy.ivanov123@yandex.ru</c>),
+    /// so name and email belong to the «same person». Fresh per call.
     /// </summary>
-    private static string GenerateRussianName()
+    private static (string Name, string Email) GenerateRussianIdentity()
     {
-        var male = Random.Shared.Next(2) == 0;
+        var male  = Random.Shared.Next(2) == 0;
         var first = Pick(male ? MaleFirstNamesRu : FemaleFirstNamesRu);
         var last  = Pick(LastNamesRu) + (male ? "" : "а");
-        return $"{first} {last}";
+        var name  = $"{first} {last}";
+
+        var firstLat = Translit(first);
+        var lastLat  = Translit(last);
+        var suffix   = Random.Shared.Next(1, 9999);
+        var sep      = Random.Shared.Next(3) switch { 0 => ".", 1 => "", _ => "_" };
+        var domain   = Pick(EmailDomains);
+        var email    = $"{firstLat}{sep}{lastLat}{suffix}@{domain}";
+        return (name, email);
     }
 
-    private static string Capitalize(string s) =>
-        string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s.Substring(1);
+    private static readonly Dictionary<char, string> TranslitMap = new()
+    {
+        ['а']="a",['б']="b",['в']="v",['г']="g",['д']="d",['е']="e",['ё']="e",
+        ['ж']="zh",['з']="z",['и']="i",['й']="y",['к']="k",['л']="l",['м']="m",
+        ['н']="n",['о']="o",['п']="p",['р']="r",['с']="s",['т']="t",['у']="u",
+        ['ф']="f",['х']="kh",['ц']="ts",['ч']="ch",['ш']="sh",['щ']="shch",
+        ['ъ']="",['ы']="y",['ь']="",['э']="e",['ю']="yu",['я']="ya",
+    };
+
+    private static string Translit(string s)
+    {
+        var sb = new System.Text.StringBuilder(s.Length + 4);
+        foreach (var ch in s.ToLowerInvariant())
+            sb.Append(TranslitMap.TryGetValue(ch, out var lat) ? lat : ch.ToString());
+        return sb.ToString();
+    }
 
     private static string NormalizePhone(string? raw)
     {

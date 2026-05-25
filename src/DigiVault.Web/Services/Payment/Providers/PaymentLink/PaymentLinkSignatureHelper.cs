@@ -115,7 +115,10 @@ public static class PaymentLinkSignatureHelper
         var amountCurr  = Get("amountcurr");
         var currency    = Get("currency");
         var number      = Get("number");
-        var description = Get("description");
+        // RushPay signs the webhook with the description in its form-urlencoded
+        // form (space→+, %XX uppercase), even though /start verifies it decoded.
+        // Verified against a live signature — see UrlEncodeForm.
+        var description = UrlEncodeForm(Get("description"));
         var trtype      = Get("trtype");
         var account     = Get("account");
         var paytoken    = Get("paytoken");
@@ -306,6 +309,15 @@ public static class PaymentLinkSignatureHelper
         var expected = Hash(sb.ToString(), secretKey1, secretKey2, algo);
         return string.Equals(expected, received, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// Form-urlencodes a value the way RushPay does when signing webhook
+    /// payloads: percent-encode (uppercase) with space as '+'. Equivalent to
+    /// PHP's urlencode / Python quote_plus. Used only for incoming webhook
+    /// signature verification (the description field arrives encoded).
+    /// </summary>
+    private static string UrlEncodeForm(string s)
+        => string.IsNullOrEmpty(s) ? s : Uri.EscapeDataString(s).Replace("%20", "+");
 
     private static string Hash(string data, string secretKey1, string secretKey2, string algo)
     {

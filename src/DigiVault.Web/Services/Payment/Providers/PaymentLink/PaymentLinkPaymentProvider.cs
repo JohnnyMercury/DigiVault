@@ -445,6 +445,14 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var form = QueryHelpers.ParseQuery(body)
             .ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
 
+        // RushPay's card terminal posts the «opertype»-led confirmation
+        // payload to the Status URL too (observed in prod). That payload uses
+        // the confirmation canonical and MUST be answered with the bare transID,
+        // not «OK» — otherwise it aborts with errcode 130. So if opertype is
+        // present, handle it through the confirmation path.
+        if (!string.IsNullOrEmpty(form.GetValueOrDefault("opertype")))
+            return await ValidateWebhookAsync(headers, body, ct);
+
         var algo = ReadAlgo(cfg.Settings);
         var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 

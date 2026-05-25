@@ -311,13 +311,20 @@ public static class PaymentLinkSignatureHelper
     }
 
     /// <summary>
-    /// Form-urlencodes a value the way RushPay does when signing webhook
-    /// payloads: percent-encode (uppercase) with space as '+'. Equivalent to
-    /// PHP's urlencode / Python quote_plus. Used only for incoming webhook
-    /// signature verification (the description field arrives encoded).
+    /// Reproduces the description form exactly as RushPay signs it on webhooks:
+    /// form-urlencoded (space→'+', %XX uppercase, PHP urlencode / Python
+    /// quote_plus). Our webhook pipeline can hand the value over either fully
+    /// decoded or still single-encoded (a decode/re-encode round-trip in the
+    /// controller), so we first normalise to the clean decoded string
+    /// (form-decode: '+'→space, then %XX) and only then re-encode. Idempotent
+    /// for both input shapes — verified against live RushPay signatures.
     /// </summary>
     private static string UrlEncodeForm(string s)
-        => string.IsNullOrEmpty(s) ? s : Uri.EscapeDataString(s).Replace("%20", "+");
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        var clean = Uri.UnescapeDataString(s.Replace("+", " "));
+        return Uri.EscapeDataString(clean).Replace("%20", "+");
+    }
 
     private static string Hash(string data, string secretKey1, string secretKey2, string algo)
     {

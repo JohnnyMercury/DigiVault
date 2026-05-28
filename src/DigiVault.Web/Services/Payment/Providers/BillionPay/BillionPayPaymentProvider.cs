@@ -19,9 +19,9 @@ namespace DigiVault.Web.Services.Payment.Providers.BillionPay;
 ///   MerchantId  → optional merchantUserID (currently unused — passed UserId)
 ///   Settings    → optional JSON {"baseUrl":"https://api.billionpay.cc","bank":"ANY_BANK"}
 ///
-/// Flows used here:
-///   • SBP  → method "SBP", bank ANY_BANK (the BillionPay form delivers QR / NSPK link)
-///   • Card → method "ECOM_PAYMENT_LINK" (hosted card page; returns paymentFormUrl)
+/// Flows used here (per merchant brief):
+///   • SBP  → method "NSPK", bank ANY_BANK (returns nspkURL — hosted СБП page)
+///   • Card → method "ECOM_PAYMENT_LINK" (returns paymentFormUrl — hosted card page)
 ///
 /// Signature: HMAC-SHA512(secret, message), hex, header X-API-Sign.
 ///   POST:  message = "{path}{minified-json-with-sorted-keys}"
@@ -89,8 +89,8 @@ public class BillionPayPaymentProvider : IPaymentProvider
         var ourTransactionId = TxnIdHelper.Generate(maxLength: 32);
 
         var isCard   = request.Method == PaymentMethod.Card;
-        var method   = isCard ? "ECOM_PAYMENT_LINK" : "SBP";
-        var bank     = ReadBank(cfg);  // "ANY_BANK" by default
+        var method   = isCard ? "ECOM_PAYMENT_LINK" : "NSPK";
+        var bank     = "ANY_BANK"; // both NSPK and ECOM_PAYMENT_LINK require ANY_BANK
         var amount   = decimal.Round(request.Amount, 2);
         var currency = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);

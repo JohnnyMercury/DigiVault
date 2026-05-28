@@ -226,14 +226,16 @@
     const PLATEGA_BADGE  = 'linear-gradient(135deg, #a855f7, #6b21a8)';
     const IMONEY_BADGE   = 'linear-gradient(135deg, #f59e0b, #b45309)';
     const BLVCK_BADGE    = 'linear-gradient(135deg, #4b5563, #111827)';
+    const BILLION_BADGE  = 'linear-gradient(135deg, #14b8a6, #0f766e)';
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
         // Card-метод: Enot + RushPay. У RushPay подключён еком-терминал МИР
         // (ACC1175428), карточный flow идёт через /api/payment/start.
         card: [
-            { code: 'enot',        title: 'Enot Pay', desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE  },
-            { code: 'paymentlink', title: 'RushPay',  desc: 'Карты МИР',             icon: 'bi-credit-card',         color: PLINK_BADGE },
+            { code: 'enot',        title: 'Enot Pay',   desc: 'Visa, MasterCard, МИР', icon: 'bi-credit-card-2-front', color: ENOT_BADGE   },
+            { code: 'paymentlink', title: 'RushPay',    desc: 'Карты МИР',             icon: 'bi-credit-card',         color: PLINK_BADGE  },
+            { code: 'billionpay',  title: 'BillionPay', desc: 'Карты, екоммерс',       icon: 'bi-credit-card-fill',    color: BILLION_BADGE},
         ],
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
@@ -241,6 +243,7 @@
             { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
             { code: 'pally',          title: 'Pally',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
             { code: 'platega',        title: 'Platega',        desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
+            { code: 'billionpay',     title: 'BillionPay',     desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: BILLION_BADGE },
         ],
         // QR - IntellectMoney + BlvckPay (оба отдают QR для оплаты в банке).
         qr: [

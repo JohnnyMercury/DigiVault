@@ -438,6 +438,33 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed BillionPay (api.billionpay.cc, v2.1.2). JSON REST with
+        // HMAC-SHA512 in X-API-Sign header; X-API-Key carries the public key.
+        //   ApiKey      → public X-API-Key
+        //   SecretKey   → HMAC secret
+        //   Settings    → optional JSON {"baseUrl":"...","bank":"ANY_BANK"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "billionpay"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "billionpay",
+                DisplayName = "BillionPay",
+                IsEnabled   = false,
+                Priority    = 80,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 100,
+                MaxAmount   = 300_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
+
         // Seed BlvckPay (payment.blvckpay.com). JSON REST gateway — СБП +
         // cards (МИР) + Steam, static signature token per method.
         //   ApiKey      → signature token for СБП

@@ -99,6 +99,7 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Platega.PlategaPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.IntellectMoney.IntellectMoneyPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.BlvckPay.BlvckPayPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.BillionPay.BillionPayPaymentProvider>();
 
 // Pally HTTP client — plain Bearer-auth, no certs / weird headers.
 // 30 s timeout matches the other PSPs; pal24.pro is fast in practice.
@@ -122,6 +123,11 @@ builder.Services.AddHttpClient(
 // token in each request body.
 builder.Services.AddHttpClient(
     "blvckpay",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
+
+// BillionPay HTTP client — JSON REST with HMAC-SHA512 in X-API-Sign header.
+builder.Services.AddHttpClient(
+    "billionpay",
     client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // PaymentLink server-to-server HTTP client (used by /api/payment/invoice for

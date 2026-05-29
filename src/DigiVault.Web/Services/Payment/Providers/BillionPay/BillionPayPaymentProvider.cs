@@ -128,6 +128,12 @@ public class BillionPayPaymentProvider : IPaymentProvider
                 "BillionPay → POST {Url} txn={Txn} method={Method} amount={Amt}",
                 baseUrl + path, ourTransactionId, method, amount);
 
+            // Diagnostic: print the EXACT bytes we sign + send. Allows side-by-side
+            // comparison with the official Python sample to verify canonicalisation.
+            _log.LogInformation("BillionPay DEBUG bodyJson    : {Body}", bodyJson);
+            _log.LogInformation("BillionPay DEBUG signMessage : {Msg}", signMessage);
+            _log.LogInformation("BillionPay DEBUG signature   : {Sig}", signature);
+
             using var http = _httpFactory.CreateClient(HttpClientName);
             http.DefaultRequestHeaders.Remove("X-API-Key");
             http.DefaultRequestHeaders.Remove("X-API-Sign");

@@ -95,11 +95,20 @@ public class BillionPayPaymentProvider : IPaymentProvider
         var currency = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 
+        // Amount must be serialised WITHOUT trailing zeros: C# decimal preserves
+        // scale (53.00m → "53.00"), but BillionPay re-canonicalises through a
+        // Python-style JSON parser that produces "53" / "53.5" — the trailing
+        // zeros silently break the signature. Pick int for whole numbers, double
+        // for fractional.
+        object amountForJson = amount == Math.Truncate(amount)
+            ? (long)amount
+            : (object)(double)amount;
+
         // Build sorted-keys JSON for signing. Order matters for the signature:
         // BillionPay verifies by re-serialising our body with sorted keys.
         var payload = new SortedDictionary<string, object?>(StringComparer.Ordinal)
         {
-            ["amount"]         = amount,
+            ["amount"]         = amountForJson,
             ["bank"]           = bank,
             ["callbackURL"]    = request.WebhookUrl ?? "",
             ["currency"]       = currency,

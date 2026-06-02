@@ -33,8 +33,19 @@ jobs:
           timeout: 60s
           command_timeout: 20m
           script: |
+            set -e  # fail loudly if any step (incl. git pull) errors
             cd /var/www/digivault
-            git checkout -- . && git pull origin main
+            git checkout -- .
+            git pull origin main
+            # Verify HEAD moved to the deploy commit — guards against silent
+            # auth failures (expired PAT etc.) leaving prod on old code while
+            # Actions reports green.
+            DEPLOY_SHA="${{ github.sha }}"
+            LOCAL_SHA="$(git rev-parse HEAD)"
+            if [ "${DEPLOY_SHA:0:7}" != "${LOCAL_SHA:0:7}" ]; then
+              echo "::error::HEAD ($LOCAL_SHA) does not match deploy commit ($DEPLOY_SHA) — pull likely failed."
+              exit 1
+            fi
             docker build --no-cache --network=host -t digivault:latest -f src/DigiVault.Web/Dockerfile .
             docker compose -f docker-compose.prod.yml stop web
             docker compose -f docker-compose.prod.yml up -d web
@@ -54,8 +65,19 @@ jobs:
           timeout: 120s
           command_timeout: 20m
           script: |
+            set -e  # fail loudly if any step (incl. git pull) errors
             cd /var/www/digivault
-            git checkout -- . && git pull origin main
+            git checkout -- .
+            git pull origin main
+            # Verify HEAD moved to the deploy commit — guards against silent
+            # auth failures (expired PAT etc.) leaving prod on old code while
+            # Actions reports green.
+            DEPLOY_SHA="${{ github.sha }}"
+            LOCAL_SHA="$(git rev-parse HEAD)"
+            if [ "${DEPLOY_SHA:0:7}" != "${LOCAL_SHA:0:7}" ]; then
+              echo "::error::HEAD ($LOCAL_SHA) does not match deploy commit ($DEPLOY_SHA) — pull likely failed."
+              exit 1
+            fi
             docker build --no-cache --network=host -t digivault:latest -f src/DigiVault.Web/Dockerfile .
             docker compose -f docker-compose.prod.yml stop web
             docker compose -f docker-compose.prod.yml up -d web

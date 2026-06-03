@@ -154,6 +154,14 @@ public class OrdersController : AdminBaseController
                 "text/html");
         }
 
+        // Latest payment attempt for this order — surfaces the PSP context
+        // (transaction id, method, provider) inside the order modal so admin
+        // doesn't have to cross-reference two screens for PSP disputes.
+        ViewBag.LatestTransaction = await _context.PaymentTransactions
+            .Where(t => t.OrderId == id)
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync();
+
         return PartialView("_OrderDetailsModalBody", order);
     }
 

@@ -1,20 +1,39 @@
 @model DigiVault.Core.Entities.Order
 @{
-    // Pick the first OrderItem as the primary product. Most orders are
-    // single-line (one product per order); for multi-line we still show the
-    // first row's product info — the totals at the bottom reflect the full
-    // order amount.
+    var tx = ViewBag.LatestTransaction as DigiVault.Core.Entities.PaymentTransaction;
+
+    // Pick the first OrderItem as the primary line. Most DigiVault orders
+    // are single-line (one product per order); for multi-line we still show
+    // the first row — the totals reflect the full order amount.
     var item = Model.OrderItems?.FirstOrDefault();
     var product = item?.GameProduct;
 
-    // Category label — what kind of thing was bought. Helps admin answer
-    // the PSP question "what did this transaction pay for?" at a glance.
+    // Category label — the actual question admin needs to answer for a PSP:
+    // "what kind of thing was bought." Period for subscriptions lives inside
+    // GameProduct.Name (e.g. «ExpressVPN 3 мес») so no separate field.
+    var isSteam = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
     var categoryLabel = product?.Game != null ? "Игра"
-                      : product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet" ? "Steam Wallet"
+                      : isSteam                ? "Steam Wallet"
                       : product?.GiftCard != null ? "Подарочная карта"
                       : product?.VpnProvider != null ? "VPN"
                       : product?.AiService != null ? "AI-сервис"
+                      : Model.OrderItems?.Count == 0 ? "Пополнение баланса"
                       : "—";
+
+    // Steam login is the only delivery-payload field we currently extract
+    // (Steam top-ups write «Steam: <login>; Зачислить: …» into DeliveryInfo).
+    string? steamLogin = null;
+    if (isSteam && !string.IsNullOrEmpty(Model.DeliveryInfo))
+    {
+        var raw  = Model.DeliveryInfo!;
+        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
+        if (idx1 >= 0)
+        {
+            var rest = raw[(idx1 + "Steam:".Length)..];
+            var semi = rest.IndexOf(';');
+            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
+        }
+    }
 
     var statusText = Model.Status switch
     {
@@ -37,6 +56,20 @@
             <label class="tx-label">Категория:</label>
             <input type="text" class="tx-input" value="@categoryLabel"/>
         </div>
+        @if (isSteam && !string.IsNullOrEmpty(steamLogin))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Steam Login:</label>
+                <input type="text" class="tx-input" value="@steamLogin"/>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(product?.Region))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Регион:</label>
+                <input type="text" class="tx-input" value="@product.Region"/>
+            </div>
+        }
         <div class="tx-row">
             <label class="tx-label">Количество:</label>
             <input type="text" class="tx-input" value="@(item?.Quantity.ToString() ?? "—")"/>
@@ -54,7 +87,7 @@
         </div>
     </div>
     <div class="col-md-6">
-        <h6 class="tx-section-title">Идентификаторы</h6>
+        <h6 class="tx-section-title">Идентификаторы и оплата</h6>
         <div class="tx-row">
             <label class="tx-label">User ID:</label>
             <input type="text" class="tx-input" value="@Model.UserId"/>
@@ -67,6 +100,18 @@
             <label class="tx-label">№ заказа:</label>
             <input type="text" class="tx-input tx-input-link" value="@Model.OrderNumber"/>
         </div>
+        <div class="tx-row">
+            <label class="tx-label">ID транзакции:</label>
+            <input type="text" class="tx-input tx-input-link" value="@(tx?.TransactionId ?? "—")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Метод оплаты:</label>
+            <input type="text" class="tx-input" value="@(tx?.Method.ToString().ToLower() ?? "—")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Провайдер:</label>
+            <input type="text" class="tx-input" value="@(tx?.ProviderName ?? "—")"/>
+        </div>
 
         <h6 class="tx-section-title mt-4">Временные метки</h6>
         <div class="tx-row">
@@ -78,9 +123,8 @@
             <input type="text" class="tx-input" value="@(Model.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "—")"/>
         </div>
     </div>
-    @* Admin scratchpad — editable in-place for PSP-dispute screenshots.
-       Not persisted (mirrors the cyborg-games / nord-hosting flow: fill →
-       screenshot → close). Survives only until the modal is reopened. *@
+    @* Admin scratchpad — fill in what was bought, screenshot for PSP,
+       close. Not persisted (mirrors cyborg-games / nord-hosting flow). *@
     <div class="col-12">
         <h6 class="tx-section-title mt-4">Комментарий</h6>
         <textarea class="tx-input" rows="3" style="width:100%;resize:vertical;" placeholder="Впишите что было куплено / любые заметки для PSP…"></textarea>

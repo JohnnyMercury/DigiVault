@@ -123,6 +123,40 @@ public class OrdersController : AdminBaseController
         return PartialView("_TransactionDetailsModalBody", transaction);
     }
 
+    /// <summary>
+    /// Returns the order-details modal body. Triggered when admin clicks the
+    /// blue order-number badge in the transaction search result — separate
+    /// from the transaction-details modal because it answers a different
+    /// question (what was bought, vs. how was it paid).
+    /// </summary>
+    public async Task<IActionResult> OrderPartial(int id)
+    {
+        var order = await _context.Orders
+            .Include(o => o.User)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.GameProduct)
+                    .ThenInclude(p => p!.Game)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.GameProduct)
+                    .ThenInclude(p => p!.GiftCard)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.GameProduct)
+                    .ThenInclude(p => p!.VpnProvider)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.GameProduct)
+                    .ThenInclude(p => p!.AiService)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order == null)
+        {
+            return Content(
+                "<div class='alert alert-warning m-3'>Заказ не найден.</div>",
+                "text/html");
+        }
+
+        return PartialView("_OrderDetailsModalBody", order);
+    }
+
     public async Task<IActionResult> Details(int id)
     {
         var order = await _context.Orders

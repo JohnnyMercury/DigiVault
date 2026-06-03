@@ -101,12 +101,4 @@
             <input type="text" class="tx-input" value="@(Model.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "-")"/>
         </div>
     </div>
-    @* Admin scratchpad — editable in-place for screenshots / PSP disputes.
-       Not persisted (matches the cyborg-games / nord-hosting workflow where
-       admin fills the field, screenshots, closes the modal). Survives only
-       until the modal is reopened. *@
-    <div class="col-12">
-        <h6 class="tx-section-title mt-4">Комментарий</h6>
-        <textarea class="tx-input" rows="3" style="width:100%;resize:vertical;" placeholder="Впишите что было куплено / Steam Login / любые заметки для PSP…"></textarea>
-    </div>
 </div>

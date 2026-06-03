@@ -1,0 +1,88 @@
+@model DigiVault.Core.Entities.Order
+@{
+    // Pick the first OrderItem as the primary product. Most orders are
+    // single-line (one product per order); for multi-line we still show the
+    // first row's product info — the totals at the bottom reflect the full
+    // order amount.
+    var item = Model.OrderItems?.FirstOrDefault();
+    var product = item?.GameProduct;
+
+    // Category label — what kind of thing was bought. Helps admin answer
+    // the PSP question "what did this transaction pay for?" at a glance.
+    var categoryLabel = product?.Game != null ? "Игра"
+                      : product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet" ? "Steam Wallet"
+                      : product?.GiftCard != null ? "Подарочная карта"
+                      : product?.VpnProvider != null ? "VPN"
+                      : product?.AiService != null ? "AI-сервис"
+                      : "—";
+
+    var statusText = Model.Status switch
+    {
+        DigiVault.Core.Enums.OrderStatus.Completed  => "Оплачен",
+        DigiVault.Core.Enums.OrderStatus.Processing => "В обработке",
+        DigiVault.Core.Enums.OrderStatus.Pending    => "Ожидает",
+        DigiVault.Core.Enums.OrderStatus.Cancelled  => "Отменён",
+        DigiVault.Core.Enums.OrderStatus.Refunded   => "Возврат",
+        _ => Model.Status.ToString(),
+    };
+}
+<div class="row g-4">
+    <div class="col-md-6">
+        <h6 class="tx-section-title">Информация о заказе</h6>
+        <div class="tx-row">
+            <label class="tx-label">Название товара:</label>
+            <input type="text" class="tx-input" value="@(product?.Name ?? "—")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Категория:</label>
+            <input type="text" class="tx-input" value="@categoryLabel"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Количество:</label>
+            <input type="text" class="tx-input" value="@(item?.Quantity.ToString() ?? "—")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Сумма:</label>
+            <div class="d-flex gap-2 flex-grow-1">
+                <input type="text" class="tx-input tx-input-bold" style="max-width: 120px;" value="@Model.TotalAmount.ToString("N2")"/>
+                <input type="text" class="tx-input tx-input-muted" style="max-width: 80px;" value="RUB"/>
+            </div>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Статус:</label>
+            <input type="text" class="tx-input tx-input-status" value="@statusText"/>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h6 class="tx-section-title">Идентификаторы</h6>
+        <div class="tx-row">
+            <label class="tx-label">User ID:</label>
+            <input type="text" class="tx-input" value="@Model.UserId"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Email:</label>
+            <input type="text" class="tx-input" value="@(Model.User?.Email ?? "—")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">№ заказа:</label>
+            <input type="text" class="tx-input tx-input-link" value="@Model.OrderNumber"/>
+        </div>
+
+        <h6 class="tx-section-title mt-4">Временные метки</h6>
+        <div class="tx-row">
+            <label class="tx-label">Создан:</label>
+            <input type="text" class="tx-input" value="@Model.CreatedAt.ToString("dd.MM.yyyy, HH:mm:ss")"/>
+        </div>
+        <div class="tx-row">
+            <label class="tx-label">Завершён:</label>
+            <input type="text" class="tx-input" value="@(Model.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "—")"/>
+        </div>
+    </div>
+    @* Admin scratchpad — editable in-place for PSP-dispute screenshots.
+       Not persisted (mirrors the cyborg-games / nord-hosting flow: fill →
+       screenshot → close). Survives only until the modal is reopened. *@
+    <div class="col-12">
+        <h6 class="tx-section-title mt-4">Комментарий</h6>
+        <textarea class="tx-input" rows="3" style="width:100%;resize:vertical;" placeholder="Впишите что было куплено / любые заметки для PSP…"></textarea>
+    </div>
+</div>

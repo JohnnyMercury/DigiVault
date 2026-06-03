@@ -8,32 +8,16 @@
     var item = Model.OrderItems?.FirstOrDefault();
     var product = item?.GameProduct;
 
-    // Category label — the actual question admin needs to answer for a PSP:
+    // Category label — the question admin needs to answer for a PSP:
     // "what kind of thing was bought." Period for subscriptions lives inside
-    // GameProduct.Name (e.g. «ExpressVPN 3 мес») so no separate field.
-    var isSteam = product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet";
+    // GameProduct.Name (e.g. «ExpressVPN 3 мес») so no separate field needed.
     var categoryLabel = product?.Game != null ? "Игра"
-                      : isSteam                ? "Steam Wallet"
+                      : product?.GiftCard != null && product.GiftCard.Slug == "steam-wallet" ? "Steam Wallet"
                       : product?.GiftCard != null ? "Подарочная карта"
                       : product?.VpnProvider != null ? "VPN"
                       : product?.AiService != null ? "AI-сервис"
                       : Model.OrderItems?.Count == 0 ? "Пополнение баланса"
                       : "—";
-
-    // Steam login is the only delivery-payload field we currently extract
-    // (Steam top-ups write «Steam: <login>; Зачислить: …» into DeliveryInfo).
-    string? steamLogin = null;
-    if (isSteam && !string.IsNullOrEmpty(Model.DeliveryInfo))
-    {
-        var raw  = Model.DeliveryInfo!;
-        var idx1 = raw.IndexOf("Steam:", StringComparison.OrdinalIgnoreCase);
-        if (idx1 >= 0)
-        {
-            var rest = raw[(idx1 + "Steam:".Length)..];
-            var semi = rest.IndexOf(';');
-            steamLogin = (semi >= 0 ? rest[..semi] : rest).Trim();
-        }
-    }
 
     var statusText = Model.Status switch
     {
@@ -56,13 +40,6 @@
             <label class="tx-label">Категория:</label>
             <input type="text" class="tx-input" value="@categoryLabel"/>
         </div>
-        @if (isSteam && !string.IsNullOrEmpty(steamLogin))
-        {
-            <div class="tx-row">
-                <label class="tx-label">Steam Login:</label>
-                <input type="text" class="tx-input" value="@steamLogin"/>
-            </div>
-        }
         <div class="tx-row">
             <label class="tx-label">Количество:</label>
             <input type="text" class="tx-input" value="@(item?.Quantity.ToString() ?? "—")"/>

@@ -63,13 +63,6 @@
                 <input type="text" class="tx-input" value="@steamLogin"/>
             </div>
         }
-        @if (!string.IsNullOrEmpty(product?.Region))
-        {
-            <div class="tx-row">
-                <label class="tx-label">Регион:</label>
-                <input type="text" class="tx-input" value="@product.Region"/>
-            </div>
-        }
         <div class="tx-row">
             <label class="tx-label">Количество:</label>
             <input type="text" class="tx-input" value="@(item?.Quantity.ToString() ?? "—")"/>
@@ -122,11 +115,5 @@
             <label class="tx-label">Завершён:</label>
             <input type="text" class="tx-input" value="@(Model.CompletedAt?.ToString("dd.MM.yyyy, HH:mm:ss") ?? "—")"/>
         </div>
-    </div>
-    @* Admin scratchpad — fill in what was bought, screenshot for PSP,
-       close. Not persisted (mirrors cyborg-games / nord-hosting flow). *@
-    <div class="col-12">
-        <h6 class="tx-section-title mt-4">Комментарий</h6>
-        <textarea class="tx-input" rows="3" style="width:100%;resize:vertical;" placeholder="Впишите что было куплено / любые заметки для PSP…"></textarea>
     </div>
 </div>

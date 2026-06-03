@@ -232,6 +232,28 @@
     </div>
 </div>
 
+@* Second modal — «Детали заказа». Triggered by clicking the cyan
+   order-number badge in the search-result card. Content fetched via
+   /Admin/Orders/OrderPartial/{id}. Must be declared BEFORE the script
+   block below — the JS captures #orderDetailsModalBody at IIFE-time, so
+   the element has to exist in the DOM at that point. *@
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content tx-modal">
+            <div class="modal-header tx-modal-header">
+                <h5 class="modal-title mb-0"><i class="bi bi-bag-check me-2"></i>Детали заказа</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body tx-modal-body" id="orderDetailsModalBody">
+                <div class="text-center text-muted py-5">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <div class="mt-2">Загрузка…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
         const modalBody = document.getElementById('txDetailsModalBody');
@@ -293,26 +315,6 @@
         }
     })();
 </script>
-
-@* Second modal — «Детали заказа». Triggered by clicking the cyan
-   order-number badge in the search-result card. Content fetched via
-   /Admin/Orders/OrderPartial/{id}. *@
-<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content tx-modal">
-            <div class="modal-header tx-modal-header">
-                <h5 class="modal-title mb-0"><i class="bi bi-bag-check me-2"></i>Детали заказа</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body tx-modal-body" id="orderDetailsModalBody">
-                <div class="text-center text-muted py-5">
-                    <div class="spinner-border text-info" role="status"></div>
-                    <div class="mt-2">Загрузка…</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
     /* Pink search button matches the Cyborg accent. */

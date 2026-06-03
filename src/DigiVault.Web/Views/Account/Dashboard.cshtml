@@ -374,7 +374,15 @@
                                     <i class="bi bi-bag-check"></i>
                                 </div>
                                 <div class="order-details">
-                                    <div class="order-id">Заказ #@order.Id</div>
+                                    <div class="order-id">
+                                        Заказ #@order.Id
+                                        @* Empty OrderItems = synthetic balance-topup order.
+                                           Tag so user spots it without opening details. *@
+                                        @if (order.OrderItems == null || !order.OrderItems.Any())
+                                        {
+                                            <span class="badge bg-info ms-1" style="font-size: 0.65rem; vertical-align: middle;">Пополнение</span>
+                                        }
+                                    </div>
                                     <div class="order-date">@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
                                 </div>
                                 <div class="order-amount">@order.TotalAmount.ToString("N0") ₽</div>

@@ -25,7 +25,16 @@
                         @foreach (var order in Model.Orders)
                         {
                             <tr>
-                                <td><code>@order.OrderNumber</code></td>
+                                <td>
+                                    <code>@order.OrderNumber</code>
+                                    @* OrderItems.Count == 0 → synthetic order created for a
+                                       balance topup. Tag visually so user doesn't confuse it
+                                       with a product purchase. *@
+                                    @if (order.Items.Count == 0)
+                                    {
+                                        <span class="badge bg-info ms-2">Пополнение</span>
+                                    }
+                                </td>
                                 <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
                                 <td>@order.Items.Count шт.</td>
                                 <td class="text-primary fw-bold">@order.TotalAmount.ToString("N0") ₽</td>

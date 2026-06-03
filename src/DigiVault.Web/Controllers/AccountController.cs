@@ -151,7 +151,11 @@ public class AccountController : Controller
         if (user == null)
             return RedirectToAction("Login");
 
+        // Include OrderItems so the Dashboard view can distinguish a real
+        // product purchase from a synthetic balance-topup order (empty items
+        // ⇒ topup) when it decides whether to draw the «Пополнение» badge.
         var orders = await _context.Orders
+            .Include(o => o.OrderItems)
             .Where(o => o.UserId == user.Id)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();

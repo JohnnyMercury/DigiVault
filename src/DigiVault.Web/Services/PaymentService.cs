@@ -127,12 +127,42 @@ public class PaymentService : IPaymentService
             return result;
         }
 
+        // Создаём синтетический Order для пополнения баланса — даём ему наш
+        // номер DV-YYYYMMDD-XXXXXXXX, чтобы транзакция была кликабельна из
+        // админ-поиска (плашка «Заказ» в Details modal) и попадала в
+        // /Account/Orders у юзера. OrderItems оставляем пустым — у пополнения
+        // нет товарных позиций. Backfill-миграция уже накатила то же самое
+        // на старые транзакции; здесь делаем то же для новых.
+        var orderNumber = $"DV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+        var depositOrder = new Order
+        {
+            UserId = userId,
+            OrderNumber = orderNumber,
+            TotalAmount = amount,
+            Status = result.Status switch
+            {
+                PaymentStatus.Pending    => OrderStatus.Pending,
+                PaymentStatus.Processing => OrderStatus.Processing,
+                PaymentStatus.Completed  => OrderStatus.Completed,
+                PaymentStatus.Failed     => OrderStatus.Cancelled,
+                PaymentStatus.Cancelled  => OrderStatus.Cancelled,
+                PaymentStatus.Refunded   => OrderStatus.Refunded,
+                PaymentStatus.Expired    => OrderStatus.Cancelled,
+                _                        => OrderStatus.Pending,
+            },
+            CreatedAt = DateTime.UtcNow,
+            DeliveryInfo = "Пополнение баланса",
+        };
+        _context.Orders.Add(depositOrder);
+        await _context.SaveChangesAsync();  // need depositOrder.Id below
+
         // Сохраняем транзакцию в БД
         var transaction = new PaymentTransaction
         {
             TransactionId = result.TransactionId!,
             ProviderTransactionId = result.ProviderTransactionId,
             UserId = userId,
+            OrderId = depositOrder.Id,
             ProviderName = provider.Name,
             Method = method,
             Amount = amount,

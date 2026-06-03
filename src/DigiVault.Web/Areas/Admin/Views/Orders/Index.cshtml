@@ -95,7 +95,11 @@
                             <div>
                                 @if (searchedTx.Order != null)
                                 {
-                                    <span class="badge" style="background:#06b6d4;color:#000;">@searchedTx.Order.OrderNumber</span>
+                                    <button type="button"
+                                            class="badge border-0"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#txDetailsModal"
+                                            style="background:#06b6d4;color:#000;cursor:pointer;">@searchedTx.Order.OrderNumber</button>
                                 }
                                 else
                                 {

@@ -23,25 +23,16 @@
     </div>
 }
 
-@* Видимость всей VPN-секции на публичной части. Используется когда сайт
-   проверяет эквайер для подключения карточных РФ-методов — VPN временно
-   скрывается одним кликом и так же одним кликом возвращается. *@
 <div class="card bg-dark border-secondary mb-4">
     <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h6 class="mb-1">
-                    <i class="bi bi-eye me-2" style="color: #667eea;"></i>
-                    Видимость VPN на сайте
-                    <span class="badge ms-2 @(vpnVisible ? "bg-success" : "bg-secondary")">
-                        @(vpnVisible ? "Видна" : "Скрыта")
-                    </span>
-                </h6>
-                <small class="text-muted">
-                    Скрывает страницу <code>/Catalog/Vpn</code>, тайл на главной, пункты в меню и футере, отзывы с категорией VPN.
-                    Применяется сразу, без передеплоя.
-                </small>
-            </div>
+            <h6 class="mb-0">
+                <i class="bi bi-eye me-2" style="color: #667eea;"></i>
+                Видимость на сайте
+                <span class="badge ms-2 @(vpnVisible ? "bg-success" : "bg-secondary")">
+                    @(vpnVisible ? "Видна" : "Скрыта")
+                </span>
+            </h6>
             <form asp-action="ToggleVisibility" method="post" class="m-0">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="visible" value="@(vpnVisible ? "false" : "true")"/>

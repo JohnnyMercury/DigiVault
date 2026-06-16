@@ -1,6 +1,7 @@
 using DigiVault.Core.Entities;
 using DigiVault.Core.Interfaces;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,12 +12,15 @@ public class VpnProvidersController : AdminBaseController
     private readonly ApplicationDbContext _context;
     private readonly IFileService _fileService;
     private readonly ILogger<VpnProvidersController> _logger;
+    private readonly IFeatureFlagsService _features;
 
-    public VpnProvidersController(ApplicationDbContext context, IFileService fileService, ILogger<VpnProvidersController> logger)
+    public VpnProvidersController(ApplicationDbContext context, IFileService fileService,
+        ILogger<VpnProvidersController> logger, IFeatureFlagsService features)
     {
         _context = context;
         _fileService = fileService;
         _logger = logger;
+        _features = features;
     }
 
     public async Task<IActionResult> Index()
@@ -26,7 +30,25 @@ public class VpnProvidersController : AdminBaseController
             .OrderBy(v => v.SortOrder)
             .ToListAsync();
 
+        ViewBag.VpnVisible = await _features.IsVpnVisibleAsync();
         return View(providers);
+    }
+
+    /// <summary>
+    /// Toggles public visibility of the entire VPN section. Used by Key
+    /// to hide /Catalog/Vpn, the homepage tile, menu links and VPN
+    /// reviews while a Russian-card PSP reviews the site. One-click
+    /// rollback (button label flips to «Показать VPN»).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleVisibility(bool visible)
+    {
+        await _features.SetVpnVisibleAsync(visible);
+        TempData["SuccessMessage"] = visible
+            ? "VPN-секция включена — категория снова видна на сайте."
+            : "VPN-секция скрыта с сайта (страницы, меню, отзывы).";
+        return RedirectToAction(nameof(Index));
     }
 
     public IActionResult Create()

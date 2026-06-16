@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Видимость секций";
+    var vpnVisible = (bool)(ViewBag.VpnVisible ?? true);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-eye me-2" style="color: #667eea;"></i>Видимость секций</h4>
+        <small class="text-muted">Включение/выключение целых разделов каталога без редеплоя</small>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card bg-dark border-secondary">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="mb-1">
+                    <i class="bi bi-shield-check me-2" style="color: #667eea;"></i>
+                    VPN-секция
+                </h5>
+                <p class="text-muted mb-0">
+                    Когда выключена — скрывается всё: страница <code>/Catalog/Vpn</code>,
+                    карточки конкретных VPN-провайдеров, тайл на главной, ссылки в меню
+                    (десктоп, мобильное, футер), отзывы с категорией <code>vpn</code>,
+                    VPN-карточки в общем каталоге. Используется для прохождения проверки
+                    эквайером при подключении карточных платежных систем РФ.
+                </p>
+            </div>
+            <span class="badge fs-6 px-3 py-2 @(vpnVisible ? "bg-success" : "bg-secondary")">
+                @(vpnVisible ? "Видна на сайте" : "Скрыта")
+            </span>
+        </div>
+
+        <hr class="my-4 border-secondary"/>
+
+        <form asp-action="ToggleVpn" method="post" class="d-flex gap-3 align-items-center">
+            @Html.AntiForgeryToken()
+            @if (vpnVisible)
+            {
+                <input type="hidden" name="visible" value="false"/>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-eye-slash me-2"></i>Скрыть VPN с сайта
+                </button>
+                <small class="text-muted">Применяется сразу, без передеплоя.</small>
+            }
+            else
+            {
+                <input type="hidden" name="visible" value="true"/>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-eye me-2"></i>Показать VPN на сайте
+                </button>
+                <small class="text-muted">Категория сразу появится во всех местах.</small>
+            }
+        </form>
+    </div>
+</div>

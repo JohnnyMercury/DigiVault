@@ -69,6 +69,8 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<DigiVault.Web.Services.IOrderService, DigiVault.Web.Services.OrderService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddScoped<DigiVault.Web.Services.IFeatureFlagsService,
+                          DigiVault.Web.Services.FeatureFlagsService>();
 
 // Fulfilment — generates the actual delivered credentials for paid orders.
 builder.Services.AddScoped<DigiVault.Web.Services.Fulfilment.ICredentialGenerator,

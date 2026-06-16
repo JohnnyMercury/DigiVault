@@ -61,17 +61,19 @@ public class CatalogController : Controller
     private readonly IOrderService _orderService;
     private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
     private readonly ILogger<CatalogController> _logger;
+    private readonly IFeatureFlagsService _features;
     private const int PageSize = 24;
 
     public CatalogController(ApplicationDbContext context, IGameService gameService,
         IOrderService orderService, Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager,
-        ILogger<CatalogController> logger)
+        ILogger<CatalogController> logger, IFeatureFlagsService features)
     {
         _context = context;
         _gameService = gameService;
         _orderService = orderService;
         _userManager = userManager;
         _logger = logger;
+        _features = features;
     }
 
     private async Task SetUserBalanceAsync()
@@ -281,7 +283,11 @@ public class CatalogController : Controller
         // Собираем родительские товары из трёх таблиц
         var showGames = string.IsNullOrWhiteSpace(category) || category == "games";
         var showGiftCards = string.IsNullOrWhiteSpace(category) || category == "giftcards";
-        var showVpn = string.IsNullOrWhiteSpace(category) || category == "vpn";
+        // VPN section can be admin-hidden via FeatureFlag (PSP acquirer review).
+        // When hidden, it doesn't matter what `category` query says — the
+        // catalog skips VPN entirely.
+        var showVpn = (string.IsNullOrWhiteSpace(category) || category == "vpn")
+                      && await _features.IsVpnVisibleAsync();
 
         if (showGames)
         {
@@ -547,6 +553,13 @@ public class CatalogController : Controller
 
     public async Task<IActionResult> Vpn()
     {
+        // Admin can temporarily hide the entire VPN section (e.g. while a
+        // Russian-card PSP is reviewing the site). Returns 404 just like a
+        // missing slug would — so crawlers/acquirers see no clue the page
+        // exists.
+        if (!await _features.IsVpnVisibleAsync())
+            return NotFound();
+
         var vpnProviders = await _context.VpnProviders
             .Where(v => v.IsActive)
             .OrderBy(v => v.SortOrder)
@@ -559,6 +572,9 @@ public class CatalogController : Controller
     public async Task<IActionResult> VpnProvider(string slug)
     {
         if (string.IsNullOrEmpty(slug))
+            return NotFound();
+
+        if (!await _features.IsVpnVisibleAsync())
             return NotFound();
 
         var provider = await _context.VpnProviders

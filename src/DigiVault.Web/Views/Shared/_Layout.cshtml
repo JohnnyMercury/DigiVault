@@ -5,6 +5,13 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject DigiVault.Web.Services.IFeatureFlagsService FeatureFlags
+
+@{
+    // Cached once per request — used to hide every public VPN entry-point
+    // (header dropdown, mobile nav, footer link, homepage tile).
+    var vpnVisible = await FeatureFlags.IsVpnVisibleAsync();
+}
 @{
     // Visibility of the Telegram Premium card across the entire site is
     // driven by GiftCards.IsActive on slug telegram-premium (toggled from
@@ -778,7 +785,10 @@
                             {
                                 <li><a class="dropdown-item" href="/Catalog/Telegram"><i class="bi bi-send-fill me-2"></i>Telegram Premium</a></li>
                             }
-                            <li><a class="dropdown-item" href="/Catalog/Vpn"><i class="bi bi-shield-check me-2"></i>VPN подписки</a></li>
+                            @if (vpnVisible)
+                            {
+                                <li><a class="dropdown-item" href="/Catalog/Vpn"><i class="bi bi-shield-check me-2"></i>VPN подписки</a></li>
+                            }
                             <li><a class="dropdown-item" href="/Catalog/Ai"><i class="bi bi-robot me-2"></i>AI-сервисы</a></li>
                             <li><a class="dropdown-item" href="/Catalog/GameCurrency"><i class="bi bi-controller me-2"></i>Игровая валюта</a></li>
                             <li><a class="dropdown-item" href="/Catalog/GiftCards"><i class="bi bi-gift me-2"></i>Подарочные карты</a></li>
@@ -883,9 +893,12 @@
                         <i class="bi bi-send-fill"></i>Telegram Premium
                     </a>
                 }
-                <a href="/Catalog/Vpn" class="mobile-nav-item">
-                    <i class="bi bi-shield-check"></i>VPN подписки
-                </a>
+                @if (vpnVisible)
+                {
+                    <a href="/Catalog/Vpn" class="mobile-nav-item">
+                        <i class="bi bi-shield-check"></i>VPN подписки
+                    </a>
+                }
                 <a href="/Catalog/Ai" class="mobile-nav-item">
                     <i class="bi bi-robot"></i>AI-сервисы
                 </a>
@@ -973,7 +986,10 @@
                 <div class="col-lg-2 col-md-4">
                     <h6 class="mb-3 text-white">Каталог</h6>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="/Catalog/Vpn">VPN подписки</a></li>
+                        @if (vpnVisible)
+                        {
+                            <li class="mb-2"><a href="/Catalog/Vpn">VPN подписки</a></li>
+                        }
                         <li class="mb-2"><a href="/Catalog/Ai">AI-сервисы</a></li>
                         <li class="mb-2"><a href="/Catalog/GameCurrency">Игровая валюта</a></li>
                         <li class="mb-2"><a href="/Catalog/GiftCards">Подарочные карты</a></li>

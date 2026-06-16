@@ -606,6 +606,10 @@
             <div class="nav-section">
                 <div class="nav-section-title">Система</div>
                 <nav>
+                    <a asp-controller="FeatureFlags" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "FeatureFlags" ? "active" : "")">
+                        <i class="bi bi-eye-fill"></i>
+                        <span>Видимость секций</span>
+                    </a>
                     <a asp-controller="Database" asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Database" ? "active" : "")">
                         <i class="bi bi-database-fill"></i>
                         <span>База данных</span>

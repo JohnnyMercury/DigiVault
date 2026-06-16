@@ -1,11 +1,13 @@
 @model DigiVault.Web.Models.HomeViewModel
 @using Microsoft.EntityFrameworkCore
 @inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
+@inject DigiVault.Web.Services.IFeatureFlagsService FeatureFlags
 @{
     ViewData["Title"] = "Главная";
     var telegramPremiumVisible = await DbContext.GiftCards
         .AsNoTracking()
         .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+    var vpnVisible = await FeatureFlags.IsVpnVisibleAsync();
 }
 
 <style>
@@ -674,18 +676,21 @@
 <section class="categories-grid">
     <div class="container container-wide">
         <div class="row g-3">
-            <div class="col-lg-4 col-md-6">
-                <a href="/Catalog/Vpn" class="category-tile">
-                    <div class="category-tile-icon vpn">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div class="category-tile-content">
-                        <div class="category-tile-name">VPN Подписки</div>
-                        <div class="category-tile-count">NordVPN, Surfshark, ExpressVPN</div>
-                    </div>
-                    <i class="bi bi-chevron-right category-tile-arrow"></i>
-                </a>
-            </div>
+            @if (vpnVisible)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <a href="/Catalog/Vpn" class="category-tile">
+                        <div class="category-tile-icon vpn">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <div class="category-tile-content">
+                            <div class="category-tile-name">VPN Подписки</div>
+                            <div class="category-tile-count">NordVPN, Surfshark, ExpressVPN</div>
+                        </div>
+                        <i class="bi bi-chevron-right category-tile-arrow"></i>
+                    </a>
+                </div>
+            }
             <div class="col-lg-4 col-md-6">
                 <a href="/Catalog/Ai" class="category-tile">
                     <div class="category-tile-icon ai">

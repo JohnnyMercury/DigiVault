@@ -1,6 +1,7 @@
 using DigiVault.Core.Entities;
 using DigiVault.Core.Enums;
 using DigiVault.Infrastructure.Data;
+using DigiVault.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,14 @@ public class ReviewsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IFeatureFlagsService _features;
 
-    public ReviewsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+    public ReviewsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
+        IFeatureFlagsService features)
     {
         _context = context;
         _userManager = userManager;
+        _features = features;
     }
 
     // GET /Reviews
@@ -27,11 +31,23 @@ public class ReviewsController : Controller
     {
         const int pageSize = 10;
 
+        var vpnVisible = await _features.IsVpnVisibleAsync();
+
         IQueryable<ProductReview> query = _context.ProductReviews
             .Include(r => r.Game)
             .Include(r => r.GiftCard)
             .Include(r => r.VpnProvider)
             .Where(r => r.IsApproved);
+
+        // Когда админ скрывает VPN-секцию (PSP-онбординг), не светим и отзывы:
+        // запрос ?category=vpn → 404, любое упоминание VPN-провайдера в общей
+        // ленте отрезается.
+        if (!vpnVisible)
+        {
+            if (string.Equals(category, "vpn", StringComparison.OrdinalIgnoreCase))
+                return NotFound();
+            query = query.Where(r => r.VpnProviderId == null);
+        }
 
         // Filter by category
         if (!string.IsNullOrEmpty(category))

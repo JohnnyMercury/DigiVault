@@ -1,9 +1,11 @@
 @using DigiVault.Core.Entities
 @using DigiVault.Core.Enums
 @using DigiVault.Web.Controllers
+@inject DigiVault.Web.Services.IFeatureFlagsService FeatureFlags
 @model List<ProductReview>
 @{
     ViewData["Title"] = "Отзывы клиентов";
+    var vpnVisible = await FeatureFlags.IsVpnVisibleAsync();
     var stats = (ReviewStats)ViewBag.Stats;
     var category = (string?)ViewBag.Category;
     var rating = (int?)ViewBag.Rating;
@@ -137,7 +139,10 @@
                     <option value="games" selected="@(category == "games")">Игровая валюта</option>
                     <option value="telegram" selected="@(category == "telegram")">Telegram</option>
                     <option value="giftcards" selected="@(category == "giftcards")">Подарочные карты</option>
-                    <option value="vpn" selected="@(category == "vpn")">VPN</option>
+                    @if (vpnVisible)
+                    {
+                        <option value="vpn" selected="@(category == "vpn")">VPN</option>
+                    }
                 </select>
 
                 <div class="rating-filter">

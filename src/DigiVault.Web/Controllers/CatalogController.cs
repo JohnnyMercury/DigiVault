@@ -434,6 +434,13 @@ public class CatalogController : Controller
         if (product == null)
             return NotFound();
 
+        // Mask VPN products when admin hid the section (PSP onboarding).
+        if (product.Category == DigiVault.Core.Enums.ProductCategory.VpnSubscription
+            && !await _features.IsVpnVisibleAsync())
+        {
+            return NotFound();
+        }
+
         return View(product);
     }
 

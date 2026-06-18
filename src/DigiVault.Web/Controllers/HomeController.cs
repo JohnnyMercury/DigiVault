@@ -1,5 +1,6 @@
 using DigiVault.Infrastructure.Data;
 using DigiVault.Web.Models;
+using DigiVault.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
@@ -9,10 +10,12 @@ namespace DigiVault.Web.Controllers;
 public class HomeController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly IFeatureFlagsService _features;
 
-    public HomeController(ApplicationDbContext context)
+    public HomeController(ApplicationDbContext context, IFeatureFlagsService features)
     {
         _context = context;
+        _features = features;
     }
 
     public async Task<IActionResult> Index()
@@ -62,11 +65,16 @@ public class HomeController : Controller
             MinPrice = g.Products.Any() ? g.Products.Min(p => p.Price) : null
         }));
 
-        // VPN Providers
-        var vpnProviders = await _context.VpnProviders
-            .Include(v => v.Products.Where(p => p.IsActive && p.StockQuantity > 0))
-            .Where(v => v.IsActive)
-            .ToListAsync();
+        // VPN Providers — skipped entirely when admin hid the VPN section
+        // (e.g. PSP-onboarding mode). Otherwise the «Популярные товары» grid
+        // on the homepage still surfaces NordVPN/Surfshark tiles even though
+        // the dedicated /Catalog/Vpn page returns 404.
+        var vpnProviders = await _features.IsVpnVisibleAsync()
+            ? await _context.VpnProviders
+                .Include(v => v.Products.Where(p => p.IsActive && p.StockQuantity > 0))
+                .Where(v => v.IsActive)
+                .ToListAsync()
+            : new List<DigiVault.Core.Entities.VpnProvider>();
 
         items.AddRange(vpnProviders.Select(v => new CatalogItemViewModel
         {

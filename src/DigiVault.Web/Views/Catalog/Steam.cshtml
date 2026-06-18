@@ -1,6 +1,7 @@
 @using DigiVault.Core.Entities
 @using Microsoft.EntityFrameworkCore
 @inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
+@inject DigiVault.Web.Services.IFeatureFlagsService FeatureFlags
 @{
     ViewData["Title"] = "Пополнение Steam - Key Zona";
 
@@ -9,6 +10,7 @@
     var telegramPremiumVisible = await DbContext.GiftCards
         .AsNoTracking()
         .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+    var vpnVisible = await FeatureFlags.IsVpnVisibleAsync();
 
     // Admin-editable via /Admin/Steam (AppSettings: steam:* keys).
     var card          = ViewBag.SteamCard as GiftCard;
@@ -437,10 +439,13 @@
                 <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #10b981, #047857);"><i class="bi bi-robot"></i></div>
                 <div class="sidebar-game-info"><span class="sidebar-game-name">AI-сервисы</span><span class="sidebar-game-subtitle">ChatGPT, Claude</span></div>
             </a>
-            <a href="/Catalog?category=vpn" class="sidebar-game">
-                <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-shield-lock-fill"></i></div>
-                <div class="sidebar-game-info"><span class="sidebar-game-name">VPN подписки</span><span class="sidebar-game-subtitle">NordVPN, Surfshark</span></div>
-            </a>
+            @if (vpnVisible)
+            {
+                <a href="/Catalog?category=vpn" class="sidebar-game">
+                    <div class="sidebar-game-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);"><i class="bi bi-shield-lock-fill"></i></div>
+                    <div class="sidebar-game-info"><span class="sidebar-game-name">VPN подписки</span><span class="sidebar-game-subtitle">NordVPN, Surfshark</span></div>
+                </a>
+            }
             @if (telegramPremiumVisible)
             {
                 <a href="/Catalog/Telegram" class="sidebar-game">

@@ -2,11 +2,13 @@
 @using DigiVault.Core.Entities
 @using Microsoft.EntityFrameworkCore
 @inject DigiVault.Infrastructure.Data.ApplicationDbContext DbContext
+@inject DigiVault.Web.Services.IFeatureFlagsService FeatureFlags
 @{
     ViewData["Title"] = "Каталог";
     var telegramPremiumVisible = await DbContext.GiftCards
         .AsNoTracking()
         .AnyAsync(g => g.Slug == "telegram-premium" && g.IsActive);
+    var vpnVisible = await FeatureFlags.IsVpnVisibleAsync();
     // Рандомный порядок для верхнего блока "Популярные"
     var rng = new Random();
     var popularItems = (Model.Items ?? Enumerable.Empty<DigiVault.Web.Models.CatalogItemViewModel>())
@@ -485,16 +487,19 @@
                 Категории
             </h2>
             <div class="category-cards">
-                <a href="/Catalog?category=vpn" class="category-card">
-                    <div class="category-card-icon vpn">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div class="category-card-content">
-                        <h3>VPN подписки</h3>
-                        <p>NordVPN, ExpressVPN и другие</p>
-                    </div>
-                    <i class="bi bi-chevron-right category-card-arrow"></i>
-                </a>
+                @if (vpnVisible)
+                {
+                    <a href="/Catalog?category=vpn" class="category-card">
+                        <div class="category-card-icon vpn">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <div class="category-card-content">
+                            <h3>VPN подписки</h3>
+                            <p>NordVPN, ExpressVPN и другие</p>
+                        </div>
+                        <i class="bi bi-chevron-right category-card-arrow"></i>
+                    </a>
+                }
                 <a href="/Catalog?category=games" class="category-card">
                     <div class="category-card-icon game">
                         <i class="bi bi-coin"></i>

@@ -31,6 +31,11 @@
     // menu). Same flag pattern as ShowLegalInfo — flip Site:ShowTelegramChannel
     // (or env Site__ShowTelegramChannel) to hide every entry point at once.
     var showTelegramChannel = Configuration.GetValue<bool>("Site:ShowTelegramChannel", true);
+
+    // Yandex.Metrika counter id. Empty = analytics off (snippet not rendered).
+    // Set Site:YandexMetrikaId (or env Site__YandexMetrikaId) to the 8-digit
+    // counter number from metrika.yandex.ru to switch tracking on site-wide.
+    var yandexMetrikaId = Configuration.GetValue<string>("Site:YandexMetrikaId", "");
 }
 <!DOCTYPE html>
 <html lang="ru" data-bs-theme="dark">
@@ -750,6 +755,27 @@
 
     </style>
     @await RenderSectionAsync("Styles", required: false)
+
+    @if (!string.IsNullOrWhiteSpace(yandexMetrikaId))
+    {
+        <!-- Yandex.Metrika counter -->
+        <script type="text/javascript">
+            (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+            (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+            ym(@yandexMetrikaId, "init", {
+                clickmap:true,
+                trackLinks:true,
+                accurateTrackBounce:true,
+                webvisor:true
+            });
+        </script>
+        <noscript><div><img src="https://mc.yandex.ru/watch/@yandexMetrikaId" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+        <!-- /Yandex.Metrika counter -->
+    }
 </head>
 <body>
     <!-- Animated background -->

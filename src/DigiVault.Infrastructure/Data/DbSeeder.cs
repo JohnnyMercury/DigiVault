@@ -465,6 +465,35 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed FreeKassa (api.fk.life/v1). JSON REST, HMAC-SHA256 request sig.
+        //   MerchantId  → shopId (числовой ID магазина)
+        //   ApiKey      → API-ключ из настроек ЛК (подпись запросов)
+        //   SecretKey   → «Секретное слово 2» (подпись вебхука md5)
+        //   Settings    → JSON: {"baseUrl":"https://api.fk.life/v1",
+        //                 "fallbackIp":"145.223.90.75","i_card":36,"i_sbp":44}
+        // Реальные ключи задаются UPDATE'ом в проде, в репозиторий не коммитятся.
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "freekassa"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "freekassa",
+                DisplayName = "FreeKassa",
+                IsEnabled   = false,
+                Priority    = 90,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 300_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
+
         // Seed BlvckPay (payment.blvckpay.com). JSON REST gateway — СБП +
         // cards (МИР) + Steam, static signature token per method.
         //   ApiKey      → signature token for СБП

@@ -51,6 +51,15 @@ public static class PaymentMethodCatalog
             Available: true),
 
         new PaymentMethodOption(
+            Code: "sberpay",
+            Title: "СберПей",
+            Description: "Оплата через приложение Сбербанк",
+            IconClass: "bi-phone",
+            Gradient: "linear-gradient(135deg, #21a038, #178a2e)",
+            EnumValue: PaymentMethod.SberPay,
+            Available: true),
+
+        new PaymentMethodOption(
             Code: "qr",
             Title: "QR-код",
             Description: "Оплата сканированием QR-кода банка",
@@ -76,7 +85,7 @@ public static class PaymentMethodCatalog
             : All.FirstOrDefault(m => m.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// Map a UI code (`card`, `sbp`, `qr`, `p2p`) to the backend
+    /// Map a UI code (`card`, `sbp`, `sberpay`, `qr`, `p2p`) to the backend
     /// <see cref="PaymentMethod"/> enum used by the PSP layer.
     /// Falls back to <see cref="PaymentMethod.Card"/> for unknown codes.
     /// </summary>

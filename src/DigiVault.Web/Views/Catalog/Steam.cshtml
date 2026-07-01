@@ -877,9 +877,10 @@
         if (selectedMethod === 'balance' && !isAuth)
             return showModalError('Оплата с баланса доступна только в личном кабинете');
 
-        // For card / sbp / balance - proceed straight. qr / p2p - open step 2
-        // which will surface the «Скоро» empty-state.
-        if (selectedMethod === 'qr' || selectedMethod === 'p2p') {
+        // For card / sbp / balance - proceed straight. qr / p2p / sberpay -
+        // open step 2: qr/p2p surface the «Скоро» empty-state, sberpay shows
+        // the KASSA (FreeKassa i=43) provider tile like every other page.
+        if (selectedMethod === 'qr' || selectedMethod === 'p2p' || selectedMethod === 'sberpay') {
             window.lastSelectedPrice = currentAmount;
             window.openPaymentStep2(selectedMethod);
             return;
@@ -888,7 +889,7 @@
         submitSteamFetch({ method: selectedMethod, service: null, login: login });
     }
 
-    function submitSteamFetch({ method, service, login }) {
+    function submitSteamFetch({ method, service, login, provider }) {
         const btn = document.querySelector('.modal-pay-button');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Обработка…';
@@ -902,6 +903,7 @@
                 SteamLogin: login,
                 PaymentMethod: method,
                 EnotService: service,
+                Provider: provider || null,
                 Email: window.guestCheckoutEmail || null,
             })
         })
@@ -931,10 +933,11 @@
         });
     }
 
-    // Bridge to step-2 picker
-    window.submitPurchaseWithService = function (method, serviceCode, tile) {
+    // Bridge to step-2 picker. Arg 2 is the chosen PSP code (e.g. "freekassa"),
+    // NOT an Enot service — pass it as `provider` so the backend routes to it.
+    window.submitPurchaseWithService = function (method, providerCode, tile) {
         const login = document.getElementById('modalSteamLogin').value.trim();
-        submitSteamFetch({ method: method, service: serviceCode, login: login });
+        submitSteamFetch({ method: method, service: null, login: login, provider: providerCode });
     };
 </script>
 }

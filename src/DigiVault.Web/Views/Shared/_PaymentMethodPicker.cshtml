@@ -248,6 +248,11 @@
             { code: 'billionpay',     title: 'BillionPay',     desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: BILLION_BADGE },
             { code: 'freekassa',      title: 'KASSA',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: FK_BADGE      },
         ],
+        // СберПей - только KASSA (FreeKassa i=43). Клиент вводит телефон и
+        // подтверждает списание push-уведомлением в приложении Сбербанк.
+        sberpay: [
+            { code: 'freekassa',      title: 'KASSA',          desc: 'СберПей — оплата в приложении Сбербанк', icon: 'bi-phone', color: FK_BADGE },
+        ],
         // QR - IntellectMoney + BlvckPay (оба отдают QR для оплаты в банке).
         qr: [
             { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: IMONEY_BADGE },
@@ -258,10 +263,11 @@
     };
 
     const METHOD_LABELS = {
-        card: 'Банковская карта',
-        sbp:  'СБП',
-        qr:   'QR-код',
-        p2p:  'P2P перевод',
+        card:    'Банковская карта',
+        sbp:     'СБП',
+        sberpay: 'СберПей',
+        qr:      'QR-код',
+        p2p:     'P2P перевод',
     };
 
     // Provider names enabled in admin (PaymentProviderConfigs.IsEnabled). Tiles

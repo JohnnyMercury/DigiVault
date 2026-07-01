@@ -26,7 +26,7 @@ namespace DigiVault.Web.Services.Payment.Providers.FreeKassa;
 ///                   "baseUrl":"https://api.fk.life/v1",
 ///                   "secretWord1":"...",   // для legacy SCI, в API не нужен
 ///                   "fallbackIp":"145.223.90.75",   // если у клиента нет IP
-///                   "i_card":36, "i_sbp":44, "i_sberpay":null
+///                   "i_card":36, "i_sbp":44, "i_sberpay":43
 ///                 }
 ///
 /// Flow:
@@ -36,10 +36,10 @@ namespace DigiVault.Web.Services.Payment.Providers.FreeKassa;
 ///   MERCHANT_ORDER_ID, SIGN, intid, P_EMAIL, CUR_ID}. Уведомление приходит
 ///   ТОЛЬКО по успешной оплате. Проверяем SIGN, отвечаем ровно "YES".
 ///
-/// Замечание про `i`: 44 = СБП/QR, 36 = карты РФ (подтверждены мерчантом).
-/// Код для SberPay не подтверждён — при method=SberPay `i` не отправляем,
-/// FreeKassa покажет свою страницу выбора со СберПеем. Как только придёт
-/// код — добавляем "i_sberpay" в Settings, редеплой не нужен.
+/// Замечание про `i`: 36 = карты РФ, 44 = СБП/QR, 43 = SberPay («Оплата через
+/// Сбер», ввод телефона + push в приложении Сбербанк). Все три подтверждены
+/// живым тестом на этом магазине. (13 «Онлайн банк» = FKWallet, НЕ Сбер.)
+/// Переопределяются ключами i_card / i_sbp / i_sberpay в Settings без редеплоя.
 /// </summary>
 public class FreeKassaPaymentProvider : IPaymentProvider
 {
@@ -327,21 +327,29 @@ public class FreeKassaPaymentProvider : IPaymentProvider
     /// <summary>
     /// Maps our method to FreeKassa's `i` (payment-system id). Per the API
     /// docs `i` is REQUIRED on /orders/create, so this always returns a value
-    /// — never omit it. FreeKassa has no dedicated SberPay method (currency
-    /// list §1.8 has only 36 Card / 42 СБП / 44 СБП API / 13 Онлайн-банк);
-    /// SberPay is paid inside the СБП flow, so SberPay → 44.
+    /// — never omit it.
+    ///
+    /// Codes (verified live against api.fk.life on this shop):
+    ///   36 = Card RUB API, 44 = СБП (API),
+    ///   43 = «Оплата через Сбер» / SberPay — the payment page asks for the
+    ///        phone number and confirms via a push in the Sberbank app. This
+    ///        method is MISSING from the doc's method list (it jumps 42→44),
+    ///        but works: i=43 → paymentt.kassa.ai/sber/ with the SberPay badge.
+    ///   (13 = «Онлайн банк» is FKWallet, NOT Sber — do NOT use it for SberPay.)
     /// </summary>
     private int ResolveMethodCode(PaymentProviderConfig cfg, PaymentMethod method)
     {
-        // Codes confirmed by merchant & docs: 36 = Card RUB API, 44 = СБП (API).
-        int iCard = ReadIntSetting(cfg, "i_card") ?? 36;
-        int iSbp  = ReadIntSetting(cfg, "i_sbp")  ?? 44;
+        // Codes confirmed by merchant, docs & live test: 36 = Card RUB API,
+        // 44 = СБП (API), 43 = SberPay («Оплата через Сбер», push в приложении).
+        int iCard    = ReadIntSetting(cfg, "i_card")    ?? 36;
+        int iSbp     = ReadIntSetting(cfg, "i_sbp")     ?? 44;
+        int iSberPay = ReadIntSetting(cfg, "i_sberpay") ?? 43;
 
         return method switch
         {
             PaymentMethod.Card    => iCard,
             PaymentMethod.SBP     => iSbp,
-            PaymentMethod.SberPay => iSbp,  // no separate SberPay method → СБП
+            PaymentMethod.SberPay => iSberPay,  // «Оплата через Сбер» (push в приложении Сбербанк)
             _                     => iCard,
         };
     }

@@ -145,9 +145,10 @@ public class FreeKassaPaymentProvider : IPaymentProvider
             ["shopId"]    = shopId.ToString(CultureInfo.InvariantCulture),
         };
 
+        // `i` is REQUIRED by the API — always include it (in both the signed
+        // param set and the body).
         var iCode = ResolveMethodCode(cfg, request.Method);
-        if (iCode.HasValue)
-            p["i"] = iCode.Value.ToString(CultureInfo.InvariantCulture);
+        p["i"] = iCode.ToString(CultureInfo.InvariantCulture);
 
         // signature = HMAC-SHA256(apiKey, values sorted-by-key joined with '|')
         var signature = HmacSha256Hex(cfg.ApiKey!, string.Join("|", p.Values));
@@ -164,9 +165,9 @@ public class FreeKassaPaymentProvider : IPaymentProvider
             ["currency"]  = currency,
             ["email"]     = email,
             ["ip"]        = ip,
+            ["i"]         = iCode,
             ["signature"] = signature,
         };
-        if (iCode.HasValue) body["i"] = iCode.Value;
 
         var url  = ReadBaseUrl(cfg) + "/orders/create";
         var json = JsonSerializer.Serialize(body);
@@ -323,19 +324,24 @@ public class FreeKassaPaymentProvider : IPaymentProvider
         => await _db.PaymentProviderConfigs.AsNoTracking()
             .FirstOrDefaultAsync(c => c.Name == Name, ct);
 
-    /// <summary>Maps our method to FreeKassa's `i`. Null → omit `i`.</summary>
-    private int? ResolveMethodCode(PaymentProviderConfig cfg, PaymentMethod method)
+    /// <summary>
+    /// Maps our method to FreeKassa's `i` (payment-system id). Per the API
+    /// docs `i` is REQUIRED on /orders/create, so this always returns a value
+    /// — never omit it. FreeKassa has no dedicated SberPay method (currency
+    /// list §1.8 has only 36 Card / 42 СБП / 44 СБП API / 13 Онлайн-банк);
+    /// SberPay is paid inside the СБП flow, so SberPay → 44.
+    /// </summary>
+    private int ResolveMethodCode(PaymentProviderConfig cfg, PaymentMethod method)
     {
-        // Defaults confirmed by merchant: 44 = СБП/QR, 36 = карты РФ.
-        int? iCard    = ReadIntSetting(cfg, "i_card")    ?? 36;
-        int? iSbp     = ReadIntSetting(cfg, "i_sbp")     ?? 44;
-        int? iSberPay = ReadIntSetting(cfg, "i_sberpay"); // unknown → null → omit
+        // Codes confirmed by merchant & docs: 36 = Card RUB API, 44 = СБП (API).
+        int iCard = ReadIntSetting(cfg, "i_card") ?? 36;
+        int iSbp  = ReadIntSetting(cfg, "i_sbp")  ?? 44;
 
         return method switch
         {
             PaymentMethod.Card    => iCard,
             PaymentMethod.SBP     => iSbp,
-            PaymentMethod.SberPay => iSberPay,
+            PaymentMethod.SberPay => iSbp,  // no separate SberPay method → СБП
             _                     => iCard,
         };
     }

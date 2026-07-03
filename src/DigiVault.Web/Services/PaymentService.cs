@@ -93,6 +93,14 @@ public class PaymentService : IPaymentService
             return PaymentResult.Failed("Метод оплаты временно недоступен");
         }
 
+        // Enforce the per-provider amount limits set in admin
+        // (PaymentProviderConfigs.Min/MaxAmount). They were stored + shown but
+        // never actually applied, so a configured «минимум 5 000 ₽» had no
+        // effect. Now a deposit outside the range is rejected before we hit the PSP.
+        var limitError = await CheckProviderLimitsAsync(provider.Name, amount);
+        if (limitError != null)
+            return PaymentResult.Failed(limitError);
+
         // Build absolute callbacks. Enot validates these as URIs server-side
         // and rejects relative paths («Поле fail_url имеет ошибочный формат»).
         // Fallback for the legacy callsites that don't pass siteBaseUrl: use
@@ -354,6 +362,26 @@ public class PaymentService : IPaymentService
         _logger.LogInformation(
             "Balance credited: {UserId} +{Amount} RUB, transaction: {TransactionId}",
             transaction.UserId, transaction.Amount, transaction.TransactionId);
+    }
+
+    /// <summary>
+    /// Validates <paramref name="amount"/> against the configured
+    /// Min/MaxAmount for the given provider (admin → PaymentProviders → Edit).
+    /// Returns a user-facing error string if the amount is out of range, or
+    /// null if it's fine (or no limits are set). Zero/negative bounds are
+    /// treated as «not set».
+    /// </summary>
+    private async Task<string?> CheckProviderLimitsAsync(string providerName, decimal amount)
+    {
+        var cfg = await _context.PaymentProviderConfigs.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Name == providerName);
+        if (cfg == null) return null;
+
+        if (cfg.MinAmount is decimal min && min > 0 && amount < min)
+            return $"Минимальная сумма для выбранного способа оплаты — {min:N0} ₽";
+        if (cfg.MaxAmount is decimal max && max > 0 && amount > max)
+            return $"Максимальная сумма для выбранного способа оплаты — {max:N0} ₽";
+        return null;
     }
 
     // Старый метод для обратной совместимости

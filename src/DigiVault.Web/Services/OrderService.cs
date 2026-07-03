@@ -214,6 +214,12 @@ public class OrderService : IOrderService
             if (provider == null || !provider.IsEnabled)
                 return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
 
+            // 2b. Enforce the per-provider amount limits (admin →
+            //     PaymentProviders). Stored + shown but previously never applied.
+            var limitError = await CheckProviderLimitsAsync(provider.Name, totalPrice);
+            if (limitError != null)
+                return new PurchaseResult { Success = false, ErrorMessage = limitError };
+
             // 3. Create the Order in Pending — payment hasn't arrived yet.
             //    Stock is decremented up-front to avoid two simultaneous checkouts
             //    going through; if the user abandons the flow we let the order
@@ -451,6 +457,11 @@ public class OrderService : IOrderService
             if (provider == null || !provider.IsEnabled)
                 return new PurchaseResult { Success = false, ErrorMessage = "Способ оплаты временно недоступен" };
 
+            // Enforce the per-provider amount limits (admin → PaymentProviders).
+            var limitError = await CheckProviderLimitsAsync(provider.Name, customAmount);
+            if (limitError != null)
+                return new PurchaseResult { Success = false, ErrorMessage = limitError };
+
             var orderNumber = GenerateOrderNumber();
             var deliveryInfo = $"Steam: {steamLogin.Trim()}; Зачислить: {bonusedDisplay}";
 
@@ -558,6 +569,25 @@ public class OrderService : IOrderService
     // Add / remove / rename methods there — mapping here updates automatically.
     private static DigiVault.Core.Enums.PaymentMethod MapPaymentMethod(string raw)
         => DigiVault.Web.Services.Payment.PaymentMethodCatalog.ToEnum(raw);
+
+    /// <summary>
+    /// Validates <paramref name="amount"/> against the configured Min/MaxAmount
+    /// for the given provider (admin → PaymentProviders → Edit). Returns a
+    /// user-facing error if out of range, or null when it fits / no limits set.
+    /// Zero/negative bounds are treated as «not set».
+    /// </summary>
+    private async Task<string?> CheckProviderLimitsAsync(string providerName, decimal amount)
+    {
+        var cfg = await _context.PaymentProviderConfigs.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Name == providerName);
+        if (cfg == null) return null;
+
+        if (cfg.MinAmount is decimal min && min > 0 && amount < min)
+            return $"Минимальная сумма для выбранного способа оплаты — {min:N0} ₽";
+        if (cfg.MaxAmount is decimal max && max > 0 && amount > max)
+            return $"Максимальная сумма для выбранного способа оплаты — {max:N0} ₽";
+        return null;
+    }
 
     /// <summary>
     /// Top-level UI category → list of Enot service codes actually enabled in

@@ -15,10 +15,17 @@
     // track the admin toggle (PaymentProviderConfigs.IsEnabled). We emit the
     // set of currently-enabled provider names and filter the tiles against it
     // client-side, so flipping «Выключить» in admin removes the tile.
-    var enabledProviderNames = PspDbContext.PaymentProviderConfigs
+    var enabledProviders = PspDbContext.PaymentProviderConfigs
         .Where(p => p.IsEnabled)
-        .Select(p => p.Name)
+        .Select(p => new { p.Name, p.MinAmount, p.MaxAmount })
         .ToList();
+    var enabledProviderNames = enabledProviders.Select(p => p.Name).ToList();
+    // name → {min,max} so the picker can hide a provider whose configured
+    // amount limits don't fit the current order/top-up sum (matches the
+    // server-side enforcement in Payment/OrderService.CheckProviderLimitsAsync).
+    var providerLimits = enabledProviders.ToDictionary(
+        p => p.Name,
+        p => new { min = p.MinAmount, max = p.MaxAmount });
 }
 
 <div id="paymentStep2" class="ps2" style="display:none;">
@@ -273,13 +280,31 @@
     // Provider names enabled in admin (PaymentProviderConfigs.IsEnabled). Tiles
     // for disabled providers are hidden so the picker matches the admin toggle.
     const ENABLED_PROVIDERS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(enabledProviderNames));
+    // { providerCode: { min: <decimal|null>, max: <decimal|null> } } — admin limits.
+    const PROVIDER_LIMITS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(providerLimits));
+
+    // A provider tile is only offered if the current amount fits its configured
+    // Min/MaxAmount. No amount known (0) or no limits → always show. Zero/neg
+    // bounds are treated as «not set», mirroring the server check.
+    function amountFitsProvider(code, amount) {
+        const lim = PROVIDER_LIMITS[code];
+        if (!lim || !amount) return true;
+        if (lim.min != null && lim.min > 0 && amount < lim.min) return false;
+        if (lim.max != null && lim.max > 0 && amount > lim.max) return false;
+        return true;
+    }
 
     let currentMethod  = null;
     let currentProvider = null;
 
     window.openPaymentStep2 = function (method) {
-        const providers = (PROVIDERS_BY_METHOD[method] || [])
+        const amount = Number(window.lastSelectedPrice || 0);
+        const enabledForMethod = (PROVIDERS_BY_METHOD[method] || [])
             .filter(p => ENABLED_PROVIDERS.includes(p.code));
+        const providers = enabledForMethod
+            .filter(p => amountFitsProvider(p.code, amount));
+        // Distinguish «no PSP at all» from «PSPs exist but none accept this sum».
+        const hiddenByAmount = enabledForMethod.length > 0 && providers.length === 0;
         const grid    = document.getElementById('paymentStep2Grid');
         const label   = document.getElementById('paymentStep2MethodLabel');
         const count   = document.getElementById('paymentStep2Count');
@@ -300,10 +325,24 @@
         const payBtn = document.getElementById('paymentStep2PayBtn');
 
         if (providers.length === 0) {
-            // Empty-state: метод заявлен, но PSP под него ещё не подключён.
-            // Плитка остаётся в шаге 1 как заготовка — но здесь честно
-            // показываем «скоро».
-            grid.innerHTML = `
+            // Two empty-state flavours:
+            //  • hiddenByAmount → PSPs exist for this method but the current sum
+            //    is outside all of their configured limits (e.g. < 5 000 ₽).
+            //  • otherwise → no PSP wired for this method yet («скоро»).
+            const amountTxt = amount ? amount.toLocaleString('ru-RU') + ' ₽' : 'этой суммы';
+            grid.innerHTML = hiddenByAmount ? `
+                <div class="ps2-empty">
+                    <div class="ps2-empty-icon"><i class="bi bi-cash-stack"></i></div>
+                    <div class="ps2-empty-title">Сумма вне лимитов</div>
+                    <div class="ps2-empty-desc">
+                        Для <b>${amountTxt}</b> этим способом нет доступных платёжных систем.<br/>
+                        Измените сумму или выберите другой способ оплаты.
+                    </div>
+                    <button type="button" class="ps2-empty-back" onclick="closePaymentStep2()">
+                        <i class="bi bi-arrow-left"></i> Выбрать другой метод
+                    </button>
+                </div>
+            ` : `
                 <div class="ps2-empty">
                     <div class="ps2-empty-icon"><i class="bi bi-clock-history"></i></div>
                     <div class="ps2-empty-title">Скоро будет доступно</div>
@@ -317,7 +356,7 @@
                 </div>
             `;
             payBtn.disabled = true;
-            payBtn.textContent = 'Метод недоступен';
+            payBtn.textContent = hiddenByAmount ? 'Сумма вне лимитов' : 'Метод недоступен';
         } else {
             grid.innerHTML = providers.map(p => `
                 <div class="ps2-tile" data-method="${method}" data-provider="${p.code}">

@@ -7,6 +7,27 @@ namespace DigiVault.Infrastructure.Data;
 
 public static class DbSeeder
 {
+    public static PaymentProviderConfig CreateParityPayProviderConfig(DateTime now)
+    {
+        return new PaymentProviderConfig
+        {
+            Name        = "paritypay",
+            DisplayName = "Kizona",
+            IsEnabled   = true,
+            Priority    = 100,
+            ApiKey      = "",
+            SecretKey   = "",
+            MerchantId  = "",
+            Settings    = "{\"baseUrl\":\"https://api.paritypay.ru\",\"expireMinutes\":60}",
+            IsTestMode  = false,
+            Commission  = 0,
+            MinAmount   = 1,
+            MaxAmount   = 300_000,
+            CreatedAt   = now,
+            UpdatedAt   = now,
+        };
+    }
+
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
@@ -503,24 +524,20 @@ public static class DbSeeder
         //                 {"baseUrl":"https://api.paritypay.ru","expireMinutes":60}
         if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "paritypay"))
         {
-            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
-            {
-                Name        = "paritypay",
-                DisplayName = "Kizona",
-                IsEnabled   = false,
-                Priority    = 100,
-                ApiKey      = "",
-                SecretKey   = "",
-                MerchantId  = "",
-                Settings    = "{\"baseUrl\":\"https://api.paritypay.ru\",\"expireMinutes\":60}",
-                IsTestMode  = false,
-                Commission  = 0,
-                MinAmount   = 1,
-                MaxAmount   = 300_000,
-                CreatedAt   = DateTime.UtcNow,
-                UpdatedAt   = DateTime.UtcNow,
-            });
+            context.PaymentProviderConfigs.Add(CreateParityPayProviderConfig(DateTime.UtcNow));
             await context.SaveChangesAsync();
+        }
+        else
+        {
+            var paritypay = await context.PaymentProviderConfigs
+                .FirstAsync(c => c.Name == "paritypay");
+            if (!paritypay.IsEnabled)
+            {
+                paritypay.DisplayName = "Kizona";
+                paritypay.IsEnabled = true;
+                paritypay.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+            }
         }
 
         // Seed BlvckPay (payment.blvckpay.com). JSON REST gateway — СБП +

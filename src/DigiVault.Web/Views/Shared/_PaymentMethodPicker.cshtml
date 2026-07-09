@@ -235,7 +235,7 @@
     const BLVCK_BADGE    = 'linear-gradient(135deg, #4b5563, #111827)';
     const BILLION_BADGE  = 'linear-gradient(135deg, #14b8a6, #0f766e)';
     const FK_BADGE       = 'linear-gradient(135deg, #ef4444, #991b1b)';
-    const KIZONA_BADGE   = 'linear-gradient(135deg, #0ea5e9, #0369a1)';
+    const PARITYPAY_BADGE   = 'linear-gradient(135deg, #0ea5e9, #0369a1)';
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
@@ -250,7 +250,7 @@
         sbp: [
             { code: 'enot',        title: 'Enot Pay',    desc: 'СБП - реквизиты или QR-код', icon: 'bi-lightning-charge', color: ENOT_BADGE    },
             { code: 'paymentlink', title: 'RushPay',     desc: 'СБП через QR-код банка',     icon: 'bi-qr-code-scan',     color: PLINK_BADGE   },
-            { code: 'paritypay',   title: 'Kizona',      desc: 'СБП / QR через ParityPay',   icon: 'bi-qr-code-scan',     color: KIZONA_BADGE  },
+            { code: 'paritypay',   title: 'ParityPay',      desc: 'СБП / QR через ParityPay',   icon: 'bi-qr-code-scan',     color: PARITYPAY_BADGE  },
             { code: 'overpay',     title: 'Overpay',     desc: 'СБП (Faster Payments)',      icon: 'bi-lightning',        color: OVERPAY_BADGE },
             { code: 'pally',          title: 'Pally',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: PALLY_BADGE   },
             { code: 'platega',        title: 'Platega',        desc: 'СБП (QR-код)',               icon: 'bi-qr-code',          color: PLATEGA_BADGE },
@@ -262,9 +262,9 @@
         sberpay: [
             { code: 'freekassa',      title: 'KASSA',          desc: 'СберПей — оплата в приложении Сбербанк', icon: 'bi-phone', color: FK_BADGE },
         ],
-        // QR - Kizona / IntellectMoney / BlvckPay: all route to bank QR flows.
+        // QR - ParityPay / IntellectMoney / BlvckPay: all route to bank QR flows.
         qr: [
-            { code: 'paritypay',      title: 'Kizona',         desc: 'СБП QR через ParityPay', icon: 'bi-qr-code-scan', color: KIZONA_BADGE },
+            { code: 'paritypay',      title: 'ParityPay',         desc: 'СБП QR через ParityPay', icon: 'bi-qr-code-scan', color: PARITYPAY_BADGE },
             { code: 'intellectmoney', title: 'IntellectMoney', desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: IMONEY_BADGE },
             { code: 'blvckpay',       title: 'BlvckPay',       desc: 'СБП QR-код банка', icon: 'bi-qr-code-scan', color: BLVCK_BADGE  },
         ],

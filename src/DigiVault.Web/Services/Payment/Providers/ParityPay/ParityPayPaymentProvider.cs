@@ -13,7 +13,7 @@ namespace DigiVault.Web.Services.Payment.Providers.ParityPay;
 
 /// <summary>
 /// <see cref="IPaymentProvider"/> for ParityPay (api.paritypay.ru), exposed to
-/// customers as Kizona in the step-2 payment picker.
+/// customers as ParityPay in the step-2 payment picker.
 ///
 /// Configuration in <see cref="PaymentProviderConfig"/> with Name="paritypay":
 ///   MerchantId  -> shop_id (UUID from the ParityPay cashier settings)
@@ -55,7 +55,7 @@ public class ParityPayPaymentProvider : IPaymentProvider
     }
 
     public string Name => "paritypay";
-    public string DisplayName => "Kizona";
+    public string DisplayName => "ParityPay";
 
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {
@@ -69,9 +69,9 @@ public class ParityPayPaymentProvider : IPaymentProvider
             var cfg = _db.PaymentProviderConfigs.AsNoTracking()
                 .FirstOrDefault(c => c.Name == Name);
             return cfg?.IsEnabled == true
-                && !string.IsNullOrEmpty(cfg.MerchantId)
-                && !string.IsNullOrEmpty(cfg.ApiKey)
-                && !string.IsNullOrEmpty(cfg.SecretKey);
+                && !string.IsNullOrWhiteSpace(cfg.MerchantId)
+                && !string.IsNullOrWhiteSpace(cfg.ApiKey)
+                && !string.IsNullOrWhiteSpace(cfg.SecretKey);
         }
     }
 
@@ -80,14 +80,14 @@ public class ParityPayPaymentProvider : IPaymentProvider
     public async Task<PaymentResult> CreatePaymentAsync(PaymentRequest request, CancellationToken ct = default)
     {
         var cfg = await LoadConfigAsync(ct);
-        if (cfg == null) return PaymentResult.Failed("Kizona не настроена в админке.");
-        if (!cfg.IsEnabled) return PaymentResult.Failed("Kizona временно отключена.");
-        if (string.IsNullOrEmpty(cfg.MerchantId))
-            return PaymentResult.Failed("Kizona: не задан shop_id (MerchantId).");
-        if (string.IsNullOrEmpty(cfg.ApiKey))
-            return PaymentResult.Failed("Kizona: не задан секретный ключ №1 (ApiKey).");
-        if (string.IsNullOrEmpty(cfg.SecretKey))
-            return PaymentResult.Failed("Kizona: не задан секретный ключ №2 (SecretKey).");
+        if (cfg == null) return PaymentResult.Failed("ParityPay не настроена в админке.");
+        if (!cfg.IsEnabled) return PaymentResult.Failed("ParityPay временно отключена.");
+        if (string.IsNullOrWhiteSpace(cfg.MerchantId))
+            return PaymentResult.Failed("ParityPay: не задан shop_id (MerchantId).");
+        if (string.IsNullOrWhiteSpace(cfg.ApiKey))
+            return PaymentResult.Failed("ParityPay: не задан секретный ключ №1 (ApiKey).");
+        if (string.IsNullOrWhiteSpace(cfg.SecretKey))
+            return PaymentResult.Failed("ParityPay: не задан секретный ключ №2 (SecretKey).");
 
         var ourTransactionId = TxnIdHelper.Generate(maxLength: 32);
         var amount = RoundAmountForJson(request.Amount);
@@ -118,7 +118,7 @@ public class ParityPayPaymentProvider : IPaymentProvider
         try
         {
             _log.LogInformation(
-                "Kizona → POST {Url} txn={Txn} amount={Amount}",
+                "ParityPay → POST {Url} txn={Txn} amount={Amount}",
                 url, ourTransactionId, request.Amount);
 
             using var http = _httpFactory.CreateClient(HttpClientName);
@@ -129,12 +129,12 @@ public class ParityPayPaymentProvider : IPaymentProvider
             using var resp = await http.PostAsync(url, content, ct);
             var raw = await resp.Content.ReadAsStringAsync(ct);
 
-            _log.LogInformation("Kizona ← {Status} {Body}", (int)resp.StatusCode, raw);
+            _log.LogInformation("ParityPay ← {Status} {Body}", (int)resp.StatusCode, raw);
 
             if (!resp.IsSuccessStatusCode)
             {
                 return PaymentResult.Failed(
-                    $"Kizona вернула HTTP {(int)resp.StatusCode}: {raw}",
+                    $"ParityPay вернула HTTP {(int)resp.StatusCode}: {raw}",
                     ((int)resp.StatusCode).ToString());
             }
 
@@ -142,16 +142,16 @@ public class ParityPayPaymentProvider : IPaymentProvider
             var root = doc.RootElement;
 
             if (root.TryGetProperty("error", out var error))
-                return PaymentResult.Failed($"Kizona отказала в создании счёта: {ReadElementAsString(error) ?? raw}");
+                return PaymentResult.Failed($"ParityPay отказала в создании счёта: {ReadElementAsString(error) ?? raw}");
 
             var invoiceId = ReadString(root, "id");
             var status = ReadString(root, "status");
             var link = ReadString(root, "link");
 
             if (string.IsNullOrEmpty(invoiceId))
-                return PaymentResult.Failed($"Kizona не вернула id инвойса: {raw}");
+                return PaymentResult.Failed($"ParityPay не вернула id инвойса: {raw}");
             if (string.IsNullOrEmpty(link))
-                return PaymentResult.Failed($"Kizona не вернула ссылку оплаты: {raw}");
+                return PaymentResult.Failed($"ParityPay не вернула ссылку оплаты: {raw}");
 
             return new PaymentResult
             {
@@ -170,8 +170,8 @@ public class ParityPayPaymentProvider : IPaymentProvider
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Kizona /invoice/create failed");
-            return PaymentResult.Failed($"Kizona недоступна: {ex.Message}");
+            _log.LogError(ex, "ParityPay /invoice/create failed");
+            return PaymentResult.Failed($"ParityPay недоступна: {ex.Message}");
         }
     }
 
@@ -180,13 +180,13 @@ public class ParityPayPaymentProvider : IPaymentProvider
         CancellationToken ct = default)
     {
         var cfg = await LoadConfigAsync(ct);
-        if (cfg == null || string.IsNullOrEmpty(cfg.MerchantId) || string.IsNullOrEmpty(cfg.ApiKey))
+        if (cfg == null || string.IsNullOrWhiteSpace(cfg.MerchantId) || string.IsNullOrWhiteSpace(cfg.ApiKey))
         {
             return new PaymentStatusResult
             {
                 TransactionId = transactionId,
                 Status = PaymentStatus.Failed,
-                Message = "Kizona not configured.",
+                Message = "ParityPay not configured.",
             };
         }
 
@@ -261,7 +261,7 @@ public class ParityPayPaymentProvider : IPaymentProvider
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Kizona status check failed for {Txn}", transactionId);
+            _log.LogError(ex, "ParityPay status check failed for {Txn}", transactionId);
             return new PaymentStatusResult
             {
                 TransactionId = transactionId,
@@ -277,17 +277,17 @@ public class ParityPayPaymentProvider : IPaymentProvider
         CancellationToken ct = default)
     {
         var cfg = await LoadConfigAsync(ct);
-        if (cfg == null || string.IsNullOrEmpty(cfg.MerchantId) || string.IsNullOrEmpty(cfg.SecretKey))
-            return WebhookValidationResult.Invalid("Kizona not configured.");
+        if (cfg == null || string.IsNullOrWhiteSpace(cfg.MerchantId) || string.IsNullOrWhiteSpace(cfg.SecretKey))
+            return WebhookValidationResult.Invalid("ParityPay not configured.");
 
         if (string.IsNullOrWhiteSpace(body))
-            return WebhookValidationResult.Invalid("Kizona webhook: empty body.");
+            return WebhookValidationResult.Invalid("ParityPay webhook: empty body.");
 
         JsonDocument doc;
         try { doc = JsonDocument.Parse(body); }
         catch (Exception ex)
         {
-            return WebhookValidationResult.Invalid($"Kizona webhook: body is not JSON: {ex.Message}");
+            return WebhookValidationResult.Invalid($"ParityPay webhook: body is not JSON: {ex.Message}");
         }
 
         using (doc)
@@ -295,25 +295,25 @@ public class ParityPayPaymentProvider : IPaymentProvider
             var root = doc.RootElement;
             var hdr = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
             if (!hdr.TryGetValue("X-SIGNATURE", out var actualSignature))
-                return WebhookValidationResult.Invalid("Kizona webhook: X-SIGNATURE missing.");
+                return WebhookValidationResult.Invalid("ParityPay webhook: X-SIGNATURE missing.");
 
             var expectedSignature = ParityPaySignatureHelper.BuildSignature(root, cfg.SecretKey!);
             if (!ParityPaySignatureHelper.FixedTimeEquals(actualSignature, expectedSignature))
             {
-                _log.LogWarning("Kizona webhook signature mismatch. Got {Got}, expected {Expected}",
+                _log.LogWarning("ParityPay webhook signature mismatch. Got {Got}, expected {Expected}",
                     actualSignature, expectedSignature);
-                return WebhookValidationResult.Invalid("Kizona webhook: signature mismatch.");
+                return WebhookValidationResult.Invalid("ParityPay webhook: signature mismatch.");
             }
 
             var shopId = ReadString(root, "shop_id");
             if (!string.Equals(shopId, cfg.MerchantId, StringComparison.Ordinal))
-                return WebhookValidationResult.Invalid("Kizona webhook: shop_id mismatch.");
+                return WebhookValidationResult.Invalid("ParityPay webhook: shop_id mismatch.");
 
             var orderId = ReadString(root, "order_id");
             var invoiceId = ReadString(root, "id");
             var txnId = !string.IsNullOrEmpty(orderId) ? orderId : invoiceId;
             if (string.IsNullOrEmpty(txnId))
-                return WebhookValidationResult.Invalid("Kizona webhook: missing order_id/id.");
+                return WebhookValidationResult.Invalid("ParityPay webhook: missing order_id/id.");
 
             var status = ReadString(root, "status");
             var amount = ReadDecimal(root, "amount");
@@ -335,7 +335,7 @@ public class ParityPayPaymentProvider : IPaymentProvider
         CancellationToken ct = default)
     {
         return Task.FromResult(PaymentResult.Failed(
-            "Возвраты через Kizona API не подключены — выполните возврат вручную в ЛК ParityPay."));
+            "Возвраты через ParityPay API не подключены — выполните возврат вручную в ЛК ParityPay."));
     }
 
     private async Task<PaymentProviderConfig?> LoadConfigAsync(CancellationToken ct)

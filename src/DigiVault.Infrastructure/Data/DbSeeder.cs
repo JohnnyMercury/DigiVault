@@ -12,8 +12,8 @@ public static class DbSeeder
         return new PaymentProviderConfig
         {
             Name        = "paritypay",
-            DisplayName = "Kizona",
-            IsEnabled   = true,
+            DisplayName = "ParityPay",
+            IsEnabled   = false,
             Priority    = 100,
             ApiKey      = "",
             SecretKey   = "",
@@ -26,6 +26,13 @@ public static class DbSeeder
             CreatedAt   = now,
             UpdatedAt   = now,
         };
+    }
+
+    public static bool HasParityPayProviderCredentials(PaymentProviderConfig config)
+    {
+        return !string.IsNullOrWhiteSpace(config.MerchantId)
+            && !string.IsNullOrWhiteSpace(config.ApiKey)
+            && !string.IsNullOrWhiteSpace(config.SecretKey);
     }
 
     public static async Task SeedAsync(IServiceProvider serviceProvider)
@@ -515,7 +522,7 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        // Seed ParityPay / Kizona (api.paritypay.ru). JSON REST with
+        // Seed ParityPay (api.paritypay.ru). JSON REST with
         // HMAC-SHA256 request signatures in X-SIGNATURE.
         //   MerchantId  → shop_id (UUID кассы)
         //   ApiKey      → секретный ключ №1 для API-запросов
@@ -531,10 +538,19 @@ public static class DbSeeder
         {
             var paritypay = await context.PaymentProviderConfigs
                 .FirstAsync(c => c.Name == "paritypay");
-            if (!paritypay.IsEnabled)
+            var changed = false;
+            if (paritypay.DisplayName != "ParityPay")
             {
-                paritypay.DisplayName = "Kizona";
-                paritypay.IsEnabled = true;
+                paritypay.DisplayName = "ParityPay";
+                changed = true;
+            }
+            if (paritypay.IsEnabled && !HasParityPayProviderCredentials(paritypay))
+            {
+                paritypay.IsEnabled = false;
+                changed = true;
+            }
+            if (changed)
+            {
                 paritypay.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
             }

@@ -135,7 +135,7 @@ builder.Services.AddHttpClient(
     "freekassa",
     client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
-// ParityPay / Kizona HTTP client — JSON REST (api.paritypay.ru), HMAC-SHA256
+// ParityPay HTTP client — JSON REST (api.paritypay.ru), HMAC-SHA256
 // in the X-SIGNATURE header.
 builder.Services.AddHttpClient(
     "paritypay",

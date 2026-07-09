@@ -494,6 +494,35 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
+        // Seed ParityPay / Kizona (api.paritypay.ru). JSON REST with
+        // HMAC-SHA256 request signatures in X-SIGNATURE.
+        //   MerchantId  → shop_id (UUID кассы)
+        //   ApiKey      → секретный ключ №1 для API-запросов
+        //   SecretKey   → секретный ключ №2 для webhook платежей
+        //   Settings    → optional JSON:
+        //                 {"baseUrl":"https://api.paritypay.ru","expireMinutes":60}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "paritypay"))
+        {
+            context.PaymentProviderConfigs.Add(new PaymentProviderConfig
+            {
+                Name        = "paritypay",
+                DisplayName = "Kizona",
+                IsEnabled   = false,
+                Priority    = 100,
+                ApiKey      = "",
+                SecretKey   = "",
+                MerchantId  = "",
+                Settings    = "{\"baseUrl\":\"https://api.paritypay.ru\",\"expireMinutes\":60}",
+                IsTestMode  = false,
+                Commission  = 0,
+                MinAmount   = 1,
+                MaxAmount   = 300_000,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            });
+            await context.SaveChangesAsync();
+        }
+
         // Seed BlvckPay (payment.blvckpay.com). JSON REST gateway — СБП +
         // cards (МИР) + Steam, static signature token per method.
         //   ApiKey      → signature token for СБП

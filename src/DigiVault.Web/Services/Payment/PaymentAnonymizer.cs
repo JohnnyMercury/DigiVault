@@ -236,13 +236,147 @@ public class PaymentAnonymizer
         if (!ShouldAnonymize(originalEmail))
             return originalEmail ?? "";
         var rnd = new Random(seed);
-        var first  = FirstNames[rnd.Next(FirstNames.Length)];
-        var last   = LastNames[rnd.Next(LastNames.Length)];
-        var suffix = rnd.Next(1, 9999);
-        var domain = EmailDomains[rnd.Next(EmailDomains.Length)];
-        var sep = rnd.Next(3) switch { 0 => ".", 1 => "", _ => "_" };
-        return $"{first}{sep}{last}{suffix}@{domain}";
+        var domain = DisplayDomains[rnd.Next(DisplayDomains.Length)];
+        var nick = Nicknames[rnd.Next(Nicknames.Length)];
+        var nick2 = Nicknames[rnd.Next(Nicknames.Length)];
+        var adj = Adjectives[rnd.Next(Adjectives.Length)];
+        var noun = Nouns[rnd.Next(Nouns.Length)];
+        var noun2 = Nouns[rnd.Next(Nouns.Length)];
+        var ruFirst = FirstNames[rnd.Next(FirstNames.Length)];
+        var ruLast = LastNames[rnd.Next(LastNames.Length)];
+        var yr = rnd.Next(1985, 2006);
+        var n2 = rnd.Next(1, 999);
+        var n3 = rnd.Next(1, 9999);
+        var sep = rnd.Next(3) switch { 0 => ".", 1 => "_", _ => "" };
+        var style = rnd.Next(20);
+        var local = style switch
+        {
+            // ник + число: phantom42, glitch777
+            0  => $"{nick}{rnd.Next(1, 99)}",
+            // ник + прилагательное: ghost.calm, nova_epic
+            1  => $"{nick}{sep}{adj}",
+            // прилагательное + существительное + число: dark_wolf795
+            2  => $"{adj}{sep}{noun}{n2}",
+            // просто ник: maverick, vortex
+            3  => $"{nick}",
+            // существительное + число: phoenix6101
+            4  => $"{noun}{n3}",
+            // ник + существительное: frost.blade, neon_hawk
+            5  => $"{nick}{sep}{noun}",
+            // ник + ник: pixel.storm, cyber_zen
+            6  => $"{nick}{sep}{nick2}",
+            // xX_ник_Xx / x_ник_x
+            7  => rnd.Next(2) == 0 ? $"xX_{nick}_Xx" : $"x_{nick}{rnd.Next(1, 99)}_x",
+            // pr0_ник, n1ce_ник
+            8  => $"{LeetPrefixes[rnd.Next(LeetPrefixes.Length)]}{nick}",
+            // 2fast4u стиль: число + прилагательное + число + существительное
+            9  => $"{rnd.Next(2, 10)}{adj}{rnd.Next(2, 10)}{noun}",
+            // прилагательное + ник: epic_phantom, wild.blaze
+            10 => $"{adj}{sep}{nick}",
+            // ник + год: shadow98, nova2001
+            11 => $"{nick}{yr % 100:D2}",
+            // the_ник, mr_ник, just_ник
+            12 => $"{Prefixes[rnd.Next(Prefixes.Length)]}{nick}",
+            // существительное + существительное: wolffire, ice_storm
+            13 => $"{noun}{sep}{noun2}",
+            // ник + _official / _real
+            14 => $"{nick}{Suffixes[rnd.Next(Suffixes.Length)]}",
+            // рус.имя(транслит) + число: sergey88, ivan_92
+            15 => $"{ruFirst}{sep}{rnd.Next(70, 105)}",
+            // инициал.рус.фамилия: s.ivanov
+            16 => $"{ruFirst[0]}.{ruLast}",
+            // прилагательное + число: lucky777, epic42
+            17 => $"{adj}{rnd.Next(1, 999)}",
+            // not_ / un_ + ник: not_a_ghost, un_rebel
+            18 => $"{NegPrefixes[rnd.Next(NegPrefixes.Length)]}{nick}{(rnd.Next(2) == 0 ? rnd.Next(1, 99).ToString() : "")}",
+            // ник + прилагательное + число: frost.dark13
+            _  => $"{nick}{sep}{adj}{rnd.Next(1, 99)}",
+        };
+        return $"{local}@{domain}";
     }
+
+    private static readonly string[] DisplayDomains =
+    {
+        "gmail.com", "gmail.com", "gmail.com", "gmail.com",
+        "yahoo.com", "yahoo.com",
+        "outlook.com", "hotmail.com",
+        "mail.ru", "mail.ru", "mail.ru",
+        "yandex.ru", "yandex.ru",
+        "icloud.com", "protonmail.com",
+        "bk.ru", "inbox.ru", "list.ru",
+        "rambler.ru", "live.com",
+    };
+
+    private static readonly string[] Nicknames =
+    {
+        "shadow", "phantom", "ghost", "blaze", "frost", "storm",
+        "pixel", "cyber", "neo", "flux", "nova", "zen", "vortex",
+        "raven", "echo", "orbit", "drift", "pulse", "crypt", "glitch",
+        "jade", "onyx", "ruby", "opal", "ivory", "coral", "amber",
+        "maverick", "nomad", "rebel", "strix", "apex", "lynx",
+        "cobalt", "neon", "titan", "atlas", "spark", "dash", "bolt",
+        "chrome", "indie", "retro", "sonic", "turbo", "rocket",
+        "sunny", "cloudy", "rainy", "snowy", "windy", "misty",
+        "sleepy", "grumpy", "lucky", "happy", "zippy", "fuzzy",
+        "enigma", "cipher", "vector", "matrix", "prism", "helix",
+        "wraith", "specter", "mirage", "void", "nebula", "quasar",
+        "oxide", "carbon", "argon", "helium", "plasma", "neutron",
+        "cactus", "bamboo", "maple", "cedar", "willow", "moss",
+        "panda", "otter", "koala", "ferret", "gecko", "parrot",
+        "waffle", "pretzel", "donut", "pickle", "mango", "kiwi",
+        "disco", "jazz", "tempo", "bass", "synth", "vinyl",
+        "dusk", "dawn", "haze", "ember", "ash", "flint",
+        "riddle", "puzzle", "trick", "quest", "myth", "saga",
+        "ninja", "samurai", "ronin", "viking", "pirate", "wizard",
+    };
+
+    private static readonly string[] Adjectives =
+    {
+        "dark", "lucky", "cool", "crazy", "sweet", "happy", "super",
+        "best", "good", "real", "big", "red", "fast", "gold", "nice",
+        "pro", "top", "hot", "cold", "wild", "free", "true", "brave",
+        "calm", "bright", "magic", "epic", "fresh", "silent", "vivid",
+        "royal", "solar", "polar", "urban", "rustic", "noble", "rapid",
+        "tiny", "loud", "odd", "rare", "raw", "sly", "lazy", "keen",
+        "bold", "grim", "pale", "vast", "wise", "lost", "mad", "lone",
+    };
+
+    private static readonly string[] Nouns =
+    {
+        "angel", "star", "wolf", "fox", "cat", "lion", "tiger",
+        "bear", "eagle", "hawk", "fire", "ice", "sun", "moon",
+        "sky", "storm", "king", "knight", "shadow", "dream",
+        "heart", "soul", "wind", "flame", "rider", "hunter",
+        "river", "ocean", "forest", "thunder", "crystal", "arrow",
+        "blade", "spark", "phoenix", "dragon", "panther", "falcon",
+        "comet", "laser", "garden", "island", "bridge", "tower",
+        "pixel", "byte", "logic", "code", "node", "loop",
+        "wave", "reef", "dune", "cliff", "peak", "cave",
+        "orbit", "lens", "gear", "bolt", "wire", "chip",
+    };
+
+    private static readonly string[] Prefixes =
+    {
+        "the_", "mr_", "pro_", "cool_", "just_", "hey_", "real_",
+        "im_", "my_", "dj_", "mc_", "lil_", "big_", "sir_",
+    };
+
+    private static readonly string[] LeetPrefixes =
+    {
+        "pr0_", "n1ce_", "l33t_", "h4x_", "z3r0_", "k1ng_",
+        "b0ss_", "w1ld_", "r4w_", "d4rk_", "f1re_", "1ce_",
+    };
+
+    private static readonly string[] Suffixes =
+    {
+        "_official", "_real", "_og", "_hq", "_x", "_v2",
+        "_pro", "_fx", "_io", "_gg", "_tv", "_dev",
+    };
+
+    private static readonly string[] NegPrefixes =
+    {
+        "not_a_", "un_", "anti_", "non_", "no_", "zero_",
+    };
 
     // ──────────────────────────────────────────────────────────────────
     // Generators

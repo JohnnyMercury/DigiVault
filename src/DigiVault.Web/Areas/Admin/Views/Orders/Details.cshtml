@@ -1,4 +1,5 @@
 @model Order
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = $"Order {Model.OrderNumber}";
     var statusClass = Model.Status switch
@@ -61,7 +62,7 @@
                 <div class="mb-3">
                     <div class="text-muted small">Customer</div>
                     <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId" class="text-primary">
-                        @Model.User?.Email
+                        @Anonymizer.DisplayEmail(Model.User?.Email, Model.Id)
                     </a>
                 </div>
                 <div class="mb-3">

@@ -1,5 +1,6 @@
 @model List<Order>
 @using DigiVault.Core.Entities
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = "Orders";
     var searchedTx = ViewBag.SearchedTransaction as DigiVault.Core.Entities.PaymentTransaction;
@@ -68,7 +69,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="small text-muted">Пользователь:</div>
-                            <div>@(searchedTx.User?.Email ?? $"User #{searchedTx.UserId}")</div>
+                            <div>@(Anonymizer.DisplayEmail(searchedTx.User?.Email, searchedTx.Id) is var e && !string.IsNullOrEmpty(e) ? e : $"User #{searchedTx.UserId}")</div>
                         </div>
                         <div class="col-md-6">
                             <div class="small text-muted">Сумма:</div>
@@ -168,7 +169,7 @@
                     };
                     <tr>
                         <td><code>@order.OrderNumber</code></td>
-                        <td>@order.User?.Email</td>
+                        <td>@Anonymizer.DisplayEmail(order.User?.Email, order.Id)</td>
                         <td class="text-primary fw-bold">@order.TotalAmount.ToString("N0") ₽</td>
                         <td><span class="badge bg-@statusClass">@order.Status</span></td>
                         <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>

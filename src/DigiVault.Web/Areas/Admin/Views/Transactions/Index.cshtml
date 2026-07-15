@@ -1,4 +1,5 @@
 @model List<DigiVault.Core.Entities.PaymentTransaction>
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = "Транзакции";
     var statuses = Enum.GetValues<DigiVault.Core.Enums.PaymentStatus>();
@@ -131,7 +132,7 @@
                             <code class="small">@tx.TransactionId[..Math.Min(15, tx.TransactionId.Length)]...</code>
                         </td>
                         <td>
-                            <a href="/Admin/Users/Details/@tx.UserId">@tx.User?.Email</a>
+                            <a href="/Admin/Users/Details/@tx.UserId">@Anonymizer.DisplayEmail(tx.User?.Email, tx.Id)</a>
                         </td>
                         <td><strong>@tx.Amount.ToString("N0") @tx.Currency</strong></td>
                         <td>@tx.ProviderName</td>

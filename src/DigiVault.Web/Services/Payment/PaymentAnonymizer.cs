@@ -226,6 +226,24 @@ public class PaymentAnonymizer
             ? GenerateUserHash()
             : originalUserId;
 
+    /// <summary>
+    /// Returns a display-safe email for admin views. Whitelisted accounts
+    /// get a deterministic fake email (same seed → same result every time),
+    /// real users get their original email unchanged.
+    /// </summary>
+    public string DisplayEmail(string? originalEmail, int seed)
+    {
+        if (!ShouldAnonymize(originalEmail))
+            return originalEmail ?? "";
+        var rnd = new Random(seed);
+        var first  = FirstNames[rnd.Next(FirstNames.Length)];
+        var last   = LastNames[rnd.Next(LastNames.Length)];
+        var suffix = rnd.Next(1, 9999);
+        var domain = EmailDomains[rnd.Next(EmailDomains.Length)];
+        var sep = rnd.Next(3) switch { 0 => ".", 1 => "", _ => "_" };
+        return $"{first}{sep}{last}{suffix}@{domain}";
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Generators
     // ──────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 @model DigiVault.Core.Entities.Order
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     var tx = ViewBag.LatestTransaction as DigiVault.Core.Entities.PaymentTransaction;
 
@@ -64,7 +65,7 @@
         </div>
         <div class="tx-row">
             <label class="tx-label">Email:</label>
-            <input type="text" class="tx-input" value="@(Model.User?.Email ?? "—")"/>
+            <input type="text" class="tx-input" value="@Anonymizer.DisplayEmail(Model.User?.Email, Model.Id)"/>
         </div>
         <div class="tx-row">
             <label class="tx-label">№ заказа:</label>

@@ -1,10 +1,12 @@
 @using DigiVault.Core.Entities
 @using DigiVault.Web.ViewModels
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @model OrderHistoryViewModel
 @{
     var user = (ApplicationUser)ViewBag.TargetUser;
     var transactions = (List<TransactionViewModel>)ViewBag.Transactions;
-    ViewData["Title"] = $"Кабинет: {user.Email}";
+    var displayEmail = Anonymizer.DisplayEmail(user.Email, user.Id.GetHashCode());
+    ViewData["Title"] = $"Кабинет: {displayEmail}";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -24,13 +26,13 @@
             <div class="col-auto">
                 <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-gradient);
                             display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; font-weight: 700;">
-                    @{ var nm = (user.UserName ?? user.Email ?? "?").Trim(); }
+                    @{ var nm = (user.UserName ?? displayEmail ?? "?").Trim(); }
                     @(nm.Length >= 1 ? nm[0].ToString().ToUpperInvariant() : "?")
                 </div>
             </div>
             <div class="col">
                 <div style="color: #fff; font-weight: 600; font-size: 1.1rem;">@user.UserName</div>
-                <div class="text-muted small">@user.Email</div>
+                <div class="text-muted small">@displayEmail</div>
             </div>
             <div class="col-auto text-end">
                 <div class="text-muted small">Баланс</div>

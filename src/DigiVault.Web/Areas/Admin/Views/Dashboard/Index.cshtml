@@ -1,5 +1,6 @@
 @using DigiVault.Core.Entities
 @using DigiVault.Core.Enums
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = "Дашборд";
 }
@@ -89,7 +90,7 @@
                                 };
                                 <tr>
                                     <td><code style="color: #667eea;">#@order.Id</code></td>
-                                    <td>@(order.User?.Email ?? "—")</td>
+                                    <td>@(Anonymizer.DisplayEmail(order.User?.Email, order.Id) is var em && !string.IsNullOrEmpty(em) ? em : "—")</td>
                                     <td style="color: #4facfe; font-weight: 600;">@order.TotalAmount.ToString("N0") ₽</td>
                                     <td><span class="badge-status @statusClass">@statusText</span></td>
                                     <td style="color: rgba(255,255,255,0.5);">@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>

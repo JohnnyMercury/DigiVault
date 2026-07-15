@@ -1,6 +1,7 @@
 using DigiVault.Core.Entities;
 using DigiVault.Infrastructure.Data;
 using DigiVault.Web.Services;
+using DigiVault.Web.Services.Payment;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +13,15 @@ public class UsersController : AdminBaseController
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IOrderService _orderService;
+    private readonly PaymentAnonymizer _anonymizer;
 
     public UsersController(ApplicationDbContext context, UserManager<ApplicationUser> userManager,
-        IOrderService orderService)
+        IOrderService orderService, PaymentAnonymizer anonymizer)
     {
         _context = context;
         _userManager = userManager;
         _orderService = orderService;
+        _anonymizer = anonymizer;
     }
 
     public async Task<IActionResult> Index(string? search = null, int page = 1)
@@ -112,7 +115,7 @@ public class UsersController : AdminBaseController
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Пользователь {user.Email} удалён";
+        TempData["SuccessMessage"] = $"Пользователь {_anonymizer.DisplayEmail(user.Email, user.Id.GetHashCode())} удалён";
         return RedirectToAction(nameof(Index));
     }
 

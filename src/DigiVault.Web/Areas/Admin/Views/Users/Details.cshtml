@@ -1,6 +1,8 @@
 @model ApplicationUser
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
-    ViewData["Title"] = $"User - {Model.Email}";
+    var displayEmail = Anonymizer.DisplayEmail(Model.Email, Model.Id.GetHashCode());
+    ViewData["Title"] = $"User - {displayEmail}";
     var roles = ViewBag.Roles as IList<string>;
 }
 
@@ -11,7 +13,7 @@
                 <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                     <i class="bi bi-person-fill text-primary fs-2"></i>
                 </div>
-                <h5>@Model.Email</h5>
+                <h5>@displayEmail</h5>
                 <div class="mb-3">
                     @foreach (var role in roles)
                     {

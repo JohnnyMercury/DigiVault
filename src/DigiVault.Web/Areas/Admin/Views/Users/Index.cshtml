@@ -1,4 +1,5 @@
 @model List<ApplicationUser>
+@inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = "Users";
 }
@@ -27,7 +28,7 @@
                 @foreach (var user in Model)
                 {
                     <tr>
-                        <td>@user.Email</td>
+                        <td>@Anonymizer.DisplayEmail(user.Email, user.Id.GetHashCode())</td>
                         <td class="text-primary">@user.Balance.ToString("N2") ₽</td>
                         <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td>@(user.LastLoginAt?.ToString("MMM dd, HH:mm") ?? "-")</td>

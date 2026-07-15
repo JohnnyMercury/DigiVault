@@ -135,10 +135,11 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var cardAccount = ReadCardAccount(cfg);
         var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 
-        // cf1 carries the buyer id in PaymentLink's expected format.
-        // Randomised for whitelisted internal-test accounts (no-op for real
-        // users) so the constant user id isn't an antifraud fingerprint.
-        var cf1Value = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}";
+        // user_id is a dedicated top-level parameter per PL's spec (NOT cf1 —
+        // cf1/cf2/cf3 are reserved for first/last name or a Telegram handle,
+        // required only for P2P methods we don't use). Required, ≤255 chars,
+        // charset 0-9a-zA-Z only — SanitizeUserId strips anything else.
+        var userIdValue = SanitizeUserId(_anonymizer.AnonymizeUserId(request.Email, request.UserId));
 
         var signature = PaymentLinkSignatureHelper.Build(
             amount:      request.Amount,
@@ -150,7 +151,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             account:     cardAccount,
             paytoken:    null,
             backUrl:     request.SuccessUrl,
-            cf1:         cf1Value,
+            cf1:         null,
             cf2:         null,
             cf3:         null,
             secretKey1:  cardKey1,
@@ -176,7 +177,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["email"]       = contacts.Email,
             ["phone"]       = contacts.Phone,
             ["lang"]        = "ru",
-            ["cf1"]         = cf1Value,
+            ["user_id"]     = userIdValue,
             ["signature"]   = signature,
         };
 
@@ -227,9 +228,11 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var validity = DateTime.UtcNow.AddMinutes(60).ToString("yyyy-MM-ddTHH:mm:sszzz",
             System.Globalization.CultureInfo.InvariantCulture);
 
-        // Randomised for whitelisted internal-test accounts (no-op for real
-        // users) so the constant user id isn't an antifraud fingerprint.
-        var cf1Value = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}";
+        // user_id is a dedicated top-level parameter per PL's spec (NOT cf1 —
+        // cf1/cf2/cf3 are reserved for first/last name or a Telegram handle,
+        // required only for P2P methods we don't use). Required, ≤255 chars,
+        // charset 0-9a-zA-Z only — SanitizeUserId strips anything else.
+        var userIdValue = SanitizeUserId(_anonymizer.AnonymizeUserId(request.Email, request.UserId));
         // Anonymise contacts for whitelisted accounts (no-op for real users).
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 
@@ -247,7 +250,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             firstName:    firstName,
             lastName:     null,
             middleName:   null,
-            cf1:          cf1Value,
+            cf1:          null,
             cf2:          null,
             cf3:          null,
             email:        contacts.Email,
@@ -277,7 +280,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["notify_phone"] = "0",
             ["account"]      = cfg.MerchantId,
             ["backURL"]      = request.SuccessUrl,
-            ["cf1"]          = cf1Value,
+            ["user_id"]      = userIdValue,
             ["signature"]    = signature,
         };
 
@@ -697,6 +700,16 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
     internal static string ReadTargetUrl(PaymentProviderConfig cfg)
         => ReadBaseUrl(cfg) + "/api/payment/start";
 
+    /// <summary>
+    /// PL's <c>user_id</c> spec: string ≤255 chars, charset 0-9a-zA-Z only.
+    /// GUIDs (real or anonymiser-generated) contain dashes, which the spec
+    /// disallows — strip everything outside that charset and truncate.
+    /// </summary>
+    private static string SanitizeUserId(string raw)
+    {
+        var clean = new string(raw.Where(c => char.IsLetterOrDigit(c) && c < 128).ToArray());
+        return clean.Length > 255 ? clean[..255] : clean;
+    }
 }
 
 /// <summary>Lightweight DTO for /api/payment/operate poll responses.</summary>

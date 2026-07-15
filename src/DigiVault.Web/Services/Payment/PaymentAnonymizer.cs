@@ -206,9 +206,36 @@ public class PaymentAnonymizer
         return new AnonymizedContacts(email, phone, ip, "", false);
     }
 
+    /// <summary>
+    /// The user-identifier to send to a PSP — ParityPay calls this field
+    /// <c>user_hash</c>; other providers use <c>client_id</c>/<c>user_id</c>/
+    /// <c>merchantUserID</c>. For whitelisted internal-test accounts a fresh
+    /// random id is returned per call, so repeat purchases from the same
+    /// account don't share a constant user id (that constant is a textbook
+    /// antifraud fingerprint). Real users get their actual
+    /// <paramref name="originalUserId"/> unchanged.
+    ///
+    /// <para>Note: this only affects the value sent OUTBOUND to the PSP. Our
+    /// own crediting and audit key on the stored
+    /// <see cref="DigiVault.Core.Entities.PaymentTransaction.UserId"/> and the
+    /// internal transaction id, never on this value — so randomising it here is
+    /// safe.</para>
+    /// </summary>
+    public string AnonymizeUserId(string? originalEmail, string originalUserId)
+        => ShouldAnonymize(originalEmail)
+            ? GenerateUserHash()
+            : originalUserId;
+
     // ──────────────────────────────────────────────────────────────────
     // Generators
     // ──────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// A fresh, realistic-looking user id. Uses the same GUID shape as our
+    /// ASP.NET Identity user ids (lowercase, hyphenated), so it's
+    /// indistinguishable from a real id to a PSP's antifraud.
+    /// </summary>
+    private static string GenerateUserHash() => Guid.NewGuid().ToString();
 
     /// <summary>
     /// Returns something like <c>nikita.kuznetsov12@yandex.ru</c>. The

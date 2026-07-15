@@ -115,8 +115,9 @@ public class PallyPaymentProvider : IPaymentProvider
             ["type"]    = "normal",
             // Custom field — store the internal user id so we can correlate
             // multi-account abuse in our own analytics if needed. Pally echoes
-            // it back in the postback.
-            ["custom"]  = $"userid:{request.UserId}",
+            // it back in the postback. Randomised for whitelisted internal-test
+            // accounts so the constant id isn't an antifraud fingerprint.
+            ["custom"]  = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}",
             // 1 = merchant absorbs commission; 0 = payer pays it on top.
             // Default to 1 so the displayed price matches the actual charge.
             ["payer_pays_commission"] = "0",

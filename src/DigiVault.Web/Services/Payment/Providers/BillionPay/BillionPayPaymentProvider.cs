@@ -113,7 +113,9 @@ public class BillionPayPaymentProvider : IPaymentProvider
             ["callbackURL"]    = request.WebhookUrl ?? "",
             ["currency"]       = currency,
             ["externalID"]     = ourTransactionId,
-            ["merchantUserID"] = request.UserId,
+            // Randomised for whitelisted internal-test accounts so BillionPay's
+            // antifraud can't cluster their repeat purchases on a constant id.
+            ["merchantUserID"] = _anonymizer.AnonymizeUserId(request.Email, request.UserId),
             ["method"]         = method,
         };
         if (!string.IsNullOrEmpty(request.SuccessUrl))

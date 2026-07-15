@@ -42,15 +42,18 @@ public class ParityPayPaymentProvider : IPaymentProvider
 
     private readonly ApplicationDbContext _db;
     private readonly IHttpClientFactory _httpFactory;
+    private readonly PaymentAnonymizer _anonymizer;
     private readonly ILogger<ParityPayPaymentProvider> _log;
 
     public ParityPayPaymentProvider(
         ApplicationDbContext db,
         IHttpClientFactory httpFactory,
+        PaymentAnonymizer anonymizer,
         ILogger<ParityPayPaymentProvider> log)
     {
         _db = db;
         _httpFactory = httpFactory;
+        _anonymizer = anonymizer;
         _log = log;
     }
 
@@ -93,6 +96,13 @@ public class ParityPayPaymentProvider : IPaymentProvider
         var amount = RoundAmountForJson(request.Amount);
         var expireMinutes = ReadExpireMinutes(cfg);
 
+        // Randomise the outbound user id for whitelisted internal-test accounts
+        // so ParityPay's antifraud can't cluster their repeat purchases on a
+        // constant user_hash. Real customers keep their actual id. Crediting
+        // keys on our stored PaymentTransaction.UserId, so this value is
+        // cosmetic to us. Same value in custom_fields to stay consistent.
+        var userHash = _anonymizer.AnonymizeUserId(request.Email, request.UserId);
+
         var payload = new SortedDictionary<string, object?>(StringComparer.Ordinal)
         {
             ["shop_id"] = cfg.MerchantId!,
@@ -100,10 +110,10 @@ public class ParityPayPaymentProvider : IPaymentProvider
             ["order_id"] = ourTransactionId,
             ["service"] = "sbp",
             ["expire"] = expireMinutes,
-            ["user_hash"] = request.UserId,
+            ["user_hash"] = userHash,
             ["custom_fields"] = request.OrderId.HasValue
                 ? $"order:{request.OrderId.Value}"
-                : $"userid:{request.UserId}",
+                : $"userid:{userHash}",
             ["comment"] = request.Description ?? $"Order {ourTransactionId}",
         };
 

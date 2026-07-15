@@ -31,13 +31,15 @@ public class EnotPaymentProvider : IPaymentProvider
 
     private readonly ApplicationDbContext _db;
     private readonly IHttpClientFactory _httpFactory;
+    private readonly PaymentAnonymizer _anonymizer;
     private readonly ILogger<EnotPaymentProvider> _log;
 
     public EnotPaymentProvider(ApplicationDbContext db, IHttpClientFactory httpFactory,
-        ILogger<EnotPaymentProvider> log)
+        PaymentAnonymizer anonymizer, ILogger<EnotPaymentProvider> log)
     {
         _db = db;
         _httpFactory = httpFactory;
+        _anonymizer = anonymizer;
         _log = log;
     }
 
@@ -95,10 +97,13 @@ public class EnotPaymentProvider : IPaymentProvider
             ["fail_url"]    = request.CancelUrl,
             ["comment"]     = request.Description,
             // Pass useful context back through the loop so the webhook can audit
-            // the original purchase even if our DB row is somehow lost.
+            // the original purchase even if our DB row is somehow lost. The user
+            // id is randomised for whitelisted internal-test accounts so the
+            // constant id isn't an antifraud fingerprint; real users keep their
+            // actual id, so audit recovery still works for them.
             ["custom_fields"] = JsonSerializer.Serialize(new
             {
-                userId  = request.UserId,
+                userId  = _anonymizer.AnonymizeUserId(request.Email, request.UserId),
                 orderId = request.OrderId,
             }),
             ["expire"] = 300,

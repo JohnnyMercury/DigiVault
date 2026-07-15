@@ -136,7 +136,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var (cardKey1, cardKey2) = ReadCardKeys(cfg);
 
         // cf1 carries the buyer id in PaymentLink's expected format.
-        var cf1Value = $"userid:{request.UserId}";
+        // Randomised for whitelisted internal-test accounts (no-op for real
+        // users) so the constant user id isn't an antifraud fingerprint.
+        var cf1Value = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}";
 
         var signature = PaymentLinkSignatureHelper.Build(
             amount:      request.Amount,
@@ -225,7 +227,9 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         var validity = DateTime.UtcNow.AddMinutes(60).ToString("yyyy-MM-ddTHH:mm:sszzz",
             System.Globalization.CultureInfo.InvariantCulture);
 
-        var cf1Value = $"userid:{request.UserId}";
+        // Randomised for whitelisted internal-test accounts (no-op for real
+        // users) so the constant user id isn't an antifraud fingerprint.
+        var cf1Value = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}";
         // Anonymise contacts for whitelisted accounts (no-op for real users).
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 

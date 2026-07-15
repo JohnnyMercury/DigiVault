@@ -61,7 +61,7 @@
         <h6 class="tx-section-title">Идентификаторы и оплата</h6>
         <div class="tx-row">
             <label class="tx-label">User ID:</label>
-            <input type="text" class="tx-input" value="@Model.UserId"/>
+            <input type="text" class="tx-input" value="@Anonymizer.DisplayUserId(Model.User?.Email, Model.UserId, Model.Id)"/>
         </div>
         <div class="tx-row">
             <label class="tx-label">Email:</label>

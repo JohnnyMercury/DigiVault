@@ -227,6 +227,21 @@ public class PaymentAnonymizer
             : originalUserId;
 
     /// <summary>
+    /// Returns a display-safe user id for admin views. Whitelisted accounts
+    /// get a deterministic fake GUID (same seed → same result every time),
+    /// real users get their original id unchanged.
+    /// </summary>
+    public string DisplayUserId(string? originalEmail, string originalUserId, int seed)
+    {
+        if (!ShouldAnonymize(originalEmail))
+            return originalUserId;
+        var rnd = new Random(seed);
+        var bytes = new byte[16];
+        rnd.NextBytes(bytes);
+        return new Guid(bytes).ToString();
+    }
+
+    /// <summary>
     /// Returns a display-safe email for admin views. Whitelisted accounts
     /// get a deterministic fake email (same seed → same result every time),
     /// real users get their original email unchanged.

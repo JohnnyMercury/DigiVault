@@ -191,7 +191,7 @@ public class PaymentAnonymizer
         // validator doesn't reject the request).
         var email = !string.IsNullOrWhiteSpace(originalEmail)
             ? originalEmail!
-            : GenerateRussianEmail(); // unknown guest → blend in
+            : GenerateDiverseEmail(); // unknown guest → blend in
 
         var phone = NormalizePhone(originalPhone);
         if (string.IsNullOrEmpty(phone))
@@ -405,18 +405,51 @@ public class PaymentAnonymizer
     private static string GenerateUserHash() => Guid.NewGuid().ToString();
 
     /// <summary>
-    /// Returns something like <c>nikita.kuznetsov12@yandex.ru</c>. The
-    /// numeric suffix keeps collisions on common name pairs unlikely.
+    /// Diverse, realistic-looking email. Uses the same 20-style pool as
+    /// <see cref="DisplayEmail"/> but with <see cref="Random.Shared"/>
+    /// (non-deterministic) so every PSP call gets a unique address whose
+    /// format varies — nick-based, adjective+noun, leet, xX_Xx, etc.
     /// </summary>
-    private static string GenerateRussianEmail()
+    private static string GenerateDiverseEmail()
     {
-        var first  = Pick(FirstNames);
-        var last   = Pick(LastNames);
-        var suffix = Random.Shared.Next(1, 9999);
-        var domain = Pick(EmailDomains);
-        // Common email styles: name.surname / namesurname / name_surname
-        var sep = Random.Shared.Next(3) switch { 0 => ".", 1 => "", _ => "_" };
-        return $"{first}{sep}{last}{suffix}@{domain}";
+        var rnd    = Random.Shared;
+        var domain = Pick(DisplayDomains);
+        var nick   = Pick(Nicknames);
+        var nick2  = Pick(Nicknames);
+        var adj    = Pick(Adjectives);
+        var noun   = Pick(Nouns);
+        var noun2  = Pick(Nouns);
+        var ruFirst = Pick(FirstNames);
+        var ruLast  = Pick(LastNames);
+        var yr     = rnd.Next(1985, 2006);
+        var n2     = rnd.Next(1, 999);
+        var n3     = rnd.Next(1, 9999);
+        var sep    = rnd.Next(3) switch { 0 => ".", 1 => "_", _ => "" };
+        var style  = rnd.Next(20);
+        var local = style switch
+        {
+            0  => $"{nick}{rnd.Next(1, 99)}",
+            1  => $"{nick}{sep}{adj}",
+            2  => $"{adj}{sep}{noun}{n2}",
+            3  => $"{nick}",
+            4  => $"{noun}{n3}",
+            5  => $"{nick}{sep}{noun}",
+            6  => $"{nick}{sep}{nick2}",
+            7  => rnd.Next(2) == 0 ? $"xX_{nick}_Xx" : $"x_{nick}{rnd.Next(1, 99)}_x",
+            8  => $"{Pick(LeetPrefixes)}{nick}",
+            9  => $"{rnd.Next(2, 10)}{adj}{rnd.Next(2, 10)}{noun}",
+            10 => $"{adj}{sep}{nick}",
+            11 => $"{nick}{yr % 100:D2}",
+            12 => $"{Pick(Prefixes)}{nick}",
+            13 => $"{noun}{sep}{noun2}",
+            14 => $"{nick}{Pick(Suffixes)}",
+            15 => $"{ruFirst}{sep}{rnd.Next(70, 105)}",
+            16 => $"{ruFirst[0]}.{ruLast}",
+            17 => $"{adj}{rnd.Next(1, 999)}",
+            18 => $"{Pick(NegPrefixes)}{nick}{(rnd.Next(2) == 0 ? rnd.Next(1, 99).ToString() : "")}",
+            _  => $"{nick}{sep}{adj}{rnd.Next(1, 99)}",
+        };
+        return $"{local}@{domain}";
     }
 
     /// <summary>
@@ -498,10 +531,11 @@ public class PaymentAnonymizer
     };
 
     /// <summary>
-    /// Builds one coherent RU identity: a Cyrillic full name with gender
-    /// agreement (<c>Дмитрий Иванов</c> / <c>Анна Иванова</c>) and an email
-    /// transliterated from that same name (<c>dmitriy.ivanov123@yandex.ru</c>),
-    /// so name and email belong to the «same person». Fresh per call.
+    /// Builds a RU identity: Cyrillic full name with gender agreement
+    /// (<c>Дмитрий Иванов</c> / <c>Анна Иванова</c>) paired with a
+    /// diverse-format email that does NOT correlate with the name — just
+    /// like a real person whose name is "Дмитрий" but email is
+    /// "phantom42@gmail.com". Fresh per call.
     /// </summary>
     private static (string Name, string Email) GenerateRussianIdentity()
     {
@@ -509,31 +543,7 @@ public class PaymentAnonymizer
         var first = Pick(male ? MaleFirstNamesRu : FemaleFirstNamesRu);
         var last  = Pick(LastNamesRu) + (male ? "" : "а");
         var name  = $"{first} {last}";
-
-        var firstLat = Translit(first);
-        var lastLat  = Translit(last);
-        var suffix   = Random.Shared.Next(1, 9999);
-        var sep      = Random.Shared.Next(3) switch { 0 => ".", 1 => "", _ => "_" };
-        var domain   = Pick(EmailDomains);
-        var email    = $"{firstLat}{sep}{lastLat}{suffix}@{domain}";
-        return (name, email);
-    }
-
-    private static readonly Dictionary<char, string> TranslitMap = new()
-    {
-        ['а']="a",['б']="b",['в']="v",['г']="g",['д']="d",['е']="e",['ё']="e",
-        ['ж']="zh",['з']="z",['и']="i",['й']="y",['к']="k",['л']="l",['м']="m",
-        ['н']="n",['о']="o",['п']="p",['р']="r",['с']="s",['т']="t",['у']="u",
-        ['ф']="f",['х']="kh",['ц']="ts",['ч']="ch",['ш']="sh",['щ']="shch",
-        ['ъ']="",['ы']="y",['ь']="",['э']="e",['ю']="yu",['я']="ya",
-    };
-
-    private static string Translit(string s)
-    {
-        var sb = new System.Text.StringBuilder(s.Length + 4);
-        foreach (var ch in s.ToLowerInvariant())
-            sb.Append(TranslitMap.TryGetValue(ch, out var lat) ? lat : ch.ToString());
-        return sb.ToString();
+        return (name, GenerateDiverseEmail());
     }
 
     private static string NormalizePhone(string? raw)

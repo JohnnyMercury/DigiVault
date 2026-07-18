@@ -205,6 +205,10 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             RedirectUrl   = $"/Payment/PaymentLinkStart/{ourTransactionId}",
             Status        = PaymentStatus.Pending,
             ProviderData  = new Dictionary<string, string> { ["data"] = providerData },
+            SentContacts  = new SentContactData(
+                Email: contacts.Email, Phone: contacts.Phone, Name: null,
+                UserId: userIdValue, Ip: null,
+                Anonymized: contacts.Anonymized),
         };
     }
 
@@ -331,10 +335,15 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
                 "PaymentLink → /invoice prepared txn={Txn} transID={TransId} payURL={PayUrl}",
                 ourTransactionId, transId, payUrl);
 
-            return PaymentResult.Successful(
+            var result = PaymentResult.Successful(
                 transactionId:         ourTransactionId,
                 redirectUrl:           payUrl,
                 providerTransactionId: transId);
+            result.SentContacts = new SentContactData(
+                Email: contacts.Email, Phone: contacts.Phone, Name: firstName,
+                UserId: userIdValue, Ip: null,
+                Anonymized: contacts.Anonymized);
+            return result;
         }
         catch (Exception ex)
         {

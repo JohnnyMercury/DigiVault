@@ -94,6 +94,7 @@ public class BillionPayPaymentProvider : IPaymentProvider
         var amount   = decimal.Round(request.Amount, 2);
         var currency = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
+        var userIdValue = _anonymizer.AnonymizeUserId(request.Email, request.UserId);
 
         // Amount must be serialised WITHOUT trailing zeros: C# decimal preserves
         // scale (53.00m → "53.00"), but BillionPay re-canonicalises through a
@@ -115,7 +116,7 @@ public class BillionPayPaymentProvider : IPaymentProvider
             ["externalID"]     = ourTransactionId,
             // Randomised for whitelisted internal-test accounts so BillionPay's
             // antifraud can't cluster their repeat purchases on a constant id.
-            ["merchantUserID"] = _anonymizer.AnonymizeUserId(request.Email, request.UserId),
+            ["merchantUserID"] = userIdValue,
             ["method"]         = method,
         };
         if (!string.IsNullOrEmpty(request.SuccessUrl))
@@ -212,6 +213,10 @@ public class BillionPayPaymentProvider : IPaymentProvider
                     ["pay_url"]    = payUrl,
                     ["method"]     = method,
                 },
+                SentContacts = new SentContactData(
+                    Email: null, Phone: contacts.Phone, Name: null,
+                    UserId: userIdValue, Ip: null,
+                    Anonymized: contacts.Anonymized),
             };
         }
         catch (Exception ex)

@@ -86,6 +86,8 @@ public class EnotPaymentProvider : IPaymentProvider
         // the webhook as `order_id`, and we look up the PaymentTransaction by it.
         var ourTransactionId = "kz-" + Guid.NewGuid().ToString("N");
 
+        var userIdValue = _anonymizer.AnonymizeUserId(request.Email, request.UserId);
+
         var body = new Dictionary<string, object?>
         {
             ["amount"]      = request.Amount,
@@ -103,7 +105,7 @@ public class EnotPaymentProvider : IPaymentProvider
             // actual id, so audit recovery still works for them.
             ["custom_fields"] = JsonSerializer.Serialize(new
             {
-                userId  = _anonymizer.AnonymizeUserId(request.Email, request.UserId),
+                userId  = userIdValue,
                 orderId = request.OrderId,
             }),
             ["expire"] = 300,
@@ -183,10 +185,15 @@ public class EnotPaymentProvider : IPaymentProvider
 
             _log.LogInformation("Enot invoice created: invoice_id={InvoiceId} url={Url}", invoiceId, url);
 
-            return PaymentResult.Successful(
+            var result = PaymentResult.Successful(
                 transactionId: ourTransactionId,
                 redirectUrl: url,
                 providerTransactionId: invoiceId);
+            result.SentContacts = new SentContactData(
+                Email: null, Phone: null, Name: null,
+                UserId: userIdValue, Ip: null,
+                Anonymized: _anonymizer.ShouldAnonymize(request.Email));
+            return result;
         }
         catch (Exception ex)
         {

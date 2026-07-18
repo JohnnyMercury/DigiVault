@@ -252,6 +252,10 @@ public class IntellectMoneyPaymentProvider : IPaymentProvider
                     ["invoice_id"] = invoiceId,
                     ["pay_url"]    = payPage,
                 },
+                SentContacts = new SentContactData(
+                    Email: email, Phone: null, Name: null,
+                    UserId: null, Ip: null,
+                    Anonymized: contacts.Anonymized),
             };
         }
         catch (Exception ex)

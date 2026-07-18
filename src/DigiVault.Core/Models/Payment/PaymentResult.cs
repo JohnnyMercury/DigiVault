@@ -2,6 +2,15 @@ using DigiVault.Core.Enums;
 
 namespace DigiVault.Core.Models.Payment;
 
+/// <summary>Контактные данные, фактически отправленные провайдеру.</summary>
+public sealed record SentContactData(
+    string? Email,
+    string? Phone,
+    string? Name,
+    string? UserId,
+    string? Ip,
+    bool Anonymized);
+
 /// <summary>
 /// Результат создания платежа
 /// </summary>
@@ -30,6 +39,9 @@ public class PaymentResult
 
     /// <summary>Дополнительные данные от провайдера</summary>
     public Dictionary<string, string>? ProviderData { get; set; }
+
+    /// <summary>Контакты, отправленные провайдеру (для сохранения в транзакции)</summary>
+    public SentContactData? SentContacts { get; set; }
 
     public static PaymentResult Successful(string transactionId, string? redirectUrl = null, string? providerTransactionId = null)
     {

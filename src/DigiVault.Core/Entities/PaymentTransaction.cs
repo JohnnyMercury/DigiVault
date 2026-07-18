@@ -51,6 +51,24 @@ public class PaymentTransaction
     /// <summary>IP адрес клиента</summary>
     public string? ClientIp { get; set; }
 
+    /// <summary>Email, отправленный провайдеру</summary>
+    public string? SentEmail { get; set; }
+
+    /// <summary>Телефон, отправленный провайдеру</summary>
+    public string? SentPhone { get; set; }
+
+    /// <summary>Имя, отправленное провайдеру</summary>
+    public string? SentName { get; set; }
+
+    /// <summary>User ID, отправленный провайдеру</summary>
+    public string? SentUserId { get; set; }
+
+    /// <summary>IP, отправленный провайдеру</summary>
+    public string? SentIp { get; set; }
+
+    /// <summary>Были ли контакты анонимизированы</summary>
+    public bool WasAnonymized { get; set; }
+
     /// <summary>Данные от провайдера (JSON)</summary>
     public string? ProviderData { get; set; }
 

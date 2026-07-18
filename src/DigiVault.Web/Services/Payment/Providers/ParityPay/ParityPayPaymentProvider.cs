@@ -176,6 +176,10 @@ public class ParityPayPaymentProvider : IPaymentProvider
                     ["pay_url"] = link,
                     ["service"] = "sbp",
                 },
+                SentContacts = new SentContactData(
+                    Email: null, Phone: null, Name: null,
+                    UserId: userHash, Ip: null,
+                    Anonymized: _anonymizer.ShouldAnonymize(request.Email)),
             };
         }
         catch (Exception ex)

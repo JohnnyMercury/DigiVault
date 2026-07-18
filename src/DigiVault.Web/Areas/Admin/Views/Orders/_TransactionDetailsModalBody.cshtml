@@ -74,12 +74,26 @@
         <h6 class="tx-section-title">Пользователь и заказ</h6>
         <div class="tx-row">
             <label class="tx-label">User ID:</label>
-            <input type="text" class="tx-input" value="@Anonymizer.DisplayUserId(Model.User?.Email, Model.UserId, Model.Id)"/>
+            <input type="text" class="tx-input" value="@(!string.IsNullOrEmpty(Model.SentUserId) ? Model.SentUserId : Anonymizer.DisplayUserId(Model.User?.Email, Model.UserId, Model.Id))"/>
         </div>
         <div class="tx-row">
             <label class="tx-label">Email:</label>
-            <input type="text" class="tx-input" value="@Anonymizer.DisplayEmail(Model.User?.Email, Model.Id)"/>
+            <input type="text" class="tx-input" value="@(!string.IsNullOrEmpty(Model.SentEmail) ? Model.SentEmail : Anonymizer.DisplayEmail(Model.User?.Email, Model.Id))"/>
         </div>
+        @if (!string.IsNullOrEmpty(Model.SentName))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Имя (PSP):</label>
+                <input type="text" class="tx-input" value="@Model.SentName"/>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.SentPhone))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Телефон (PSP):</label>
+                <input type="text" class="tx-input" value="@Model.SentPhone"/>
+            </div>
+        }
         <div class="tx-row">
             <label class="tx-label">Заказ:</label>
             <input type="text" class="tx-input tx-input-badge" value="@(Model.Order?.OrderNumber ?? orderTypeLabel)"/>

@@ -101,6 +101,7 @@ public class OverpayPaymentProvider : IPaymentProvider
         // via TxnIdHelper avoids antifraud/aggregator fingerprinting on a
         // fixed brand-prefix.
         var ourTransactionId = TxnIdHelper.Generate(maxLength: 34);
+        var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
 
         // Map our high-level method to Overpay's paymentMethods enum:
         //   Card → "card"
@@ -167,10 +168,15 @@ public class OverpayPaymentProvider : IPaymentProvider
                 return PaymentResult.Failed("Overpay не вернул URL для редиректа");
             }
 
-            return PaymentResult.Successful(
+            var result = PaymentResult.Successful(
                 transactionId:         ourTransactionId,
                 redirectUrl:           redirect,
                 providerTransactionId: overpayId);
+            result.SentContacts = new SentContactData(
+                Email: contacts.Email, Phone: null, Name: null,
+                UserId: null, Ip: null,
+                Anonymized: contacts.Anonymized);
+            return result;
         }
         catch (Exception ex)
         {

@@ -315,6 +315,12 @@ public class OrderService : IOrderService
                 Currency              = "RUB",
                 Description           = paymentRequest.Description,
                 ClientIp              = clientIp,
+                SentEmail             = providerResult.SentContacts?.Email,
+                SentPhone             = providerResult.SentContacts?.Phone,
+                SentName              = providerResult.SentContacts?.Name,
+                SentUserId            = providerResult.SentContacts?.UserId,
+                SentIp                = providerResult.SentContacts?.Ip,
+                WasAnonymized         = providerResult.SentContacts?.Anonymized ?? false,
                 ProviderData          = providerResult.ProviderData != null
                                             ? JsonSerializer.Serialize(providerResult.ProviderData)
                                             : null,
@@ -538,6 +544,12 @@ public class OrderService : IOrderService
                 Currency              = "RUB",
                 Description           = paymentRequest.Description,
                 ClientIp              = clientIp,
+                SentEmail             = providerResult.SentContacts?.Email,
+                SentPhone             = providerResult.SentContacts?.Phone,
+                SentName              = providerResult.SentContacts?.Name,
+                SentUserId            = providerResult.SentContacts?.UserId,
+                SentIp                = providerResult.SentContacts?.Ip,
+                WasAnonymized         = providerResult.SentContacts?.Anonymized ?? false,
                 ProviderData          = providerResult.ProviderData != null
                                             ? JsonSerializer.Serialize(providerResult.ProviderData)
                                             : null,

@@ -61,12 +61,26 @@
         <h6 class="tx-section-title">Идентификаторы и оплата</h6>
         <div class="tx-row">
             <label class="tx-label">User ID:</label>
-            <input type="text" class="tx-input" value="@Anonymizer.DisplayUserId(Model.User?.Email, Model.UserId, Model.Id)"/>
+            <input type="text" class="tx-input" value="@(!string.IsNullOrEmpty(tx?.SentUserId) ? tx.SentUserId : Anonymizer.DisplayUserId(Model.User?.Email, Model.UserId, Model.Id))"/>
         </div>
         <div class="tx-row">
             <label class="tx-label">Email:</label>
-            <input type="text" class="tx-input" value="@Anonymizer.DisplayEmail(Model.User?.Email, Model.Id)"/>
+            <input type="text" class="tx-input" value="@(!string.IsNullOrEmpty(tx?.SentEmail) ? tx.SentEmail : Anonymizer.DisplayEmail(Model.User?.Email, Model.Id))"/>
         </div>
+        @if (!string.IsNullOrEmpty(tx?.SentName))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Имя (PSP):</label>
+                <input type="text" class="tx-input" value="@tx.SentName"/>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(tx?.SentPhone))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Телефон (PSP):</label>
+                <input type="text" class="tx-input" value="@tx.SentPhone"/>
+            </div>
+        }
         <div class="tx-row">
             <label class="tx-label">№ заказа:</label>
             <input type="text" class="tx-input tx-input-link" value="@Model.OrderNumber"/>

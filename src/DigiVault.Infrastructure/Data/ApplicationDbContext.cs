@@ -165,6 +165,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
             entity.Property(e => e.ClientIp).HasMaxLength(50);
+            entity.Property(e => e.SentEmail).HasMaxLength(200);
+            entity.Property(e => e.SentPhone).HasMaxLength(30);
+            entity.Property(e => e.SentName).HasMaxLength(200);
+            entity.Property(e => e.SentUserId).HasMaxLength(100);
+            entity.Property(e => e.SentIp).HasMaxLength(50);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

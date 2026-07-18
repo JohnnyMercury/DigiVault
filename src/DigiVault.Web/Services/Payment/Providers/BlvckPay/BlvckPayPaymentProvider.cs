@@ -195,6 +195,10 @@ public class BlvckPayPaymentProvider : IPaymentProvider
                     ["order_id"] = orderId,
                     ["pay_url"]  = payUrl,
                 },
+                SentContacts = new SentContactData(
+                    Email: contacts.Email, Phone: contacts.Phone, Name: null,
+                    UserId: null, Ip: null,
+                    Anonymized: contacts.Anonymized),
             };
         }
         catch (Exception ex)

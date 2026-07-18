@@ -101,6 +101,7 @@ public class PallyPaymentProvider : IPaymentProvider
         // Anonymise email for whitelisted internal accounts so Pally's
         // antifraud doesn't cluster them. Real users keep their actual email.
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
+        var userIdValue = _anonymizer.AnonymizeUserId(request.Email, request.UserId);
 
         var formFields = new Dictionary<string, string>
         {
@@ -117,7 +118,7 @@ public class PallyPaymentProvider : IPaymentProvider
             // multi-account abuse in our own analytics if needed. Pally echoes
             // it back in the postback. Randomised for whitelisted internal-test
             // accounts so the constant id isn't an antifraud fingerprint.
-            ["custom"]  = $"userid:{_anonymizer.AnonymizeUserId(request.Email, request.UserId)}",
+            ["custom"]  = $"userid:{userIdValue}",
             // 1 = merchant absorbs commission; 0 = payer pays it on top.
             // Default to 1 so the displayed price matches the actual charge.
             ["payer_pays_commission"] = "0",
@@ -193,6 +194,10 @@ public class PallyPaymentProvider : IPaymentProvider
                     ["bill_id"] = billId,
                     ["link_page_url"] = redirectUrl,
                 },
+                SentContacts = new SentContactData(
+                    Email: contacts.Email, Phone: null, Name: null,
+                    UserId: userIdValue, Ip: null,
+                    Anonymized: contacts.Anonymized),
             };
         }
         catch (Exception ex)

@@ -220,6 +220,10 @@ public class FreeKassaPaymentProvider : IPaymentProvider
                     ["freekassa_order_id"] = fkOrderId ?? "",
                     ["redirect_url"] = location,
                 },
+                SentContacts = new SentContactData(
+                    Email: email, Phone: null, Name: null,
+                    UserId: null, Ip: ip,
+                    Anonymized: contacts.Anonymized),
             };
         }
         catch (Exception ex)

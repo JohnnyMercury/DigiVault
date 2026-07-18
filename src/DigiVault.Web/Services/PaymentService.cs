@@ -178,6 +178,12 @@ public class PaymentService : IPaymentService
             Status = result.Status,
             Description = request.Description,
             ClientIp = clientIp,
+            SentEmail = result.SentContacts?.Email,
+            SentPhone = result.SentContacts?.Phone,
+            SentName = result.SentContacts?.Name,
+            SentUserId = result.SentContacts?.UserId,
+            SentIp = result.SentContacts?.Ip,
+            WasAnonymized = result.SentContacts?.Anonymized ?? false,
             ProviderData = result.ProviderData != null
                 ? JsonSerializer.Serialize(result.ProviderData)
                 : null

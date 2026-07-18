@@ -2,6 +2,7 @@
 @inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = $"Order {Model.OrderNumber}";
+    var latestTx = ViewBag.LatestTransaction as DigiVault.Core.Entities.PaymentTransaction;
     var statusClass = Model.Status switch
     {
         OrderStatus.Completed => "success",
@@ -62,7 +63,7 @@
                 <div class="mb-3">
                     <div class="text-muted small">Customer</div>
                     <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.UserId" class="text-primary">
-                        @Anonymizer.DisplayEmail(Model.User?.Email, Model.Id)
+                        @(!string.IsNullOrEmpty(latestTx?.SentEmail) ? latestTx.SentEmail : Anonymizer.DisplayEmail(Model.User?.Email, Model.Id))
                     </a>
                 </div>
                 <div class="mb-3">

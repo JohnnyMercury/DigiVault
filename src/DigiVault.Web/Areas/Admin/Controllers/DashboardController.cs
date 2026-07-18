@@ -33,11 +33,18 @@ public class DashboardController : AdminBaseController
             .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt >= thisMonth)
             .SumAsync(o => o.TotalAmount);
 
-        ViewBag.RecentOrders = await _context.Orders
+        var recentOrders = await _context.Orders
             .Include(o => o.User)
             .OrderByDescending(o => o.CreatedAt)
             .Take(10)
             .ToListAsync();
+        ViewBag.RecentOrders = recentOrders;
+
+        var recentOrderIds = recentOrders.Select(o => o.Id).ToList();
+        ViewBag.SentEmails = await _context.PaymentTransactions
+            .Where(t => t.OrderId.HasValue && recentOrderIds.Contains(t.OrderId.Value) && t.SentEmail != null)
+            .GroupBy(t => t.OrderId!.Value)
+            .ToDictionaryAsync(g => g.Key, g => g.OrderByDescending(t => t.CreatedAt).First().SentEmail!);
 
         ViewBag.LowStockProducts = await _context.Products
             .Where(p => p.IsActive && p.StockQuantity < 10)

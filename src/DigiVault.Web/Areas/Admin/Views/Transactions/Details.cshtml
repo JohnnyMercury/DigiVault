@@ -138,9 +138,11 @@
                     <tr>
                         <th>Email:</th>
                         <td>
-                            @if (Model.User != null)
+                            @{
+                                var dEmail = !string.IsNullOrEmpty(Model.SentEmail) ? Model.SentEmail : Anonymizer.DisplayEmail(Model.User?.Email, Model.Id);
+                            }
+                            @if (!string.IsNullOrEmpty(dEmail))
                             {
-                                var dEmail = Anonymizer.DisplayEmail(Model.User.Email, Model.Id);
                                 <a href="mailto:@dEmail" class="text-decoration-none">@dEmail</a>
                             }
                             else

@@ -132,7 +132,7 @@
                             <code class="small">@tx.TransactionId[..Math.Min(15, tx.TransactionId.Length)]...</code>
                         </td>
                         <td>
-                            <a href="/Admin/Users/Details/@tx.UserId">@Anonymizer.DisplayEmail(tx.User?.Email, tx.Id)</a>
+                            <a href="/Admin/Users/Details/@tx.UserId">@(!string.IsNullOrEmpty(tx.SentEmail) ? tx.SentEmail : Anonymizer.DisplayEmail(tx.User?.Email, tx.Id))</a>
                         </td>
                         <td><strong>@tx.Amount.ToString("N0") @tx.Currency</strong></td>
                         <td>@tx.ProviderName</td>

@@ -5,6 +5,7 @@
     ViewData["Title"] = "Orders";
     var searchedTx = ViewBag.SearchedTransaction as DigiVault.Core.Entities.PaymentTransaction;
     var txQuery    = (string?)ViewBag.TxQuery;
+    var sentEmails = ViewBag.SentEmails as Dictionary<int, string> ?? new Dictionary<int, string>();
 }
 
 @* ─────────────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="small text-muted">Пользователь:</div>
-                            <div>@(Anonymizer.DisplayEmail(searchedTx.User?.Email, searchedTx.Id) is var e && !string.IsNullOrEmpty(e) ? e : $"User #{searchedTx.UserId}")</div>
+                            <div>@(!string.IsNullOrEmpty(searchedTx.SentEmail) ? searchedTx.SentEmail : Anonymizer.DisplayEmail(searchedTx.User?.Email, searchedTx.Id) is var e && !string.IsNullOrEmpty(e) ? e : $"User #{searchedTx.UserId}")</div>
                         </div>
                         <div class="col-md-6">
                             <div class="small text-muted">Сумма:</div>
@@ -169,7 +170,7 @@
                     };
                     <tr>
                         <td><code>@order.OrderNumber</code></td>
-                        <td>@Anonymizer.DisplayEmail(order.User?.Email, order.Id)</td>
+                        <td>@(sentEmails.TryGetValue(order.Id, out var se) ? se : Anonymizer.DisplayEmail(order.User?.Email, order.Id))</td>
                         <td class="text-primary fw-bold">@order.TotalAmount.ToString("N0") ₽</td>
                         <td><span class="badge bg-@statusClass">@order.Status</span></td>
                         <td>@order.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>

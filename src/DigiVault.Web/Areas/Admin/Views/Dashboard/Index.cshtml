@@ -3,6 +3,7 @@
 @inject DigiVault.Web.Services.Payment.PaymentAnonymizer Anonymizer
 @{
     ViewData["Title"] = "Дашборд";
+    var sentEmails = ViewBag.SentEmails as Dictionary<int, string> ?? new Dictionary<int, string>();
 }
 
 <!-- Stats -->
@@ -90,7 +91,7 @@
                                 };
                                 <tr>
                                     <td><code style="color: #667eea;">#@order.Id</code></td>
-                                    <td>@(Anonymizer.DisplayEmail(order.User?.Email, order.Id) is var em && !string.IsNullOrEmpty(em) ? em : "—")</td>
+                                    <td>@(sentEmails.TryGetValue(order.Id, out var se) ? se : Anonymizer.DisplayEmail(order.User?.Email, order.Id) is var em && !string.IsNullOrEmpty(em) ? em : "—")</td>
                                     <td style="color: #4facfe; font-weight: 600;">@order.TotalAmount.ToString("N0") ₽</td>
                                     <td><span class="badge-status @statusClass">@statusText</span></td>
                                     <td style="color: rgba(255,255,255,0.5);">@order.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>

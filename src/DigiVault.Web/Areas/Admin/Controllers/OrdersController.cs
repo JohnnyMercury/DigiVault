@@ -39,6 +39,12 @@ public class OrdersController : AdminBaseController
             .Take(pageSize)
             .ToListAsync();
 
+        var orderIds = orders.Select(o => o.Id).ToList();
+        ViewBag.SentEmails = await _context.PaymentTransactions
+            .Where(t => t.OrderId.HasValue && orderIds.Contains(t.OrderId.Value) && t.SentEmail != null)
+            .GroupBy(t => t.OrderId!.Value)
+            .ToDictionaryAsync(g => g.Key, g => g.OrderByDescending(t => t.CreatedAt).First().SentEmail!);
+
         ViewBag.Status = status;
         ViewBag.Search = search;
         ViewBag.CurrentPage = page;

@@ -105,6 +105,7 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.BillionPay.BillionPayPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.FreeKassa.FreeKassaPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.ParityPay.ParityPayPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Antimatter.AntimatterPaymentProvider>();
 
 // Pally HTTP client — plain Bearer-auth, no certs / weird headers.
 // 30 s timeout matches the other PSPs; pal24.pro is fast in practice.
@@ -140,6 +141,12 @@ builder.Services.AddHttpClient(
 // in the X-SIGNATURE header.
 builder.Services.AddHttpClient(
     "paritypay",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
+
+// Antimatter HTTP client — JSON REST (antimatter.profit-gateway.com),
+// x-api-key header auth + IP/Referer whitelist, MD5 webhook signature.
+builder.Services.AddHttpClient(
+    "antimatter",
     client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // BillionPay HTTP client — JSON REST with HMAC-SHA512 in X-API-Sign header.

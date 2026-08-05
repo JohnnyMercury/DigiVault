@@ -35,6 +35,36 @@ public static class DbSeeder
             && !string.IsNullOrWhiteSpace(config.SecretKey);
     }
 
+    public static PaymentProviderConfig CreateAntimatterProviderConfig(DateTime now)
+    {
+        return new PaymentProviderConfig
+        {
+            Name        = "antimatter",
+            DisplayName = "Antimatter",
+            // Seeded INACTIVE despite having a real API key — IP whitelist
+            // on the gateway side was only just requested (29.07) and may
+            // not have propagated yet. Activate manually once a live test
+            // payment confirms the whitelist is in effect.
+            IsEnabled   = false,
+            Priority    = 100,
+            ApiKey      = "ak_1fc123239f1cd3c207c33679c17c7d6f",
+            SecretKey   = "",
+            MerchantId  = "",
+            Settings    = "{\"baseUrl\":\"https://antimatter.profit-gateway.com/api/v1\",\"refererDomain\":\"https://key-zona.com\"}",
+            IsTestMode  = false,
+            Commission  = 0,
+            MinAmount   = 1,
+            MaxAmount   = 300_000,
+            CreatedAt   = now,
+            UpdatedAt   = now,
+        };
+    }
+
+    public static bool HasAntimatterProviderCredentials(PaymentProviderConfig config)
+    {
+        return !string.IsNullOrWhiteSpace(config.ApiKey);
+    }
+
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
@@ -497,9 +527,8 @@ public static class DbSeeder
         //   MerchantId  → shopId (числовой ID магазина)
         //   ApiKey      → API-ключ из настроек ЛК (подпись запросов)
         //   SecretKey   → «Секретное слово 2» (подпись вебхука md5)
-        //   Settings    → JSON: {"baseUrl":"https://api.fk.life/v1",
-        //                 "fallbackIp":"145.223.90.75","i_card":36,"i_sbp":44}
-        // Реальные ключи задаются UPDATE'ом в проде, в репозиторий не коммитятся.
+        //   Settings    → JSON: {"baseUrl":"https://api.fk.life/v1","i_card":36,"i_sbp":44}
+        // Реальные ключи и fallbackIp задаются в защищенной конфигурации продакшена.
         if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "freekassa"))
         {
             context.PaymentProviderConfigs.Add(new PaymentProviderConfig
@@ -552,6 +581,38 @@ public static class DbSeeder
             if (changed)
             {
                 paritypay.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+            }
+        }
+
+        // Seed Antimatter (antimatter.profit-gateway.com). JSON REST, hosted
+        // checkout in EUR/RUB, x-api-key header auth + IP/Referer whitelist,
+        // MD5 webhook signature (no request signing for outbound calls).
+        //   ApiKey   → x-api-key header value
+        //   Settings → {"baseUrl":"...","refererDomain":"https://key-zona.com"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "antimatter"))
+        {
+            context.PaymentProviderConfigs.Add(CreateAntimatterProviderConfig(DateTime.UtcNow));
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            var antimatter = await context.PaymentProviderConfigs
+                .FirstAsync(c => c.Name == "antimatter");
+            var changed = false;
+            if (antimatter.DisplayName != "Antimatter")
+            {
+                antimatter.DisplayName = "Antimatter";
+                changed = true;
+            }
+            if (antimatter.IsEnabled && !HasAntimatterProviderCredentials(antimatter))
+            {
+                antimatter.IsEnabled = false;
+                changed = true;
+            }
+            if (changed)
+            {
+                antimatter.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
             }
         }

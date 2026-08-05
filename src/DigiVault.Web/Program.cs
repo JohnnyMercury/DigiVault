@@ -145,9 +145,45 @@ builder.Services.AddHttpClient(
 
 // Antimatter HTTP client — JSON REST (antimatter.profit-gateway.com),
 // x-api-key header auth + IP/Referer whitelist, MD5 webhook signature.
+//
+// This VPS is dual-stack (IPv4 + IPv6). .NET's default connection logic
+// races both and often wins on IPv6, so outbound calls left the box as
+// 2a02:4780:c:58d6::1 instead of the IPv4 145.223.90.75 we gave the gateway
+// to whitelist — Antimatter rejected every request with 403 "IP ... not
+// whitelisted" even though the IPv4 address was already allow-listed.
+// Force IPv4-only resolution/connect for this client so it always matches
+// the address on file.
 builder.Services.AddHttpClient(
     "antimatter",
-    client => { client.Timeout = TimeSpan.FromSeconds(30); });
+    client => { client.Timeout = TimeSpan.FromSeconds(30); })
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        ConnectCallback = async (context, cancellationToken) =>
+        {
+            var addresses = await System.Net.Dns.GetHostAddressesAsync(
+                context.DnsEndPoint.Host, System.Net.Sockets.AddressFamily.InterNetwork, cancellationToken);
+
+            if (addresses.Length == 0)
+                throw new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.HostNotFound);
+
+            var socket = new System.Net.Sockets.Socket(
+                System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp)
+            {
+                NoDelay = true,
+            };
+
+            try
+            {
+                await socket.ConnectAsync(new System.Net.IPEndPoint(addresses[0], context.DnsEndPoint.Port), cancellationToken);
+                return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
+        },
+    });
 
 // BillionPay HTTP client — JSON REST with HMAC-SHA512 in X-API-Sign header.
 builder.Services.AddHttpClient(

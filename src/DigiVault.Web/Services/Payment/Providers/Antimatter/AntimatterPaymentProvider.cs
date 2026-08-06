@@ -28,7 +28,15 @@ namespace DigiVault.Web.Services.Payment.Providers.Antimatter;
 public class AntimatterPaymentProvider : IPaymentProvider
 {
     private const string DefaultBaseUrl = "https://antimatter.profit-gateway.com/api/v1";
-    private const string DefaultRefererDomain = "https://key-zona.com";
+
+    // Their docs show "Referer: https://ваш-домен.com", but the gateway admin
+    // says that's wrong ("дезинформация в инструкции") and the header must be
+    // the bare domain. Probing both forms gives an identical result today —
+    // "key-zona.com" and "https://key-zona.com/" both clear the whitelist and
+    // fail later at the submerchant lookup — while "key-zona.com/" (bare with
+    // a trailing slash) is rejected outright with 403 "Referer not
+    // whitelisted". Sending the bare form per their instruction.
+    private const string DefaultRefererDomain = "key-zona.com";
     private const string HttpClientName = "antimatter";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -124,7 +132,7 @@ public class AntimatterPaymentProvider : IPaymentProvider
             };
             httpRequest.Headers.Remove("x-api-key");
             httpRequest.Headers.Add("x-api-key", cfg.ApiKey);
-            httpRequest.Headers.Referrer = new Uri(ReadRefererDomain(cfg));
+            SetRefererHeader(httpRequest, ReadRefererDomain(cfg));
 
             using var resp = await http.SendAsync(httpRequest, ct);
             var raw = await resp.Content.ReadAsStringAsync(ct);
@@ -299,6 +307,24 @@ public class AntimatterPaymentProvider : IPaymentProvider
         }
 
         return DefaultBaseUrl;
+    }
+
+    /// <summary>
+    /// Sets the Referer header, accepting either a bare domain
+    /// ("key-zona.com") or a full URL ("https://key-zona.com").
+    /// <see cref="HttpRequestHeaders.Referrer"/> only takes an absolute URI,
+    /// so the bare form has to bypass validation — otherwise constructing the
+    /// Uri throws and every payment fails.
+    /// </summary>
+    private static void SetRefererHeader(HttpRequestMessage request, string referer)
+    {
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var absolute))
+        {
+            request.Headers.Referrer = absolute;
+            return;
+        }
+
+        request.Headers.TryAddWithoutValidation("Referer", referer);
     }
 
     private static string ReadRefererDomain(PaymentProviderConfig cfg)

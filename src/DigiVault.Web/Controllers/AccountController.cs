@@ -472,36 +472,26 @@ public class AccountController : Controller
     /// </summary>
     [HttpGet, HttpPost]
     [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-    public async Task<IActionResult> PaymentSuccess(int orderId)
+    public async Task<IActionResult> PaymentSuccess(int? orderId, [FromQuery(Name = "on")] string? on)
     {
-        // PaymentLink (and some other PSPs) POST the user back to backURL
-        // with form-data containing the payment result. We deliberately don't
-        // trust that body — webhook is the source of truth — and just route
-        // the user to a friendly destination. [Authorize] is intentionally
-        // omitted: a top-level cross-site POST often arrives without our
-        // SameSite=Lax auth cookie, so requiring auth here would bounce the
-        // user to /Login and lose the orderId context.
-        await LogPaymentReturnPayloadAsync(orderId, "PaymentSuccess");
+        var resolvedOrderId = await ResolveOrderIdAsync(orderId, on);
+        await LogPaymentReturnPayloadAsync(resolvedOrderId ?? 0, "PaymentSuccess");
 
-        // PaymentLink semantics: backURL is hit on BOTH success and failure;
-        // an `errorcode` field in the POST body marks failure even though
-        // we're on the "success" route. Treat it as failure so the user sees
-        // the real reason instead of a misleading "оплата прошла" message.
         if (await IsFailureReturnAsync())
         {
-            return await PaymentFail(orderId);
+            return await PaymentFail(orderId, on);
         }
 
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
         {
-            // Public-facing "we got your payment" landing — they can log back
-            // in and find the order in their cabinet.
             TempData["SuccessMessage"] = "Оплата прошла успешно. Войдите в аккаунт чтобы увидеть товар.";
             return RedirectToAction(nameof(Login));
         }
 
-        var order = await _orderService.GetOrderAsync(user.Id, orderId);
+        var order = resolvedOrderId.HasValue
+            ? await _orderService.GetOrderAsync(user.Id, resolvedOrderId.Value)
+            : null;
         if (order == null) return RedirectToAction(nameof(Orders));
 
         TempData["SuccessMessage"] = "Оплата прошла успешно. Товар будет в кабинете в течение минуты.";
@@ -514,9 +504,10 @@ public class AccountController : Controller
     /// </summary>
     [HttpGet, HttpPost]
     [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
-    public async Task<IActionResult> PaymentFail(int orderId)
+    public async Task<IActionResult> PaymentFail(int? orderId, [FromQuery(Name = "on")] string? on)
     {
-        await LogPaymentReturnPayloadAsync(orderId, "PaymentFail");
+        var resolvedOrderId = await ResolveOrderIdAsync(orderId, on);
+        await LogPaymentReturnPayloadAsync(resolvedOrderId ?? 0, "PaymentFail");
 
         var errorText = ExtractErrorText();
 
@@ -527,7 +518,9 @@ public class AccountController : Controller
             return RedirectToAction(nameof(Login));
         }
 
-        var order = await _orderService.GetOrderAsync(user.Id, orderId);
+        var order = resolvedOrderId.HasValue
+            ? await _orderService.GetOrderAsync(user.Id, resolvedOrderId.Value)
+            : null;
         TempData["ErrorMessage"] = errorText ?? "Платёж не был завершён. Попробуйте ещё раз или свяжитесь с поддержкой.";
         if (order != null)
             return RedirectToAction(nameof(OrderDetails), new { orderNumber = order.OrderNumber });
@@ -543,6 +536,15 @@ public class AccountController : Controller
     //   • surface a meaningful error message to the user when the provider
     //     told us why the charge failed.
     // ────────────────────────────────────────────────────────────────────
+
+    private async Task<int?> ResolveOrderIdAsync(int? orderId, string? orderNumber)
+    {
+        if (orderId.HasValue && orderId.Value > 0) return orderId.Value;
+        if (string.IsNullOrWhiteSpace(orderNumber)) return null;
+        var order = await _context.Orders.AsNoTracking()
+            .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+        return order?.Id;
+    }
 
     private async Task LogPaymentReturnPayloadAsync(int orderId, string source)
     {

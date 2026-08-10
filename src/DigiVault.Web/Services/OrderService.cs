@@ -278,10 +278,10 @@ public class OrderService : IOrderService
                 // name kept off the PSP-side payload to deny antifraud
                 // brand-clustering. Reconciliation happens via
                 // merchantTransactionId.
-                Description = $"Покупка №{order.Id}",
+                Description = $"Покупка {orderNumber}",
                 OrderId     = order.Id,
-                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
-                CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
+                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?on={orderNumber}",
+                CancelUrl   = $"{siteBase}/Account/PaymentFail?on={orderNumber}",
                 WebhookUrl  = $"{siteBase}/api/webhooks/{provider.Name}",
                 ClientIp    = clientIp,
                 Metadata    = metadata.Count > 0 ? metadata : null,
@@ -512,10 +512,10 @@ public class OrderService : IOrderService
                 Email       = user?.Email,
                 // Generic neutral description (see note in CreateExternal-
                 // PaymentOrderAsync above).
-                Description = $"Пополнение №{order.Id}",
+                Description = $"Пополнение {orderNumber}",
                 OrderId     = order.Id,
-                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?orderId={order.Id}",
-                CancelUrl   = $"{siteBase}/Account/PaymentFail?orderId={order.Id}",
+                SuccessUrl  = $"{siteBase}/Account/PaymentSuccess?on={orderNumber}",
+                CancelUrl   = $"{siteBase}/Account/PaymentFail?on={orderNumber}",
                 WebhookUrl  = $"{siteBase}/api/webhooks/{provider.Name}",
                 ClientIp    = clientIp,
                 Metadata    = metadata.Count > 0 ? metadata : null,

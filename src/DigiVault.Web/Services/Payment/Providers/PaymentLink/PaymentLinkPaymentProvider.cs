@@ -162,6 +162,7 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
         // real customers PaymentAnonymizer just passes through their real
         // email/phone. See PaymentAnonymizer XML doc for the rationale.
         var contacts = _anonymizer.Anonymize(request.Email, request.Phone, request.ClientIp);
+        var firstName = string.IsNullOrWhiteSpace(contacts.Name) ? "Покупатель" : contacts.Name;
 
         var formFields = new Dictionary<string, string?>
         {
@@ -174,8 +175,11 @@ public class PaymentLinkPaymentProvider : IPaymentProvider
             ["trtype"]      = trtype.ToString(),
             ["account"]     = cardAccount,
             ["backURL"]     = request.SuccessUrl,
+            ["first_name"]  = firstName,
             ["email"]       = contacts.Email,
+            ["notify_email"]= "0",
             ["phone"]       = contacts.Phone,
+            ["notify_phone"]= "0",
             ["lang"]        = "ru",
             ["user_id"]     = userIdValue,
             ["signature"]   = signature,

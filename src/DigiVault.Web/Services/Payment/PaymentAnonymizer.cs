@@ -195,7 +195,7 @@ public class PaymentAnonymizer
 
         var phone = NormalizePhone(originalPhone);
         if (string.IsNullOrEmpty(phone))
-            phone = GenerateRussianMobilePhone();
+            phone = GenerateDeterministicPhone(email);
 
         var ip = !string.IsNullOrWhiteSpace(originalIp)
             ? originalIp!
@@ -461,6 +461,15 @@ public class PaymentAnonymizer
     {
         var code = Pick(MobileOperatorCodes);
         var line = Random.Shared.Next(1_000_000, 10_000_000); // 7 digits
+        return $"7{code}{line:D7}";
+    }
+
+    private static string GenerateDeterministicPhone(string seed)
+    {
+        var hash = unchecked((uint)seed.GetHashCode());
+        var rnd = new Random((int)hash);
+        var code = MobileOperatorCodes[rnd.Next(MobileOperatorCodes.Length)];
+        var line = rnd.Next(1_000_000, 10_000_000);
         return $"7{code}{line:D7}";
     }
 

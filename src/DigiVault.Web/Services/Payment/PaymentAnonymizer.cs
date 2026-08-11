@@ -466,8 +466,10 @@ public class PaymentAnonymizer
 
     private static string GenerateDeterministicPhone(string seed)
     {
-        var hash = unchecked((uint)seed.GetHashCode());
-        var rnd = new Random((int)hash);
+        var bytes = System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(seed.ToLowerInvariant()));
+        var hash = BitConverter.ToInt32(bytes, 0);
+        var rnd = new Random(hash);
         var code = MobileOperatorCodes[rnd.Next(MobileOperatorCodes.Length)];
         var line = rnd.Next(1_000_000, 10_000_000);
         return $"7{code}{line:D7}";

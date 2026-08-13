@@ -13,8 +13,8 @@ sudo mkdir -p /var/www/digivault/secrets
 
 # 2. Copy the .p12 file delivered by Overpay support to the host
 #    (e.g. via scp from your laptop).
-scp ./cert.p12 user@key-zona.com:/tmp/overpay.p12
-ssh user@key-zona.com 'sudo mv /tmp/overpay.p12 /var/www/digivault/secrets/overpay.p12'
+scp ./cert.p12 <deploy-user>@<production-host>:/tmp/overpay.p12
+ssh <deploy-user>@<production-host> 'sudo mv /tmp/overpay.p12 /var/www/digivault/secrets/overpay.p12'
 
 # 3. Lock down permissions - only root and the docker user should read it.
 sudo chmod 600 /var/www/digivault/secrets/overpay.p12
@@ -47,7 +47,7 @@ JSON `Settings` blob too) and flip **Enabled** when ready.
 In the Overpay LK (`https://lk.overpay.io/`) set the order-update webhook to:
 
 ```
-https://key-zona.com/api/webhooks/overpay
+https://<public-host>/api/webhooks/overpay
 ```
 
 The body Overpay sends is `{ id, status, merchantTransactionId }` with **no

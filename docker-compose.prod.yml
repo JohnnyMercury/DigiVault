@@ -9,14 +9,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8082
-      - ConnectionStrings__DefaultConnection=Host=localhost;Database=digivault;Username=postgres;Password=Cyb0rg@Games2025_Secure434;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=50;
+      - ConnectionStrings__DefaultConnection=${DIGIVAULT_CONNECTION_STRING:?}
       - Storage__UseMinIO=true
       - MinIO__Endpoint=localhost:9000
-      - MinIO__AccessKey=minioadmin
-      - MinIO__SecretKey=Cyb0rg@MinIO2025_Secure!
+      - MinIO__AccessKey=${MINIO_ACCESS_KEY:?}
+      - MinIO__SecretKey=${MINIO_SECRET_KEY:?}
       - MinIO__BucketName=digivault-images
       - MinIO__UseSSL=false
-      - MinIO__PublicUrl=https://key-zona.com:9000
+      - MinIO__PublicUrl=${MINIO_PUBLIC_URL:?}
       - MinIO__UseRelativeUrls=true
     volumes:
       - digivault-backups:/app/backups

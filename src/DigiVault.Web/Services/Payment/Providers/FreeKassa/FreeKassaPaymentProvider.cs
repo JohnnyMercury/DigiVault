@@ -25,7 +25,7 @@ namespace DigiVault.Web.Services.Payment.Providers.FreeKassa;
 ///                 {
 ///                   "baseUrl":"https://api.fk.life/v1",
 ///                   "secretWord1":"...",   // для legacy SCI, в API не нужен
-///                   "fallbackIp":"145.223.90.75",   // если у клиента нет IP
+///                   "fallbackIp":"...",   // защищенная настройка, если у клиента нет IP
 ///                   "i_card":36, "i_sbp":44, "i_sberpay":43
 ///                 }
 ///
@@ -45,10 +45,6 @@ public class FreeKassaPaymentProvider : IPaymentProvider
 {
     private const string DefaultBaseUrl = "https://api.fk.life/v1";
     private const string HttpClientName = "freekassa";
-
-    // Server public IP — fallback for FreeKassa's "ip обязателен, 127.0.0.1
-    // блокируется" rule when a guest checkout has no usable client IP.
-    private const string DefaultFallbackIp = "145.223.90.75";
 
     // FreeKassa notification source IPs (docs §1.4). Soft-checked (log only)
     // because behind nginx/docker RemoteIpAddress is the proxy — the md5 SIGN
@@ -126,7 +122,11 @@ public class FreeKassaPaymentProvider : IPaymentProvider
             ? contacts.Email
             : $"{ourTransactionId}@telegram.org";   // docs allow тгid@telegram.org
 
-        var ip = NormaliseIp(contacts.Ip, ReadSetting(cfg, "fallbackIp") ?? DefaultFallbackIp);
+        var fallbackIp = ReadSetting(cfg, "fallbackIp");
+        if (string.IsNullOrWhiteSpace(fallbackIp))
+            return PaymentResult.Failed("FreeKassa: в защищенных настройках не задан fallbackIp.");
+
+        var ip = NormaliseIp(contacts.Ip, fallbackIp);
 
         var amountStr = FormatAmount(request.Amount);
         var currency  = string.IsNullOrEmpty(request.Currency) ? "RUB" : request.Currency;
@@ -358,7 +358,7 @@ public class FreeKassaPaymentProvider : IPaymentProvider
         };
     }
 
-    /// <summary>FreeKassa blocks 127.0.0.1 / empty — fall back to server IP.</summary>
+    /// <summary>FreeKassa blocks 127.0.0.1 / empty — use the protected fallback setting.</summary>
     private static string NormaliseIp(string? ip, string fallback)
     {
         if (string.IsNullOrWhiteSpace(ip)) return fallback;

@@ -150,7 +150,11 @@ public class AntimatterPaymentProvider : IPaymentProvider
             var root = doc.RootElement;
 
             var status = ReadString(root, "status");
-            if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            // Antimatter may acknowledge creation with { success: true, status: "PENDING" }
+            // while the older response format used status: "success".
+            var successFlag = root.TryGetProperty("success", out var successElement)
+                && successElement.ValueKind == JsonValueKind.True;
+            if (!successFlag && !string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
             {
                 var errMsg = ReadString(root, "message") ?? ReadString(root, "error") ?? raw;
                 return PaymentResult.Failed($"Antimatter отказала в создании платежа: {errMsg}");

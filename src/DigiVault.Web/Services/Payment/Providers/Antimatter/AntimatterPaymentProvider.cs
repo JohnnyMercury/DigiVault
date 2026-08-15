@@ -66,7 +66,7 @@ public class AntimatterPaymentProvider : IPaymentProvider
 
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {
-        PaymentMethod.Card,
+        PaymentMethod.SBP,
     };
 
     public bool IsEnabled

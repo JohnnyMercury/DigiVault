@@ -35,6 +35,12 @@ public static class DbSeeder
             && !string.IsNullOrWhiteSpace(config.SecretKey);
     }
 
+    /// <summary>
+    /// API host is api.rollypay.io (per the cashbox's own quick-start snippet).
+    /// pay.rollypay.io only serves the hosted checkout page returned as pay_url.
+    /// </summary>
+    private const string RollyPayDefaultSettings = "{\"baseUrl\":\"https://api.rollypay.io/api/v1\"}";
+
     public static PaymentProviderConfig CreateRollyPayProviderConfig(DateTime now)
     {
         return new PaymentProviderConfig
@@ -51,7 +57,7 @@ public static class DbSeeder
             SecretKey   = "",
             // Cashbox "key-zona" — a terminal identifier, not a credential.
             MerchantId  = "f325ee96-c79c-4405-b168-705a20ffa449",
-            Settings    = "{\"baseUrl\":\"https://pay.rollypay.io/api/v1\"}",
+            Settings    = RollyPayDefaultSettings,
             IsTestMode  = false,
             Commission  = 0,
             MinAmount   = 1,
@@ -657,7 +663,7 @@ public static class DbSeeder
         //   ApiKey     → X-API-Key header
         //   SecretKey  → signing_secret (webhook HMAC-SHA256 verification)
         //   MerchantId → terminal_id (cashbox UUID)
-        //   Settings   → {"baseUrl":"https://pay.rollypay.io/api/v1"}
+        //   Settings   → {"baseUrl":"https://api.rollypay.io/api/v1"}
         if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "rollypay"))
         {
             context.PaymentProviderConfigs.Add(CreateRollyPayProviderConfig(DateTime.UtcNow));
@@ -671,6 +677,16 @@ public static class DbSeeder
             if (rollypay.DisplayName != "RollyPay")
             {
                 rollypay.DisplayName = "RollyPay";
+                changed = true;
+            }
+            // The first deploy seeded the wrong API host (pay.rollypay.io —
+            // that's the hosted checkout, not the API). Repoint any row still
+            // carrying it so the fix lands without a manual DB edit.
+            if (!string.IsNullOrWhiteSpace(rollypay.Settings)
+                && rollypay.Settings.Contains("pay.rollypay.io", StringComparison.OrdinalIgnoreCase)
+                && !rollypay.Settings.Contains("api.rollypay.io", StringComparison.OrdinalIgnoreCase))
+            {
+                rollypay.Settings = RollyPayDefaultSettings;
                 changed = true;
             }
             // Never leave it enabled without both credentials — otherwise the

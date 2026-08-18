@@ -108,7 +108,7 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Antimatter.AntimatterPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.RollyPay.RollyPayPaymentProvider>();
 
-// RollyPay HTTP client — JSON REST (pay.rollypay.io), X-API-Key + X-Nonce
+// RollyPay HTTP client — JSON REST (api.rollypay.io), X-API-Key + X-Nonce
 // header auth, HMAC-SHA256 webhook signature. SBP only.
 builder.Services.AddHttpClient(
     "rollypay",

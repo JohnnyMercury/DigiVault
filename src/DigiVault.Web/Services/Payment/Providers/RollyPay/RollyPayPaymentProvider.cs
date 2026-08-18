@@ -11,16 +11,16 @@ using Microsoft.EntityFrameworkCore;
 namespace DigiVault.Web.Services.Payment.Providers.RollyPay;
 
 /// <summary>
-/// <see cref="IPaymentProvider"/> for RollyPay (pay.rollypay.io) — hosted
-/// checkout, RUB in / USDT settlement. Wired for SBP only, per the merchant
-/// account we were given ("СБП нужен ток").
+/// <see cref="IPaymentProvider"/> for RollyPay (API on api.rollypay.io, hosted
+/// checkout served from pay.rollypay.io) — RUB in / USDT settlement. Wired for
+/// SBP only, per the merchant account we were given ("СБП нужен ток").
 ///
 /// Configuration in <see cref="PaymentProviderConfig"/> with Name="rollypay":
 ///   ApiKey     -> X-API-Key header (issued with the cashbox/terminal)
 ///   SecretKey  -> signing_secret, used ONLY to verify webhook signatures
 ///   MerchantId -> terminal_id (cashbox UUID); optional when authenticating
 ///                 by API key, sent when present for explicitness
-///   Settings   -> optional JSON {"baseUrl":"https://pay.rollypay.io/api/v1"}
+///   Settings   -> optional JSON {"baseUrl":"https://api.rollypay.io/api/v1"}
 ///
 /// Auth: X-API-Key header + X-Nonce (unique per request, 10-minute validity).
 /// Outbound requests are NOT signed — only webhooks are.
@@ -37,7 +37,10 @@ namespace DigiVault.Web.Services.Payment.Providers.RollyPay;
 /// </summary>
 public class RollyPayPaymentProvider : IPaymentProvider
 {
-    private const string DefaultBaseUrl = "https://pay.rollypay.io/api/v1";
+    // API host is api.rollypay.io — confirmed by the cashbox's own "Быстрый
+    // старт" snippet in the panel. pay.rollypay.io is only where the returned
+    // pay_url (hosted checkout page) lives, NOT the API.
+    private const string DefaultBaseUrl = "https://api.rollypay.io/api/v1";
     private const string HttpClientName = "rollypay";
 
     /// <summary>Payment method code expected by RollyPay for Faster Payments.</summary>

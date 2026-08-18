@@ -35,6 +35,41 @@ public static class DbSeeder
             && !string.IsNullOrWhiteSpace(config.SecretKey);
     }
 
+    public static PaymentProviderConfig CreateRollyPayProviderConfig(DateTime now)
+    {
+        return new PaymentProviderConfig
+        {
+            Name        = "rollypay",
+            DisplayName = "RollyPay",
+            // Seeded INACTIVE and without credentials on purpose: api_key and
+            // signing_secret are issued per-cashbox in the RollyPay panel and
+            // are entered in the admin UI, not committed to source. Enable
+            // once both are set and a live SBP payment has been confirmed.
+            IsEnabled   = false,
+            Priority    = 110,
+            ApiKey      = "",
+            SecretKey   = "",
+            // Cashbox "key-zona" — a terminal identifier, not a credential.
+            MerchantId  = "f325ee96-c79c-4405-b168-705a20ffa449",
+            Settings    = "{\"baseUrl\":\"https://pay.rollypay.io/api/v1\"}",
+            IsTestMode  = false,
+            Commission  = 0,
+            MinAmount   = 1,
+            MaxAmount   = 300_000,
+            CreatedAt   = now,
+            UpdatedAt   = now,
+        };
+    }
+
+    public static bool HasRollyPayProviderCredentials(PaymentProviderConfig config)
+    {
+        // Both are required: ApiKey signs outbound calls, SecretKey verifies
+        // webhooks. Without the secret every callback would be rejected and
+        // payments would never be confirmed.
+        return !string.IsNullOrWhiteSpace(config.ApiKey)
+            && !string.IsNullOrWhiteSpace(config.SecretKey);
+    }
+
     public static PaymentProviderConfig CreateAntimatterProviderConfig(DateTime now)
     {
         return new PaymentProviderConfig
@@ -613,6 +648,41 @@ public static class DbSeeder
             if (changed)
             {
                 antimatter.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync();
+            }
+        }
+
+        // Seed RollyPay (pay.rollypay.io). JSON REST, hosted checkout, RUB in
+        // with USDT settlement. Wired for СБП only.
+        //   ApiKey     → X-API-Key header
+        //   SecretKey  → signing_secret (webhook HMAC-SHA256 verification)
+        //   MerchantId → terminal_id (cashbox UUID)
+        //   Settings   → {"baseUrl":"https://pay.rollypay.io/api/v1"}
+        if (!await context.PaymentProviderConfigs.AnyAsync(c => c.Name == "rollypay"))
+        {
+            context.PaymentProviderConfigs.Add(CreateRollyPayProviderConfig(DateTime.UtcNow));
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            var rollypay = await context.PaymentProviderConfigs
+                .FirstAsync(c => c.Name == "rollypay");
+            var changed = false;
+            if (rollypay.DisplayName != "RollyPay")
+            {
+                rollypay.DisplayName = "RollyPay";
+                changed = true;
+            }
+            // Never leave it enabled without both credentials — otherwise the
+            // SBP tile would show a provider whose webhooks can't be verified.
+            if (rollypay.IsEnabled && !HasRollyPayProviderCredentials(rollypay))
+            {
+                rollypay.IsEnabled = false;
+                changed = true;
+            }
+            if (changed)
+            {
+                rollypay.UpdatedAt = DateTime.UtcNow;
                 await context.SaveChangesAsync();
             }
         }

@@ -237,6 +237,7 @@
     const FK_BADGE       = 'linear-gradient(135deg, #ef4444, #991b1b)';
     const PARITYPAY_BADGE   = 'linear-gradient(135deg, #0ea5e9, #0369a1)';
     const ANTIMATTER_BADGE  = 'linear-gradient(135deg, #7c3aed, #4c1d95)';
+    const ROLLYPAY_BADGE    = 'linear-gradient(135deg, #f97316, #c2410c)';
     // У каждого «работающего» метода - все доступные PSP, пользователь сам выбирает.
     // Ровно как на Cyborg / NordHosting: видишь несколько тайлов, кликаешь нужный.
     const PROVIDERS_BY_METHOD = {
@@ -258,6 +259,7 @@
             { code: 'billionpay',     title: 'BillionPay',     desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: BILLION_BADGE },
             { code: 'freekassa',      title: 'KASSA',          desc: 'СБП через QR-код',           icon: 'bi-qr-code',          color: FK_BADGE      },
             { code: 'antimatter',     title: 'Antimatter',     desc: 'СБП через QR-код',           icon: 'bi-qr-code',           color: ANTIMATTER_BADGE },
+            { code: 'rollypay',       title: 'RollyPay',       desc: 'СБП через QR-код',           icon: 'bi-qr-code',           color: ROLLYPAY_BADGE },
         ],
         // СберПей - только KASSA (FreeKassa i=43). Клиент вводит телефон и
         // подтверждает списание push-уведомлением в приложении Сбербанк.

@@ -106,6 +106,13 @@ builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Prov
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.FreeKassa.FreeKassaPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.ParityPay.ParityPayPaymentProvider>();
 builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.Antimatter.AntimatterPaymentProvider>();
+builder.Services.AddScoped<IPaymentProvider, DigiVault.Web.Services.Payment.Providers.RollyPay.RollyPayPaymentProvider>();
+
+// RollyPay HTTP client — JSON REST (pay.rollypay.io), X-API-Key + X-Nonce
+// header auth, HMAC-SHA256 webhook signature. SBP only.
+builder.Services.AddHttpClient(
+    "rollypay",
+    client => { client.Timeout = TimeSpan.FromSeconds(30); });
 
 // Pally HTTP client — plain Bearer-auth, no certs / weird headers.
 // 30 s timeout matches the other PSPs; pal24.pro is fast in practice.

@@ -12,14 +12,20 @@ namespace DigiVault.Web.Services.Payment.Providers.RollyPay;
 
 /// <summary>
 /// <see cref="IPaymentProvider"/> for RollyPay (API on api.rollypay.io, hosted
-/// checkout served from pay.rollypay.io) — RUB in / USDT settlement. Wired for
-/// SBP (original ask, "СБП нужен ток") and, later, international cards
+/// checkout served from pay.rollypay.io) — RUB in / USDT settlement. Wired
+/// initially for SBP ("СБП нужен ток"), then for international cards
 /// (payment_method=intl_card — client asked to add it to the same cashbox).
-/// Both were confirmed live against the real cashbox before being wired here
-/// (SBP on setup; intl_card via a probing curl on 19.08 — the cashbox's own
-/// "Подключенные способы оплаты" message from the manager listed only
-/// crypto/cryptobot/SBP/xrocket, but intl_card returned a real payment
-/// instead of a "method not supported" error, so it IS enabled).
+/// SBP was pulled back off on 19.08 ("из сбп убери и оставь только в
+/// международных") — SBP already has plenty of other PSPs on this storefront,
+/// so RollyPay now only covers the intl_card niche nobody else does. The code
+/// still knows how to build an SBP request (kept for a possible future
+/// re-enable) — only SupportedMethods was narrowed.
+///
+/// Both methods were confirmed live against the real cashbox before being
+/// wired here (SBP on setup; intl_card via a probing curl on 19.08 — the
+/// cashbox's own "Подключенные способы оплаты" message from the manager
+/// listed only crypto/cryptobot/SBP/xrocket, but intl_card returned a real
+/// payment instead of a "method not supported" error, so it IS enabled).
 ///
 /// Configuration in <see cref="PaymentProviderConfig"/> with Name="rollypay":
 ///   ApiKey     -> X-API-Key header (issued with the cashbox/terminal)
@@ -89,11 +95,13 @@ public class RollyPayPaymentProvider : IPaymentProvider
     public string Name => "rollypay";
     public string DisplayName => "RollyPay";
 
-    // SBP + international cards. The cashbox also exposes crypto/cryptobot/
-    // xrocket, but those are deliberately not offered on the storefront.
+    // International cards only — owner pulled RollyPay off the SBP tile
+    // (kept there since setup, but SBP already has plenty of other PSPs; the
+    // point of RollyPay on this storefront is the intl_card niche nobody else
+    // covers). The cashbox also exposes crypto/cryptobot/xrocket, but those
+    // are deliberately not offered on the storefront.
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {
-        PaymentMethod.SBP,
         PaymentMethod.IntlCard,
     };
 

@@ -13,13 +13,7 @@ namespace DigiVault.Web.Services.Payment.Providers.RollyPay;
 /// <summary>
 /// <see cref="IPaymentProvider"/> for RollyPay (API on api.rollypay.io, hosted
 /// checkout served from pay.rollypay.io) — RUB in / USDT settlement. Wired for
-/// SBP (original ask, "СБП нужен ток") and, later, international cards
-/// (payment_method=intl_card — client asked to add it to the same cashbox).
-/// Both were confirmed live against the real cashbox before being wired here
-/// (SBP on setup; intl_card via a probing curl on 19.08 — the cashbox's own
-/// "Подключенные способы оплаты" message from the manager listed only
-/// crypto/cryptobot/SBP/xrocket, but intl_card returned a real payment
-/// instead of a "method not supported" error, so it IS enabled).
+/// SBP only, per the merchant account we were given ("СБП нужен ток").
 ///
 /// Configuration in <see cref="PaymentProviderConfig"/> with Name="rollypay":
 ///   ApiKey     -> X-API-Key header (issued with the cashbox/terminal)
@@ -52,18 +46,6 @@ public class RollyPayPaymentProvider : IPaymentProvider
     /// <summary>Payment method code expected by RollyPay for Faster Payments.</summary>
     private const string SbpMethodCode = "sbp";
 
-    /// <summary>Payment method code expected by RollyPay for foreign-issued cards.</summary>
-    private const string IntlCardMethodCode = "intl_card";
-
-    /// <summary>
-    /// intl_card has its own gateway-side minimum, higher than the SBP one
-    /// we configured (MinAmount=1): a live probe on 19.08 rejected 10 ₽ with
-    /// "Сумма слишком мала для выбранного способа оплаты (минимум 100 ₽)"
-    /// and accepted 500 ₽. Enforced here so the user gets our normal Russian
-    /// error instead of the raw gateway message.
-    /// </summary>
-    private const decimal IntlCardMinAmount = 100m;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
@@ -89,12 +71,11 @@ public class RollyPayPaymentProvider : IPaymentProvider
     public string Name => "rollypay";
     public string DisplayName => "RollyPay";
 
-    // SBP + international cards. The cashbox also exposes crypto/cryptobot/
-    // xrocket, but those are deliberately not offered on the storefront.
+    // SBP only — the cashbox also exposes crypto/cryptobot/xrocket, but those
+    // are deliberately not offered on the storefront.
     public IReadOnlyList<PaymentMethod> SupportedMethods => new[]
     {
         PaymentMethod.SBP,
-        PaymentMethod.IntlCard,
     };
 
     public bool IsEnabled
@@ -117,14 +98,6 @@ public class RollyPayPaymentProvider : IPaymentProvider
         if (string.IsNullOrWhiteSpace(cfg.ApiKey))
             return PaymentResult.Failed("RollyPay: не задан API-ключ.");
 
-        var methodCode = request.Method == PaymentMethod.IntlCard ? IntlCardMethodCode : SbpMethodCode;
-
-        if (methodCode == IntlCardMethodCode && request.Amount < IntlCardMinAmount)
-        {
-            return PaymentResult.Failed(
-                $"Минимальная сумма оплаты международной картой — {IntlCardMinAmount:0} ₽.");
-        }
-
         var ourTransactionId = TxnIdHelper.Generate(maxLength: 32);
         var amount = decimal.Round(request.Amount, 2, MidpointRounding.AwayFromZero);
 
@@ -135,7 +108,7 @@ public class RollyPayPaymentProvider : IPaymentProvider
             // Docs type `amount` as a string with 2 decimals ("1500.00").
             ["amount"] = amount.ToString("F2", CultureInfo.InvariantCulture),
             ["payment_currency"] = "RUB",
-            ["payment_method"] = methodCode,
+            ["payment_method"] = SbpMethodCode,
             ["order_id"] = ourTransactionId,
             ["description"] = request.Description ?? $"Оплата #{ourTransactionId}",
             ["success_redirect_url"] = request.SuccessUrl,
@@ -156,7 +129,7 @@ public class RollyPayPaymentProvider : IPaymentProvider
         {
             _log.LogInformation(
                 "RollyPay → POST {Url} txn={Txn} amount={Amount} RUB method={Method}",
-                url, ourTransactionId, amount, methodCode);
+                url, ourTransactionId, amount, SbpMethodCode);
 
             using var http = _httpFactory.CreateClient(HttpClientName);
             using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)

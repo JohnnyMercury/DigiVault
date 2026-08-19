@@ -33,8 +33,5 @@ public enum PaymentMethod
     Balance = 8,
 
     /// <summary>Мобильный платеж</summary>
-    Mobile = 9,
-
-    /// <summary>Международная карта (иностранный банк-эмитент)</summary>
-    IntlCard = 10
+    Mobile = 9
 }

@@ -77,15 +77,6 @@ public static class PaymentMethodCatalog
             EnumValue: PaymentMethod.Card,
             Available: false,
             UnavailableHint: "Скоро"),
-
-        new PaymentMethodOption(
-            Code: "intl_card",
-            Title: "Международные карты",
-            Description: "Visa, MasterCard иностранных банков, от 100 ₽",
-            IconClass: "bi-credit-card-2-front",
-            Gradient: "linear-gradient(135deg, #06b6d4, #0e7490)",
-            EnumValue: PaymentMethod.IntlCard,
-            Available: true),
     };
 
     public static PaymentMethodOption? Get(string? code) =>

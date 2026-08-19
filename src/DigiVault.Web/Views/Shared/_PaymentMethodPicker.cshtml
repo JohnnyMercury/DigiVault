@@ -274,14 +274,20 @@
         ],
         // P2P - заготовка под будущие PSP (BlvckPay / PayPecker).
         p2p: [],
+        // Международные карты - RollyPay (payment_method=intl_card на той же
+        // кассе, что и СБП). Мин. сумма 100 ₽ — проверено вживую 19.08.
+        intl_card: [
+            { code: 'rollypay',       title: 'RollyPay',       desc: 'Visa, MasterCard иностранных банков', icon: 'bi-credit-card-2-front', color: ROLLYPAY_BADGE },
+        ],
     };
 
     const METHOD_LABELS = {
-        card:    'Банковская карта',
-        sbp:     'СБП',
-        sberpay: 'СберПей',
-        qr:      'QR-код',
-        p2p:     'P2P перевод',
+        card:      'Банковская карта',
+        sbp:       'СБП',
+        sberpay:   'СберПей',
+        qr:        'QR-код',
+        p2p:       'P2P перевод',
+        intl_card: 'Международные карты',
     };
 
     // Provider names enabled in admin (PaymentProviderConfigs.IsEnabled). Tiles

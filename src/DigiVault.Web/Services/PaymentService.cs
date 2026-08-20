@@ -344,14 +344,44 @@ public class PaymentService : IPaymentService
             return;
         }
 
-        // Order-linked payment: the money pays for an order, not for a wallet
-        // top-up. Don't credit the user's balance — fulfilment will be handed
-        // off to IFulfilmentService by WebhooksController right after this method.
         if (transaction.OrderId.HasValue)
         {
-            _logger.LogInformation(
-                "Order-linked payment completed: User {UserId}, Order {OrderId}, Amount {Amount} RUB, Txn {TransactionId} — fulfilment will follow",
-                transaction.UserId, transaction.OrderId, transaction.Amount, transaction.TransactionId);
+            // A real product order (has OrderItems) — the money pays for goods,
+            // not a wallet top-up. Don't credit the balance; fulfilment will be
+            // handed off to IFulfilmentService by WebhooksController right after
+            // this method.
+            //
+            // BUT CreateDepositAsync above ALSO attaches every wallet top-up to
+            // a synthetic Order (0 OrderItems by design — "у пополнения нет
+            // товарных позиций") so it's clickable from admin/Account/Orders.
+            // Treating "has an OrderId" as "is a real order" meant NO deposit
+            // ever reached the wallet-credit code below through this shared
+            // path — Enot/Pally/Overpay/PaymentLink only worked because each
+            // has its own StatusPollerService independently re-crediting as a
+            // reconciliation workaround; RollyPay (and any future provider
+            // without such a poller) silently never credited at all. Checking
+            // OrderItems (not just OrderId) is what actually distinguishes the
+            // two cases.
+            var hasOrderItems = await _context.OrderItems
+                .AnyAsync(oi => oi.OrderId == transaction.OrderId.Value);
+            if (hasOrderItems)
+            {
+                _logger.LogInformation(
+                    "Order-linked payment completed: User {UserId}, Order {OrderId}, Amount {Amount} RUB, Txn {TransactionId} — fulfilment will follow",
+                    transaction.UserId, transaction.OrderId, transaction.Amount, transaction.TransactionId);
+                return;
+            }
+        }
+
+        // Idempotency: this method is reachable twice for the same payment
+        // (webhook redelivery, or a webhook race with a manual admin
+        // CompletePaymentAsync call) — bail if already credited rather than
+        // double-crediting the wallet.
+        var alreadyCredited = await _context.Transactions
+            .AnyAsync(t => t.Description != null && t.Description.Contains(transaction.TransactionId));
+        if (alreadyCredited)
+        {
+            _logger.LogInformation("Payment {TransactionId} already credited — skipping", transaction.TransactionId);
             return;
         }
 
@@ -363,6 +393,21 @@ public class PaymentService : IPaymentService
             Amount = transaction.Amount,
             Type = TransactionType.Deposit,
             Description = $"Пополнение баланса [{transaction.TransactionId}]"
+        });
+
+        // Mirrors the legacy Transaction row into WalletTransaction, which is
+        // what Account → «История пополнений» actually renders. Without this
+        // the customer sees their balance go up with no matching history entry.
+        _context.WalletTransactions.Add(new WalletTransaction
+        {
+            UserId = transaction.UserId,
+            Amount = transaction.Amount,
+            BalanceAfterTransaction = user.Balance,
+            Type = WalletTransactionType.Deposit,
+            Description = $"Пополнение через {transaction.ProviderName}",
+            Reference = transaction.TransactionId,
+            Status = WalletTransactionStatus.Completed,
+            ProcessedAt = DateTime.UtcNow,
         });
 
         _logger.LogInformation(

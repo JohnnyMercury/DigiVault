@@ -105,6 +105,13 @@
                 <input type="text" class="tx-input" value="@steamLogin"/>
             </div>
         }
+        else if (!string.IsNullOrEmpty(Model.Order?.DeliveryInfo))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Данные для доставки:</label>
+                <input type="text" class="tx-input tx-input-bold" value="@Model.Order.DeliveryInfo"/>
+            </div>
+        }
 
         <h6 class="tx-section-title mt-4">Временные метки</h6>
         <div class="tx-row">

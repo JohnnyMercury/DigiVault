@@ -74,6 +74,13 @@
                     <div class="text-muted small">Status</div>
                     <span class="badge bg-@statusClass fs-6">@Model.Status</span>
                 </div>
+                @if (!string.IsNullOrEmpty(Model.DeliveryInfo))
+                {
+                    <div class="mb-3">
+                        <div class="text-muted small">Delivery Info</div>
+                        <code>@Model.DeliveryInfo</code>
+                    </div>
+                }
                 <div class="mb-3">
                     <div class="text-muted small">Created</div>
                     <div>@Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</div>

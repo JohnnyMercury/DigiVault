@@ -56,6 +56,13 @@
             <label class="tx-label">Статус:</label>
             <input type="text" class="tx-input tx-input-status" value="@statusText"/>
         </div>
+        @if (!string.IsNullOrEmpty(Model.DeliveryInfo))
+        {
+            <div class="tx-row">
+                <label class="tx-label">Данные для доставки:</label>
+                <input type="text" class="tx-input tx-input-bold" value="@Model.DeliveryInfo"/>
+            </div>
+        }
     </div>
     <div class="col-md-6">
         <h6 class="tx-section-title">Идентификаторы и оплата</h6>

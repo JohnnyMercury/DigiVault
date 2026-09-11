@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Согласие на обработку персональных данных";
+}
+
+<div class="container py-5">
+    <div class="policy-page">
+        <h1 class="policy-title"><span class="gradient-text">Согласие</span> на обработку персональных данных</h1>
+
+        <div class="policy-card">
+            <div class="section">
+                <p>Я, пользователь сайта key-zona.com, свободно, своей волей и в своём интересе даю согласие ИП РОЗИЕВ ИСФАНДИЁР УМИДЖОН УГЛИ (ИНН 51201087040060) на обработку моих персональных данных.</p>
+            </div>
+
+            <div class="section">
+                <h5>Какие данные и для чего обрабатываются</h5>
+                <p>Согласие распространяется на данные, которые я предоставляю при регистрации, оформлении заказа и обращении в поддержку: имя пользователя, адрес электронной почты, сведения о заказе и иные данные, необходимые для предоставления услуг.</p>
+                <p>Цели обработки: создание и обслуживание учётной записи, оформление и исполнение заказов, связь со мной по вопросам заказа и поддержки, обеспечение безопасности сайта и предотвращение мошеннических операций.</p>
+            </div>
+
+            <div class="section">
+                <h5>Действия с данными и передача</h5>
+                <p>Оператор вправе собирать, записывать, систематизировать, хранить, уточнять, использовать, передавать платёжным и иным партнёрам данные в объёме, необходимом для исполнения заказа, а также блокировать и удалять данные в соответствии с законодательством и Политикой конфиденциальности.</p>
+            </div>
+
+            <div class="section">
+                <h5>Срок действия и отзыв согласия</h5>
+                <p>Согласие действует до достижения целей обработки либо до его отзыва, если иное не требуется законодательством. Я могу отозвать согласие, написав на <a href="mailto:helper.user.post@gmail.com">helper.user.post@gmail.com</a>. Отзыв согласия может ограничить доступ к функциям сайта, для которых обработка данных необходима.</p>
+                <p class="mb-0">Актуальная Политика конфиденциальности опубликована на <a asp-controller="Home" asp-action="Privacy">соответствующей странице сайта</a>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    .policy-page { max-width: 960px; margin: 0 auto; }
+    .policy-title { font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 2rem; }
+    .policy-title .gradient-text { background: linear-gradient(135deg, #667eea 0%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .policy-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 2.5rem; color: rgba(255,255,255,0.75); line-height: 1.7; }
+    .policy-card .section { margin-bottom: 2rem; }
+    .policy-card .section:last-child { margin-bottom: 0; }
+    .policy-card h5 { color: #667eea; font-weight: 700; margin-bottom: 1rem; }
+    .policy-card p { margin-bottom: 0.85rem; }
+    .policy-card a { color: #667eea; text-decoration: none; }
+    .policy-card a:hover { text-decoration: underline; }
+    @@media (max-width: 768px) { .policy-card { padding: 1.5rem; } .policy-title { font-size: 1.75rem; } }
+</style>
+}

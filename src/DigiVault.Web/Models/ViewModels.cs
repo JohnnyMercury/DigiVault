@@ -21,6 +21,8 @@ public class RegisterViewModel
     public string Password { get; set; } = string.Empty;
     [DataType(DataType.Password)]
     public string ConfirmPassword { get; set; } = string.Empty;
+    [Range(typeof(bool), "true", "true", ErrorMessage = "Необходимо дать согласие на обработку персональных данных.")]
+    public bool PersonalDataConsent { get; set; }
 }
 
 public class HomeViewModel

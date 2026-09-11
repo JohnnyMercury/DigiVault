@@ -117,6 +117,7 @@ public class HomeController : Controller
     }
 
     public IActionResult UserAgreement() => View();
+    public IActionResult PersonalDataConsent() => View();
     public IActionResult RefundPolicy() => View();
     public IActionResult PaymentAndDelivery() => View();
 

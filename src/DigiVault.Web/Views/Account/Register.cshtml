@@ -252,8 +252,16 @@
                 <div class="form-check mb-4">
                     <input type="checkbox" class="form-check-input" id="agreeTerms" required />
                     <label class="form-check-label" for="agreeTerms">
-                        Я принимаю <a href="#" class="auth-link">условия использования</a>
+                        Я принимаю <a asp-controller="Home" asp-action="UserAgreement" class="auth-link">условия использования</a>
                     </label>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="PersonalDataConsent" class="form-check-input" />
+                    <label asp-for="PersonalDataConsent" class="form-check-label">
+                        Я даю <a asp-controller="Home" asp-action="PersonalDataConsent" class="auth-link">согласие на обработку персональных данных</a>
+                    </label>
+                    <span asp-validation-for="PersonalDataConsent" class="text-danger small d-block"></span>
                 </div>
 
                 <button type="submit" class="btn btn-auth" id="registerBtn">

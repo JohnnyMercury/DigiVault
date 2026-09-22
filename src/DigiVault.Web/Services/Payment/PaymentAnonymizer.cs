@@ -251,78 +251,75 @@ public class PaymentAnonymizer
         if (!ShouldAnonymize(originalEmail))
             return originalEmail ?? "";
         var rnd = new Random(seed);
-        return GenerateEmailLocal(rnd);
-    }
-
-    private static string GenerateEmailLocal(Random rnd)
-    {
-        var domain  = DisplayDomains[rnd.Next(DisplayDomains.Length)];
-        var nick    = Nicknames[rnd.Next(Nicknames.Length)];
-        var nick2   = Nicknames[rnd.Next(Nicknames.Length)];
-        var adj     = Adjectives[rnd.Next(Adjectives.Length)];
-        var noun    = Nouns[rnd.Next(Nouns.Length)];
-        var noun2   = Nouns[rnd.Next(Nouns.Length)];
+        var domain = DisplayDomains[rnd.Next(DisplayDomains.Length)];
+        var nick = Nicknames[rnd.Next(Nicknames.Length)];
+        var nick2 = Nicknames[rnd.Next(Nicknames.Length)];
+        var adj = Adjectives[rnd.Next(Adjectives.Length)];
+        var noun = Nouns[rnd.Next(Nouns.Length)];
+        var noun2 = Nouns[rnd.Next(Nouns.Length)];
         var ruFirst = FirstNames[rnd.Next(FirstNames.Length)];
-        var ruLast  = LastNames[rnd.Next(LastNames.Length)];
-        var ruHandle = RussianHandles[rnd.Next(RussianHandles.Length)];
-        var yr      = rnd.Next(1985, 2006);
-        var n2      = rnd.Next(1, 999);
-        var n3      = rnd.Next(1, 9999);
-        var sep     = rnd.Next(3) switch { 0 => ".", 1 => "_", _ => "" };
-        var style   = rnd.Next(30);
+        var ruLast = LastNames[rnd.Next(LastNames.Length)];
+        var yr = rnd.Next(1985, 2006);
+        var n2 = rnd.Next(1, 999);
+        var n3 = rnd.Next(1, 9999);
+        var sep = rnd.Next(3) switch { 0 => ".", 1 => "_", _ => "" };
+        var style = rnd.Next(20);
         var local = style switch
         {
+            // ник + число: phantom42, glitch777
             0  => $"{nick}{rnd.Next(1, 99)}",
+            // ник + прилагательное: ghost.calm, nova_epic
             1  => $"{nick}{sep}{adj}",
+            // прилагательное + существительное + число: dark_wolf795
             2  => $"{adj}{sep}{noun}{n2}",
-            3  => $"{nick}{rnd.Next(100, 9999)}",
+            // просто ник: maverick, vortex
+            3  => $"{nick}",
+            // существительное + число: phoenix6101
             4  => $"{noun}{n3}",
+            // ник + существительное: frost.blade, neon_hawk
             5  => $"{nick}{sep}{noun}",
+            // ник + ник: pixel.storm, cyber_zen
             6  => $"{nick}{sep}{nick2}",
+            // xX_ник_Xx / x_ник_x
             7  => rnd.Next(2) == 0 ? $"xX_{nick}_Xx" : $"x_{nick}{rnd.Next(1, 99)}_x",
+            // pr0_ник, n1ce_ник
             8  => $"{LeetPrefixes[rnd.Next(LeetPrefixes.Length)]}{nick}",
+            // 2fast4u стиль: число + прилагательное + число + существительное
             9  => $"{rnd.Next(2, 10)}{adj}{rnd.Next(2, 10)}{noun}",
+            // прилагательное + ник: epic_phantom, wild.blaze
             10 => $"{adj}{sep}{nick}",
+            // ник + год: shadow98, nova2001
             11 => $"{nick}{yr % 100:D2}",
+            // the_ник, mr_ник, just_ник
             12 => $"{Prefixes[rnd.Next(Prefixes.Length)]}{nick}",
+            // существительное + существительное: wolffire, ice_storm
             13 => $"{noun}{sep}{noun2}",
+            // ник + _official / _real
             14 => $"{nick}{Suffixes[rnd.Next(Suffixes.Length)]}",
+            // рус.имя(транслит) + число: sergey88, ivan_92
             15 => $"{ruFirst}{sep}{rnd.Next(70, 105)}",
+            // инициал.рус.фамилия: s.ivanov
             16 => $"{ruFirst[0]}.{ruLast}",
+            // прилагательное + число: lucky777, epic42
             17 => $"{adj}{rnd.Next(1, 999)}",
+            // not_ / un_ + ник: not_a_ghost, un_rebel
             18 => $"{NegPrefixes[rnd.Next(NegPrefixes.Length)]}{nick}{(rnd.Next(2) == 0 ? rnd.Next(1, 99).ToString() : "")}",
-            19 => $"{nick}{sep}{adj}{rnd.Next(1, 99)}",
-            // русские уменьшительные: mashka95, dimka.2001, serega_777
-            20 => $"{ruHandle}{rnd.Next(1, 99)}",
-            21 => $"{ruHandle}{sep}{rnd.Next(1985, 2006)}",
-            22 => $"{ruHandle}{sep}{rnd.Next(1, 999)}",
-            // имя.фамилия стили: sergey.ivanov, a_petrov92
-            23 => $"{ruFirst}.{ruLast}",
-            24 => $"{ruFirst}{sep}{ruLast}{rnd.Next(1, 99)}",
-            25 => $"{ruFirst[0]}_{ruLast}{rnd.Next(1, 99)}",
-            // существительное + прилагательное: wolf.dark, ocean_calm
-            26 => $"{noun}{sep}{adj}",
-            // прилагательное + прилагательное + число: sweet.calm42
-            27 => $"{adj}{sep}{Adjectives[rnd.Next(Adjectives.Length)]}{rnd.Next(1, 99)}",
-            // ник + год полный: shadow2001, nova1995
-            28 => $"{nick}{yr}",
-            // русское уменьшительное + существительное: dimka.wolf, serega_fire
-            _  => $"{ruHandle}{sep}{noun}",
+            // ник + прилагательное + число: frost.dark13
+            _  => $"{nick}{sep}{adj}{rnd.Next(1, 99)}",
         };
         return $"{local}@{domain}";
     }
 
     private static readonly string[] DisplayDomains =
     {
-        "gmail.com", "gmail.com", "gmail.com", "gmail.com", "gmail.com",
-        "yandex.ru", "yandex.ru", "yandex.ru", "yandex.ru",
-        "mail.ru", "mail.ru", "mail.ru", "mail.ru",
-        "outlook.com", "outlook.com",
+        "gmail.com", "gmail.com", "gmail.com", "gmail.com",
         "yahoo.com", "yahoo.com",
+        "outlook.com", "hotmail.com",
+        "mail.ru", "mail.ru", "mail.ru",
+        "yandex.ru", "yandex.ru",
         "icloud.com", "protonmail.com",
         "bk.ru", "inbox.ru", "list.ru",
-        "rambler.ru", "live.com", "ya.ru",
-        "hotmail.com", "ro.ru", "internet.ru",
+        "rambler.ru", "live.com",
     };
 
     private static readonly string[] Nicknames =
@@ -346,53 +343,31 @@ public class PaymentAnonymizer
         "dusk", "dawn", "haze", "ember", "ash", "flint",
         "riddle", "puzzle", "trick", "quest", "myth", "saga",
         "ninja", "samurai", "ronin", "viking", "pirate", "wizard",
-        "coffee", "sunset", "breeze", "velvet", "silver", "golden",
-        "morning", "winter", "summer", "autumn", "spring", "midnight",
-        "cookie", "candy", "honey", "butter", "cream", "toast",
-        "marble", "crystal", "bronze", "granite", "steel", "copper",
-        "thunder", "blizzard", "typhoon", "tornado", "eclipse", "aurora",
-        "anchor", "compass", "harbor", "voyage", "beacon", "captain",
-        "melody", "rhythm", "lyric", "chord", "piano", "cello",
-        "sketch", "canvas", "pastel", "crayon", "brush", "pencil",
-        "shuttle", "comet", "lunar", "solar", "astro", "cosmo",
-        "summit", "ridge", "valley", "delta", "mesa", "canyon",
     };
 
     private static readonly string[] Adjectives =
     {
-        "dark", "rich", "cool", "crazy", "sweet", "lean", "super",
+        "dark", "lucky", "cool", "crazy", "sweet", "happy", "super",
         "best", "good", "real", "big", "red", "fast", "gold", "nice",
         "pro", "top", "hot", "cold", "wild", "free", "true", "brave",
         "calm", "bright", "magic", "epic", "fresh", "silent", "vivid",
-        "royal", "neat", "polar", "urban", "rustic", "noble", "rapid",
+        "royal", "solar", "polar", "urban", "rustic", "noble", "rapid",
         "tiny", "loud", "odd", "rare", "raw", "sly", "lazy", "keen",
         "bold", "grim", "pale", "vast", "wise", "lost", "mad", "lone",
-        "blue", "green", "white", "black", "grey", "pink", "orange",
-        "warm", "soft", "deep", "light", "sharp", "smooth", "clear",
-        "young", "prime", "grand", "plain", "pure", "safe", "slim",
-        "cozy", "snug", "kind", "fair", "dull", "dry", "wet", "old",
-        "iron", "stone", "glass", "silk", "thin", "snow", "flat",
     };
 
     private static readonly string[] Nouns =
     {
         "angel", "star", "wolf", "fox", "cat", "lion", "tiger",
         "bear", "eagle", "hawk", "fire", "ice", "sun", "moon",
-        "sky", "forge", "king", "knight", "vault", "dream",
+        "sky", "storm", "king", "knight", "shadow", "dream",
         "heart", "soul", "wind", "flame", "rider", "hunter",
-        "river", "ocean", "forest", "crest", "fang", "arrow",
-        "blade", "claw", "phoenix", "dragon", "panther", "falcon",
-        "thorn", "laser", "garden", "island", "bridge", "tower",
-        "seed", "byte", "logic", "code", "node", "loop",
+        "river", "ocean", "forest", "thunder", "crystal", "arrow",
+        "blade", "spark", "phoenix", "dragon", "panther", "falcon",
+        "comet", "laser", "garden", "island", "bridge", "tower",
+        "pixel", "byte", "logic", "code", "node", "loop",
         "wave", "reef", "dune", "cliff", "peak", "cave",
-        "nest", "lens", "gear", "leaf", "wire", "chip",
-        "flower", "rose", "daisy", "tulip", "lily", "lotus",
-        "night", "gem", "cloud", "rain", "gate", "mist",
-        "bird", "fish", "deer", "crow", "dove", "swan",
-        "orb", "rock", "sand", "dust", "web", "vine",
-        "train", "plane", "ship", "sail", "port", "road",
-        "lamp", "bell", "drum", "horn", "harp", "flute",
-        "crown", "shield", "spear", "axe", "helm", "ring",
+        "orbit", "lens", "gear", "bolt", "wire", "chip",
     };
 
     private static readonly string[] Prefixes =
@@ -418,23 +393,6 @@ public class PaymentAnonymizer
         "not_a_", "un_", "anti_", "non_", "no_", "zero_",
     };
 
-    private static readonly string[] RussianHandles =
-    {
-        "mashka", "anyutka", "dimka", "sashka", "vovka", "kolyan",
-        "lenochka", "katyusha", "natashka", "tanyusha", "zhenka", "mishka",
-        "pashka", "romchik", "slavik", "vanyok", "petruha", "lyosha",
-        "tolyan", "grishka", "seryoga", "fedya", "borya", "styopa",
-        "timka", "yurka", "vitya", "goshka", "tema", "serega",
-        "leha", "sanyek", "dimon", "vovan", "zheka", "tolik",
-        "rusik", "edik", "marik", "kostik", "danila", "matvey",
-        "max", "dima", "sasha", "roma", "vlad", "artem",
-        "oleg", "nik", "den", "kir", "gleb", "mark",
-        "anya", "masha", "dasha", "lena", "sveta", "olya",
-        "polya", "yulka", "irka", "vika", "alinka", "sonya",
-        "milka", "nastya", "ksusha", "alyona", "lera", "yana",
-        "zoya", "vera", "nina", "rita", "liza", "toma",
-    };
-
     // ──────────────────────────────────────────────────────────────────
     // Generators
     // ──────────────────────────────────────────────────────────────────
@@ -446,23 +404,52 @@ public class PaymentAnonymizer
     /// </summary>
     private static string GenerateUserHash() => Guid.NewGuid().ToString();
 
-    private static readonly System.Collections.Concurrent.ConcurrentQueue<string> _recentPrefixes = new();
-    private const int RecentPrefixLimit = 200;
-
+    /// <summary>
+    /// Diverse, realistic-looking email. Uses the same 20-style pool as
+    /// <see cref="DisplayEmail"/> but with <see cref="Random.Shared"/>
+    /// (non-deterministic) so every PSP call gets a unique address whose
+    /// format varies — nick-based, adjective+noun, leet, xX_Xx, etc.
+    /// </summary>
     private static string GenerateDiverseEmail()
     {
-        for (var attempt = 0; attempt < 10; attempt++)
+        var rnd    = Random.Shared;
+        var domain = Pick(DisplayDomains);
+        var nick   = Pick(Nicknames);
+        var nick2  = Pick(Nicknames);
+        var adj    = Pick(Adjectives);
+        var noun   = Pick(Nouns);
+        var noun2  = Pick(Nouns);
+        var ruFirst = Pick(FirstNames);
+        var ruLast  = Pick(LastNames);
+        var yr     = rnd.Next(1985, 2006);
+        var n2     = rnd.Next(1, 999);
+        var n3     = rnd.Next(1, 9999);
+        var sep    = rnd.Next(3) switch { 0 => ".", 1 => "_", _ => "" };
+        var style  = rnd.Next(20);
+        var local = style switch
         {
-            var email = GenerateEmailLocal(Random.Shared);
-            var prefix = email[..Math.Min(4, email.IndexOf('@'))];
-            if (attempt < 9 && _recentPrefixes.Any(p => p == prefix))
-                continue;
-            _recentPrefixes.Enqueue(prefix);
-            while (_recentPrefixes.Count > RecentPrefixLimit)
-                _recentPrefixes.TryDequeue(out _);
-            return email;
-        }
-        throw new InvalidOperationException("Unreachable");
+            0  => $"{nick}{rnd.Next(1, 99)}",
+            1  => $"{nick}{sep}{adj}",
+            2  => $"{adj}{sep}{noun}{n2}",
+            3  => $"{nick}",
+            4  => $"{noun}{n3}",
+            5  => $"{nick}{sep}{noun}",
+            6  => $"{nick}{sep}{nick2}",
+            7  => rnd.Next(2) == 0 ? $"xX_{nick}_Xx" : $"x_{nick}{rnd.Next(1, 99)}_x",
+            8  => $"{Pick(LeetPrefixes)}{nick}",
+            9  => $"{rnd.Next(2, 10)}{adj}{rnd.Next(2, 10)}{noun}",
+            10 => $"{adj}{sep}{nick}",
+            11 => $"{nick}{yr % 100:D2}",
+            12 => $"{Pick(Prefixes)}{nick}",
+            13 => $"{noun}{sep}{noun2}",
+            14 => $"{nick}{Pick(Suffixes)}",
+            15 => $"{ruFirst}{sep}{rnd.Next(70, 105)}",
+            16 => $"{ruFirst[0]}.{ruLast}",
+            17 => $"{adj}{rnd.Next(1, 999)}",
+            18 => $"{Pick(NegPrefixes)}{nick}{(rnd.Next(2) == 0 ? rnd.Next(1, 99).ToString() : "")}",
+            _  => $"{nick}{sep}{adj}{rnd.Next(1, 99)}",
+        };
+        return $"{local}@{domain}";
     }
 
     /// <summary>
